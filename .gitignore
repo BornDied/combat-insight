@@ -1,0 +1,10 @@
+.gradle/
+.gradle-home/
+.gradle-user/
+.task-jdk/
+build/
+out/
+.idea/
+*.iml
+runelite.log
+hs_err_pid*.log
