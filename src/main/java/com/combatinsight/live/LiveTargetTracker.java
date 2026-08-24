@@ -4,56 +4,95 @@ import net.runelite.api.Actor;
 import net.runelite.api.NPC;
 
 /**
- * Retains the last NPC the player interacted with until that NPC dies,
- * despawns, or is replaced by another NPC target.
+ * Retains the last NPC explicitly confirmed by an offensive player action.
  *
- * <p>RuneLite briefly clears {@code Player#getInteracting()} when the player
- * eats, moves, changes equipment, or clicks elsewhere. Those actions should
- * not make a boss calculation disappear from the HUD.</p>
+ * <p>The live actor is used only while combat is active. Its ID and name remain
+ * available after death or despawn so hit chance and DPS can stay visible
+ * between repeated kills without retaining a removed RuneLite actor.</p>
  */
 public final class LiveTargetTracker
 {
-	private NPC target;
+	private NPC activeTarget;
+	private int retainedTargetId = -1;
+	private String retainedTargetName = "";
 
 	/**
-	 * Observes the player's current interaction. A missing or non-NPC
-	 * interaction does not discard a living NPC target.
+	 * Confirms an NPC from an Attack/Cast click or a local-player hitsplat.
+	 * Ordinary NPC interactions must never call this method.
 	 */
-	public void observe(Actor interacting)
+	public boolean confirmCombatTarget(NPC target)
 	{
-		if (interacting instanceof NPC)
+		if (target == null)
 		{
-			target = (NPC) interacting;
-			return;
+			return false;
 		}
 
-		if (target != null && target.isDead())
-		{
-			target = null;
-		}
+		int targetId = target.getId();
+		String targetName = target.getName();
+		boolean changed = activeTarget != target
+			|| retainedTargetId != targetId
+			|| !sameText(retainedTargetName, targetName);
+		activeTarget = target;
+		retainedTargetId = targetId;
+		retainedTargetName = targetName;
+		return changed;
 	}
 
 	/**
-	 * Clears the target only when the supplied actor is the retained NPC.
-	 * Actor identity is intentional because separate NPCs can share an ID.
+	 * Ends the live engagement only when the supplied actor is the active NPC.
+	 * The retained ID and name intentionally survive for between-kill display.
 	 */
-	public boolean clearIfSame(Actor actor)
+	public boolean endActiveIfSame(Actor actor)
 	{
-		if (actor != null && actor == target)
+		if (actor != null && actor == activeTarget)
 		{
-			target = null;
+			activeTarget = null;
 			return true;
 		}
 		return false;
 	}
 
-	public void clear()
+	public boolean endActiveIfDead()
 	{
-		target = null;
+		if (activeTarget != null && activeTarget.isDead())
+		{
+			activeTarget = null;
+			return true;
+		}
+		return false;
 	}
 
-	public NPC getTarget()
+	public boolean isEngagedWith(Actor interacting)
 	{
-		return target;
+		return activeTarget != null
+			&& interacting == activeTarget
+			&& !activeTarget.isDead();
+	}
+
+	public void clear()
+	{
+		activeTarget = null;
+		retainedTargetId = -1;
+		retainedTargetName = "";
+	}
+
+	public int getRetainedTargetId()
+	{
+		return retainedTargetId;
+	}
+
+	public String getRetainedTargetName()
+	{
+		return retainedTargetName;
+	}
+
+	public NPC getActiveTarget()
+	{
+		return activeTarget;
+	}
+
+	private static boolean sameText(String first, String second)
+	{
+		return first == null ? second == null : first.equals(second);
 	}
 }

@@ -69,6 +69,11 @@ public class CombatInsightOverlay extends OverlayPanel
 					: snapshot.isMaxHitAvailable() ? plugin.getMaxHitChangeColor() : WARNING);
 		}
 
+		if (mode == HudDisplayMode.ADVANCED && snapshot.hasMultiHitSplit())
+		{
+			addLine("Max split", snapshot.getMultiHitSplitText(), Color.WHITE, ACCENT);
+		}
+
 		if (mode == HudDisplayMode.MINIMAL)
 		{
 			return super.render(graphics);
@@ -147,7 +152,7 @@ public class CombatInsightOverlay extends OverlayPanel
 
 			if (config.showAttackSpeed())
 			{
-				addLine("Attack interval", snapshot.getAttackSpeedTicks() + " ticks", Color.WHITE, Color.WHITE);
+				addLine("Attack interval", snapshot.getAttackSpeedText(), Color.WHITE, Color.WHITE);
 			}
 
 			if (config.showTarget() && snapshot.hasTarget())
@@ -172,7 +177,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			if (config.showObservedAverage())
 			{
 				addLine(
-					"Avg hit",
+					snapshot.getObservedHitLabel(),
 					plugin.getObservedAverageHitText(),
 					Color.WHITE,
 					plugin.hasObservedHits() ? SUCCESS : MUTED);

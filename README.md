@@ -75,9 +75,11 @@ Later versions can add saved setup comparisons, upgrade suggestions, special att
 
 ## Current test build
 
-Version `0.3.2-SNAPSHOT` adds the target-stat and accuracy layer plus the first HUD clarity pass. The project now bundles a compact snapshot of more than 2,800 NPC IDs, including defence levels, Magic levels, stab/slash/crush defence, light/standard/heavy ranged defence, elemental weaknesses, flat armour, size, and combat attributes. It does not contact GearScape or the OSRS Wiki while RuneLite is running.
+Version `0.3.3-SNAPSHOT` adds the first exact multi-hit basic-attack distributions. Scythe of vitur, Dual macuahuitl, Torag's hammers, Sulphur blades, and Dark bow now calculate their complete attack rather than stopping at single-roll accuracy. The project continues to bundle a compact snapshot of more than 2,800 NPC IDs, including defence levels, Magic levels, stab/slash/crush defence, light/standard/heavy ranged defence, elemental weaknesses, flat armour, size, and combat attributes. It does not contact GearScape or the OSRS Wiki while RuneLite is running.
 
-The retained NPC target now powers real hit-chance and basic-attack DPS rows in both Standard and Advanced modes. Clicking the ground, eating, drinking a potion, or switching gear does not discard it. Advanced mode can additionally show the player and target accuracy rolls, target defence type, and `Avg hit` from the local player's actual hitsplats. The average includes zero-damage hits, displays its sample count, keeps separate samples for separate NPC actors, and resets when the plugin stops or the player logs out. The two raw accuracy-detail rows default off and have independent visibility switches.
+The retained NPC target powers real hit-chance and basic-attack DPS rows in both Standard and Advanced modes. A target is confirmed only by an offensive Attack or Cast action, or by one of the local player's hitsplats. Talking, trading, pickpocketing, and other ordinary NPC interactions do not activate or replace it. After a confirmed target dies or despawns, its calculation remains available between repeated kills until another combat target is confirmed or the player logs out. Clicking the ground, eating, drinking a potion, or switching gear also does not discard it. For a supported multi-hit weapon, `Max hit` is the total maximum damage of the complete attack after target flat armour. Advanced mode adds a `Max split` row showing the individual hitsplats. The hit-chance row remains the chance of one accuracy roll, matching the OSRS Wiki calculator.
+
+Advanced mode can additionally show the player and target accuracy rolls, target defence type, and the local player's observed average hitsplat. The average includes zero-damage hits, displays its sample count, keeps separate samples for separate NPC actors, and resets when the plugin stops or the player logs out. Each hitsplat in a multi-hit attack is counted separately. The two raw accuracy-detail rows default off and have independent visibility switches.
 
 The current live calculation covers:
 
@@ -91,10 +93,14 @@ The current live calculation covers:
 - Automatic powered Magic formulas for tridents, Sanguinesti, warped/Accursed/Thammaron's sceptres, Tumeken's shadow, Bone staff, Eye of ayak, Dawnbringer, and Gauntlet staves.
 - Blowpipe arrows or bolts remain ignored; the stored dart is still selected manually because the worn equipment container does not expose it. Ordinary bows and crossbows continue to react to their equipped ammunition.
 - Scurrius's summoned rat is treated as a guaranteed max-damage hit rather than using its ordinary defence roll.
+- Scythe of vitur uses one, two, or three independent accuracy rolls according to target size, with full, half, and quarter maximum hits.
+- Dual macuahuitl splits damage across two hits and rolls the second hit only after the first one is accurate. The full Blood Moon set's accuracy-weighted attack-speed effect is included in basic-attack DPS.
+- Torag's hammers and Sulphur blades split damage across two independent accuracy rolls. Dark bow fires two independent full-damage rolls.
+- Accurate zero rolls are raised to one before non-Magic flat armour is applied. Positive or negative flat armour is applied separately to every accurate hitsplat.
 
 Some mechanics still need an explicit status instead of a misleading number:
 
-- Multi-hit weapon DPS distributions such as the Scythe, dual macuahuitl, chinchompas, Venator bow, and Tonalztics. Their single-hit accuracy can still be shown.
+- Chinchompa multi-target attacks, Venator bow bounces, and Tonalztics of ralos still require dedicated attack behaviour. Their single-roll accuracy can still be shown.
 - Special attacks, enchanted-bolt procs, raid invocation scaling, phase-specific immunity or caps, Wilderness location bonuses, and effects that depend on charges or stacks the client does not expose here. Every displayed weapon value currently describes an ordinary basic attack.
 - Automatic last-cast spell detection. Normal spellbook casting still uses `Calculation inputs > Manual magic spell`; powered weapons are automatic.
 - A small number of duplicated NPC IDs whose variants have different stats. These display `Target variant needed` rather than choosing one silently.

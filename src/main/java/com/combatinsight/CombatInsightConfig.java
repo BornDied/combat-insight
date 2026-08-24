@@ -168,8 +168,8 @@ public interface CombatInsightConfig extends Config
 
 	@ConfigItem(
 		keyName = "showObservedAverage",
-		name = "Show average hit",
-		description = "In Advanced mode, show the average of your actual hitsplats against the current NPC, including zero-damage hits",
+		name = "Show average hitsplat",
+		description = "In Advanced mode, show the average of your actual hitsplats against the current NPC, including zero-damage hits; multi-hit attacks count each splat separately",
 		position = 6,
 		section = informationSection
 	)

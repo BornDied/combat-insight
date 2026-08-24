@@ -5,54 +5,74 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import net.runelite.api.NPC;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 public class LiveTargetTrackerTest
 {
 	@Test
-	public void retainsTargetWhenInteractionIsTemporarilyCleared()
+	public void retainsConfirmedTargetIdentityAfterCombatEnds()
 	{
 		LiveTargetTracker tracker = new LiveTargetTracker();
 		NPC scurrius = npc(7221, "Scurrius", new AtomicBoolean(false));
 
-		tracker.observe(scurrius);
-		tracker.observe(null);
+		assertTrue(tracker.confirmCombatTarget(scurrius));
+		assertTrue(tracker.isEngagedWith(scurrius));
+		assertTrue(tracker.endActiveIfSame(scurrius));
 
-		assertSame(scurrius, tracker.getTarget());
+		assertFalse(tracker.isEngagedWith(scurrius));
+		assertEquals(7221, tracker.getRetainedTargetId());
+		assertEquals("Scurrius", tracker.getRetainedTargetName());
 	}
 
 	@Test
-	public void replacesTargetWithNewNpcAndOnlyClearsMatchingActor()
+	public void replacesTargetOnlyAfterAnotherCombatConfirmation()
 	{
 		LiveTargetTracker tracker = new LiveTargetTracker();
 		NPC first = npc(1, "First", new AtomicBoolean(false));
 		NPC second = npc(2, "Second", new AtomicBoolean(false));
 
-		tracker.observe(first);
-		assertFalse(tracker.clearIfSame(second));
-		assertSame(first, tracker.getTarget());
+		tracker.confirmCombatTarget(first);
+		assertFalse(tracker.endActiveIfSame(second));
+		assertSame(first, tracker.getActiveTarget());
+		assertEquals(1, tracker.getRetainedTargetId());
 
-		tracker.observe(second);
-		assertSame(second, tracker.getTarget());
-		assertTrue(tracker.clearIfSame(second));
-		assertNull(tracker.getTarget());
+		tracker.confirmCombatTarget(second);
+		assertSame(second, tracker.getActiveTarget());
+		assertEquals(2, tracker.getRetainedTargetId());
+		assertEquals("Second", tracker.getRetainedTargetName());
 	}
 
 	@Test
-	public void clearsTargetAfterDeath()
+	public void deathEndsActiveActorButKeepsRetainedTarget()
 	{
 		LiveTargetTracker tracker = new LiveTargetTracker();
 		AtomicBoolean dead = new AtomicBoolean(false);
 		NPC target = npc(3, "Target", dead);
 
-		tracker.observe(target);
+		tracker.confirmCombatTarget(target);
 		dead.set(true);
-		tracker.observe(null);
 
-		assertNull(tracker.getTarget());
+		assertTrue(tracker.endActiveIfDead());
+		assertEquals(3, tracker.getRetainedTargetId());
+		assertEquals("Target", tracker.getRetainedTargetName());
+		assertFalse(tracker.isEngagedWith(target));
+	}
+
+	@Test
+	public void fullClearRemovesActiveAndRetainedTarget()
+	{
+		LiveTargetTracker tracker = new LiveTargetTracker();
+		NPC target = npc(4, "Target", new AtomicBoolean(false));
+
+		tracker.confirmCombatTarget(target);
+		tracker.clear();
+
+		assertEquals(-1, tracker.getRetainedTargetId());
+		assertEquals("", tracker.getRetainedTargetName());
+		assertFalse(tracker.isEngagedWith(target));
 	}
 
 	private static NPC npc(int id, String name, AtomicBoolean dead)

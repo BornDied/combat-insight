@@ -3,9 +3,9 @@ package com.combatinsight.calculation;
 /**
  * Core combat formulas kept independent from RuneLite UI and client code.
  *
- * This is deliberately the first, readable baseline. Equipment-specific effects,
- * NPC modifiers, multi-hit weapons, and special attacks will be layered on top
- * of this model rather than embedded in the panel.
+ * This is deliberately a readable baseline. Equipment-specific effects, NPC
+ * modifiers, multi-hit distributions, and special attacks are layered around
+ * this model rather than embedded in the panel.
  */
 public final class OsrsCombatCalculator
 {

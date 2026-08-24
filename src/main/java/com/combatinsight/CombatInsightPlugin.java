@@ -11,11 +11,14 @@ import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.MenuEntry;
+import net.runelite.api.NPC;
 import net.runelite.api.Player;
 import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.HitsplatApplied;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -62,7 +65,6 @@ public class CombatInsightPlugin extends Plugin
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
-		observeCurrentTarget();
 		refreshSnapshot();
 		log.debug("Combat Insight started");
 	}
@@ -83,19 +85,16 @@ public class CombatInsightPlugin extends Plugin
 	public void onGameTick(GameTick event)
 	{
 		LiveCombatSnapshot previous = snapshot;
-		observeCurrentTarget();
+		if (targetTracker.endActiveIfDead())
+		{
+			markCombatActivity();
+		}
 		refreshSnapshot();
 
 		LiveCombatSnapshot current = snapshot;
-		if (current.isLoggedIn() && (isPlayerInCombat()
-			|| (previous.isLoggedIn()
-			&& current.isMaxHitAvailable()
-			&& previous.isMaxHitAvailable()
-			&& !current.isTargetImmune()
-			&& !previous.isTargetImmune()
-			&& current.getMaxHit() != previous.getMaxHit())))
+		if (current.isLoggedIn() && isPlayerEngagedWithConfirmedTarget())
 		{
-			lastCombatAt = System.currentTimeMillis();
+			markCombatActivity();
 		}
 
 		if (previous.isLoggedIn() && current.isLoggedIn()
@@ -120,36 +119,49 @@ public class CombatInsightPlugin extends Plugin
 			return;
 		}
 
-		observeCurrentTarget();
 		refreshSnapshot();
+	}
+
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		MenuEntry menuEntry = event.getMenuEntry();
+		if (menuEntry == null || !isCombatMenuOption(menuEntry.getOption()))
+		{
+			return;
+		}
+
+		confirmCombatTarget(menuEntry.getNpc());
 	}
 
 	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied event)
 	{
-		if (event.getActor() != null
+		if (event.getActor() instanceof NPC
 			&& event.getHitsplat() != null
 			&& event.getHitsplat().isMine())
 		{
-			observedHitTracker.record(event.getActor(), event.getHitsplat().getAmount());
+			NPC combatTarget = (NPC) event.getActor();
+			confirmCombatTarget(combatTarget);
+			observedHitTracker.record(combatTarget, event.getHitsplat().getAmount());
 		}
 	}
 
 	@Subscribe
 	public void onActorDeath(ActorDeath event)
 	{
-		if (targetTracker.clearIfSame(event.getActor()))
+		if (targetTracker.endActiveIfSame(event.getActor()))
 		{
-			refreshSnapshot();
+			markCombatActivity();
 		}
 	}
 
 	@Subscribe
 	public void onNpcDespawned(NpcDespawned event)
 	{
-		if (targetTracker.clearIfSame(event.getNpc()))
+		if (targetTracker.endActiveIfSame(event.getNpc()))
 		{
-			refreshSnapshot();
+			markCombatActivity();
 		}
 	}
 
@@ -237,7 +249,8 @@ public class CombatInsightPlugin extends Plugin
 				config.magicSpell(),
 				config.applySlayerBonus(),
 				config.toaInvocationLevel(),
-				targetTracker.getTarget());
+				targetTracker.getRetainedTargetId(),
+				targetTracker.getRetainedTargetName());
 			captureFailureLogged = false;
 		}
 		catch (RuntimeException ex)
@@ -250,18 +263,43 @@ public class CombatInsightPlugin extends Plugin
 		}
 	}
 
-	private void observeCurrentTarget()
+	private void confirmCombatTarget(NPC target)
 	{
-		Player player = client.getLocalPlayer();
-		Actor interacting = player == null ? null : player.getInteracting();
-		targetTracker.observe(interacting);
-		observedHitTracker.selectTarget(targetTracker.getTarget());
+		if (target == null)
+		{
+			return;
+		}
+
+		boolean changed = targetTracker.confirmCombatTarget(target);
+		observedHitTracker.selectTarget(target);
+		markCombatActivity();
+		if (changed)
+		{
+			refreshSnapshot();
+		}
 	}
 
-	private boolean isPlayerInCombat()
+	private boolean isPlayerEngagedWithConfirmedTarget()
 	{
 		Player player = client.getLocalPlayer();
-		return player != null && player.getInteracting() != null;
+		return player != null && targetTracker.isEngagedWith(player.getInteracting());
+	}
+
+	private void markCombatActivity()
+	{
+		lastCombatAt = System.currentTimeMillis();
+	}
+
+	static boolean isCombatMenuOption(String option)
+	{
+		if (option == null)
+		{
+			return false;
+		}
+
+		String normalized = option.trim();
+		return "Attack".equalsIgnoreCase(normalized)
+			|| "Cast".equalsIgnoreCase(normalized);
 	}
 
 	private static Color blend(Color from, Color to, double amount)
