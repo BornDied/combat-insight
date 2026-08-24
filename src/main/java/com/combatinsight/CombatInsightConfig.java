@@ -23,17 +23,33 @@ public interface CombatInsightConfig extends Config
 	String hudSection = "hudSection";
 
 	@ConfigSection(
-		name = "Show and hide rows",
-		description = "Choose which live combat rows are visible",
+		name = "Minimal HUD rows",
+		description = "Rows available in every HUD mode",
 		position = 1,
 		closedByDefault = true
 	)
-	String informationSection = "informationSection";
+	String minimalRowsSection = "minimalRowsSection";
+
+	@ConfigSection(
+		name = "Standard HUD rows",
+		description = "Extra rows available in Standard and Advanced modes",
+		position = 2,
+		closedByDefault = true
+	)
+	String standardRowsSection = "standardRowsSection";
+
+	@ConfigSection(
+		name = "Advanced HUD rows",
+		description = "Extra rows available only in Advanced mode",
+		position = 3,
+		closedByDefault = true
+	)
+	String advancedRowsSection = "advancedRowsSection";
 
 	@ConfigSection(
 		name = "Calculation inputs",
 		description = "Extra inputs for mechanics the client cannot expose safely",
-		position = 2,
+		position = 4,
 		closedByDefault = true
 	)
 	String calculationSection = "calculationSection";
@@ -41,10 +57,10 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Effects and advanced details",
 		description = "Animation, calculation details, and conditional-mechanic notices",
-		position = 3,
+		position = 5,
 		closedByDefault = true
 	)
-	String advancedSection = "advancedSection";
+	String effectsSection = "effectsSection";
 
 	@ConfigItem(
 		keyName = "showHud",
@@ -99,7 +115,7 @@ public interface CombatInsightConfig extends Config
 		name = "Show max hit",
 		description = "Display the calculated maximum hit",
 		position = 0,
-		section = informationSection
+		section = minimalRowsSection
 	)
 	default boolean showMaxHit()
 	{
@@ -109,9 +125,9 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showStyle",
 		name = "Show attack style",
-		description = "Display the current attack style",
-		position = 1,
-		section = informationSection
+		description = "Display the current attack style in Standard and Advanced modes",
+		position = 2,
+		section = standardRowsSection
 	)
 	default boolean showStyle()
 	{
@@ -121,9 +137,9 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showWeapon",
 		name = "Show weapon or spell",
-		description = "Display the detected weapon or selected manual spell",
-		position = 2,
-		section = informationSection
+		description = "Display the detected weapon or selected manual spell in Standard and Advanced modes",
+		position = 3,
+		section = standardRowsSection
 	)
 	default boolean showWeapon()
 	{
@@ -133,9 +149,9 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showTarget",
 		name = "Show target",
-		description = "Display the current target name in Advanced mode",
-		position = 3,
-		section = informationSection
+		description = "Display the current target name and estimated hitpoints when available",
+		position = 0,
+		section = advancedRowsSection
 	)
 	default boolean showTarget()
 	{
@@ -146,8 +162,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showAccuracy",
 		name = "Show hit chance",
 		description = "Display the calculated chance for the current attack to pass the retained target's defence roll",
-		position = 4,
-		section = informationSection
+		position = 0,
+		section = standardRowsSection
 	)
 	default boolean showAccuracy()
 	{
@@ -158,8 +174,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showDps",
 		name = "Show DPS",
 		description = "Display expected basic-attack damage per second in Standard and Advanced modes",
-		position = 5,
-		section = informationSection
+		position = 1,
+		section = standardRowsSection
 	)
 	default boolean showDps()
 	{
@@ -170,8 +186,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showObservedAverage",
 		name = "Show average hitsplat",
 		description = "In Advanced mode, show the average of your actual hitsplats against the current NPC, including zero-damage hits; multi-hit attacks count each splat separately",
-		position = 6,
-		section = informationSection
+		position = 2,
+		section = advancedRowsSection
 	)
 	default boolean showObservedAverage()
 	{
@@ -182,8 +198,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showAccuracyRolls",
 		name = "Show accuracy rolls",
 		description = "In Advanced mode, show your attack roll beside the target's defence roll",
-		position = 7,
-		section = informationSection
+		position = 3,
+		section = advancedRowsSection
 	)
 	default boolean showAccuracyRolls()
 	{
@@ -194,8 +210,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showDefenceType",
 		name = "Show target defence",
 		description = "In Advanced mode, show which target defence type the current attack checks",
-		position = 8,
-		section = informationSection
+		position = 4,
+		section = advancedRowsSection
 	)
 	default boolean showDefenceType()
 	{
@@ -205,9 +221,9 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showLevels",
 		name = "Show boosted levels",
-		description = "Display the current boosted level and its Advanced calculation detail",
-		position = 9,
-		section = informationSection
+		description = "Display the current boosted level and its additional Advanced calculation detail",
+		position = 4,
+		section = standardRowsSection
 	)
 	default boolean showLevels()
 	{
@@ -217,9 +233,9 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showGearBonuses",
 		name = "Show gear bonuses",
-		description = "Display the equipped attack and damage bonuses",
-		position = 10,
-		section = informationSection
+		description = "Display the equipped attack and damage bonuses in Standard and Advanced modes",
+		position = 5,
+		section = standardRowsSection
 	)
 	default boolean showGearBonuses()
 	{
@@ -229,9 +245,9 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showPrayer",
 		name = "Show active prayer",
-		description = "Display the active offensive prayer and its Advanced damage detail",
-		position = 11,
-		section = informationSection
+		description = "Display the active offensive prayer and its additional Advanced damage detail",
+		position = 6,
+		section = standardRowsSection
 	)
 	default boolean showPrayer()
 	{
@@ -302,8 +318,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showAttackSpeed",
 		name = "Show attack speed",
 		description = "Display the weapon attack interval in ticks (Advanced mode)",
-		position = 0,
-		section = advancedSection
+		position = 1,
+		section = advancedRowsSection
 	)
 	default boolean showAttackSpeed()
 	{
@@ -314,8 +330,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showWarnings",
 		name = "Show calculation notices",
 		description = "Explain missing inputs and mechanics that are not safe to calculate yet",
-		position = 1,
-		section = advancedSection
+		position = 0,
+		section = effectsSection
 	)
 	default boolean showWarnings()
 	{
@@ -326,8 +342,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "animateChanges",
 		name = "Animate changes",
 		description = "Briefly pulse the max hit green when it rises and red when it falls",
-		position = 2,
-		section = advancedSection
+		position = 1,
+		section = effectsSection
 	)
 	default boolean animateChanges()
 	{

@@ -157,7 +157,7 @@ public class CombatInsightOverlay extends OverlayPanel
 
 			if (config.showTarget() && snapshot.hasTarget())
 			{
-				addLine("Target", shorten(snapshot.getTargetName(), 24), Color.WHITE, Color.WHITE);
+				addLine("Target", targetText(snapshot), Color.WHITE, Color.WHITE);
 			}
 
 			if (config.showAccuracyRolls())
@@ -219,5 +219,17 @@ public class CombatInsightOverlay extends OverlayPanel
 			return value == null ? "" : value;
 		}
 		return value.substring(0, Math.max(0, maximumLength - 3)) + "...";
+	}
+
+	private static String targetText(LiveCombatSnapshot snapshot)
+	{
+		String health = snapshot.getTargetHealthText();
+		if (health.isEmpty())
+		{
+			return shorten(snapshot.getTargetName(), 24);
+		}
+
+		int maximumNameLength = Math.max(4, 31 - health.length() - 3);
+		return shorten(snapshot.getTargetName(), maximumNameLength) + " - " + health;
 	}
 }

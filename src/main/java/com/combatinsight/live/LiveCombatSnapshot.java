@@ -72,6 +72,8 @@ public final class LiveCombatSnapshot
 	private final boolean hybridAtlatl;
 	private final String targetName;
 	private final int targetId;
+	private final int targetCurrentHitpoints;
+	private final int targetMaximumHitpoints;
 	private final boolean maxHitAvailable;
 	private final int maxHit;
 	private final String maxHitStatusText;
@@ -106,6 +108,8 @@ public final class LiveCombatSnapshot
 		boolean hybridAtlatl,
 		String targetName,
 		int targetId,
+		int targetCurrentHitpoints,
+		int targetMaximumHitpoints,
 		boolean maxHitAvailable,
 		int maxHit,
 		String maxHitStatusText,
@@ -139,6 +143,8 @@ public final class LiveCombatSnapshot
 		this.hybridAtlatl = hybridAtlatl;
 		this.targetName = targetName;
 		this.targetId = targetId;
+		this.targetCurrentHitpoints = targetCurrentHitpoints;
+		this.targetMaximumHitpoints = targetMaximumHitpoints;
 		this.maxHitAvailable = maxHitAvailable;
 		this.maxHit = maxHit;
 		this.maxHitStatusText = maxHitStatusText;
@@ -166,6 +172,8 @@ public final class LiveCombatSnapshot
 			false,
 			"",
 			-1,
+			-1,
+			0,
 			false,
 			0,
 			"Unavailable",
@@ -183,7 +191,9 @@ public final class LiveCombatSnapshot
 		boolean applySlayerBonus,
 		int toaInvocationLevel,
 		int retainedTargetId,
-		String retainedTargetName)
+		String retainedTargetName,
+		int targetHealthRatio,
+		int targetHealthScale)
 	{
 		if (client.getGameState() != GameState.LOGGED_IN)
 		{
@@ -207,6 +217,11 @@ public final class LiveCombatSnapshot
 		}
 		TargetProfile target = targetId < 0 ? null : TargetDatabase.find(targetId);
 		boolean targetDataAvailable = target != null && !target.isAmbiguous();
+		int targetMaximumHitpoints = targetDataAvailable ? Math.max(0, target.getHitpoints()) : 0;
+		int targetCurrentHitpoints = estimateTargetCurrentHitpoints(
+			targetHealthRatio,
+			targetHealthScale,
+			targetMaximumHitpoints);
 		if (TargetMechanics.isInTombsOfAmascut(targetId))
 		{
 			warnings.add("ToA invocation input: " + Math.max(0, toaInvocationLevel));
@@ -551,6 +566,8 @@ public final class LiveCombatSnapshot
 			equipment.isAtlatl(),
 			targetName,
 			targetId,
+			targetCurrentHitpoints,
+			targetMaximumHitpoints,
 			maxHitAvailable,
 			maxHit,
 			maxHitStatusText,
@@ -1978,6 +1995,18 @@ public final class LiveCombatSnapshot
 		return targetId;
 	}
 
+	public boolean hasTargetHealth()
+	{
+		return targetCurrentHitpoints >= 0 && targetMaximumHitpoints > 0;
+	}
+
+	public String getTargetHealthText()
+	{
+		return hasTargetHealth()
+			? String.format(Locale.ROOT, "%,d / %,d", targetCurrentHitpoints, targetMaximumHitpoints)
+			: "";
+	}
+
 	public boolean isAccuracyAvailable()
 	{
 		return targetResult.accuracyAvailable;
@@ -2035,6 +2064,40 @@ public final class LiveCombatSnapshot
 	private static String signed(int value)
 	{
 		return value >= 0 ? "+" + value : Integer.toString(value);
+	}
+
+	/**
+	 * Reverses the health-ratio calculation used by the game server and returns
+	 * the midpoint of the possible live-hitpoint range. The client does not
+	 * receive an NPC's exact live hitpoints, so unavailable or invalid inputs
+	 * deliberately return -1 instead of presenting a misleading value.
+	 */
+	static int estimateTargetCurrentHitpoints(int healthRatio, int healthScale, int maximumHitpoints)
+	{
+		if (healthRatio < 0 || healthScale <= 0 || healthRatio > healthScale || maximumHitpoints <= 0)
+		{
+			return -1;
+		}
+		if (healthRatio == 0)
+		{
+			return 0;
+		}
+
+		long minimum = 1;
+		long maximum = maximumHitpoints;
+		if (healthScale > 1)
+		{
+			long denominator = healthScale - 1L;
+			if (healthRatio > 1)
+			{
+				minimum = ((long) maximumHitpoints * (healthRatio - 1L) + healthScale - 2L)
+					/ denominator;
+			}
+			maximum = ((long) maximumHitpoints * healthRatio - 1L) / denominator;
+			maximum = Math.min(maximum, maximumHitpoints);
+		}
+
+		return (int) ((minimum + maximum + 1L) / 2L);
 	}
 
 	private static final class StyleState

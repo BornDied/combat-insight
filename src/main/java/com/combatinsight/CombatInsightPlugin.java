@@ -241,6 +241,7 @@ public class CombatInsightPlugin extends Plugin
 	{
 		try
 		{
+			NPC activeTarget = targetTracker.getActiveTarget();
 			snapshot = LiveCombatSnapshot.capture(
 				client,
 				itemManager,
@@ -250,7 +251,9 @@ public class CombatInsightPlugin extends Plugin
 				config.applySlayerBonus(),
 				config.toaInvocationLevel(),
 				targetTracker.getRetainedTargetId(),
-				targetTracker.getRetainedTargetName());
+				targetTracker.getRetainedTargetName(),
+				activeTarget == null ? -1 : activeTarget.getHealthRatio(),
+				activeTarget == null ? -1 : activeTarget.getHealthScale());
 			captureFailureLogged = false;
 		}
 		catch (RuntimeException ex)

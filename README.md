@@ -56,10 +56,12 @@ Every visible feature will have its own setting, so the plugin can be used as a 
 - Notice rows for missing inputs, unsupported mechanics, and conditional effects
 - Target-attached overlay and detailed hover tooltip
 
-The RuneLite settings are grouped into four compact sections:
+The RuneLite settings are grouped into compact sections that match the display modes:
 
 - `HUD` contains visibility, mode, duration, title, and background color.
-- `Show and hide rows` is a collapsed dropdown for every optional HUD row.
+- `Minimal HUD rows` contains the max-hit row available in every mode.
+- `Standard HUD rows` contains rows shared by Standard and Advanced modes.
+- `Advanced HUD rows` contains target health, attack speed, observed hits, and technical accuracy details shown only in Advanced mode.
 - `Calculation inputs` contains the few facts RuneLite cannot read, such as the dart stored inside a blowpipe, a manually cast spell, Slayer-task state, or Tombs of Amascut invocation. It also has a combat-type override for unusual hybrid weapons and manual casting.
 - `Effects and advanced details` contains animation and calculation notices.
 

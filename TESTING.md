@@ -33,12 +33,19 @@ that, the older CombatInsight project folders can be deleted.
 - Standard shows the compact live rows, including numeric hit chance and DPS.
 - Advanced adds optional effective level, prayer damage, attack interval,
   target, accuracy rolls, target defence type, average hitsplat, and notices.
-- Every switch under `Show and hide rows` should remove only its own row.
+- The row switches are divided into `Minimal HUD rows`, `Standard HUD rows`,
+  and `Advanced HUD rows`. Standard rows should also appear in Advanced mode,
+  while Advanced rows should not appear in Standard mode.
 - `Show hit chance` is the only hit-chance setting; it applies to Standard and
   Advanced modes.
 - `Show accuracy rolls` and `Show target defence` independently control the two
   technical accuracy rows. Both default off to keep the HUD compact.
 - Hiding boosted levels or prayer should also hide its extra Advanced detail.
+- In Advanced mode, `Show target` should use one compact row such as
+  `Target: Vorkath - 401 / 750` while the target's health bar is available.
+  The current value is an estimate from the game health-bar ratio. Before a
+  health bar is available, or after the NPC dies or despawns, the retained row
+  should show only the target name rather than a stale or invented value.
 
 ## Melee accuracy
 
