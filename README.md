@@ -1,122 +1,120 @@
 # Combat Insight
 
-Combat Insight is a modern RuneLite DPS and hit calculator for Old School RuneScape.
+Combat Insight is a RuneLite plugin for viewing live combat calculations while playing Old School RuneScape.
 
-GearScape is being used as a reference point for the user experience and as one of the validation targets for the calculation engine. The plugin will not scrape or embed the GearScape website. GearScape's public site credits the OSRS Wiki and Bitterkoekje DPS Calc for its foundations, while its terms reserve the operator's intellectual property. We can independently implement the public game formulas, validate equivalent inputs against GearScape and the OSRS Wiki calculator, and request permission from the GearScape author if a direct integration is ever desired.
+## Features
 
-The project is intentionally split into two layers:
+- Maximum hit, hit chance, and estimated basic-attack DPS
+- Exact hit splits for supported multi-hit weapons
+- Target-aware calculations using your current gear, combat style, prayers, boosts, and NPC target
+- Compact target name and estimated health in Advanced mode
+- Attack interval, observed average hitsplat, and optional accuracy details
+- Minimal, Standard, and Advanced HUD modes with independent row settings
 
-1. A pure combat-calculation engine that can be tested without starting RuneLite.
-2. A RuneLite adapter and interface that turns the player's live gear, skills, prayers, boosts, and target into a calculation input.
+The displayed values update when your equipment, combat style, prayers, boosts, weapon, or target changes.
 
-## Product direction
+## How to use
 
-The plugin is intended to be a successor to the archived DPS Calculator plugin, with a live combat snapshot rather than a form that must be repeatedly filled in.
+1. Install Combat Insight from the RuneLite Plugin Hub.
+2. Enable the plugin in RuneLite's plugin panel.
+3. Open **Configure** and choose a HUD mode.
+4. Equip your gear and select your combat style.
+5. Attack or cast on an NPC to confirm it as your combat target.
+6. View the calculated combat information in the movable overlay.
 
-The first usable version will show:
+Combat Insight retains your last confirmed combat target between repeated kills. A new Attack or Cast action, or one of your hitsplats on another NPC, updates the target.
 
-- Current equipment, combat style, boosted levels, and active offensive prayer
-- Selected or right-clicked NPC target
-- Maximum hit, accuracy, average hit, attack interval, DPS, and estimated time to kill
-- A calculation breakdown explaining how each result was produced
-- Manual target overrides for NPC variants and mechanics that cannot be inferred from the client alone
+## HUD modes
 
-## HUD concept
-
-The HUD is the main interface. The side panel is reserved for configuration, target editing, saved setups, and detailed explanations.
-
-The default `Standard` layout is a small movable card that can sit near the bottom-center of the game window or beside the target. The title row and attack-style row are optional, so the card can stay focused on the numbers that matter to you:
-
-| Area | Information |
+| Mode | Available information |
 | --- | --- |
-| Header | Combat Insight, target name, and current weapon/style |
-| Primary result | Max hit and hit chance |
-| Secondary results | Average hit, DPS, attack interval, and estimated time to kill |
-| State row | Active offensive prayer, boosts, and notices |
-| Optional detail | Attack roll, defence roll, strength bonus, and formula breakdown on hover |
+| Minimal | Maximum hit |
+| Standard | Maximum hit, hit chance, DPS, and optional combat-state rows |
+| Advanced | Standard information plus hit split, target and estimated health, attack interval, observed hits, and accuracy details |
 
-Three display modes are available:
+Every row has its own setting. The configuration sections match the HUD modes, making it clear which rows are available in Minimal, Standard, and Advanced mode.
 
-- `Minimal`: one-line max-hit display, similar to the old plugin
-- `Standard`: clean card with the live max hit and selected state rows
-- `Advanced`: expanded card with effective strength, prayer multiplier, attack interval, and DPS/target status
+## Understanding the overlay
 
-The overlay should react visually without becoming distracting. When `Animate changes` is enabled, a max-hit increase briefly pulses green and a decrease pulses red. `HUD duration` can keep the card permanent or hide it 15 or 30 seconds after combat ends. Every effect is optional in the configuration.
+### Max hit and Max split
 
-## Independent switches
+**Max hit** is the highest total damage your complete basic attack can deal. For a supported multi-hit weapon, **Max split** shows how that total is divided across its individual hitsplats.
 
-Every visible feature will have its own setting, so the plugin can be used as a minimal max-hit display or as a complete combat dashboard:
+### Hit chance
 
-- HUD visibility and display mode
-- Max hit, special-attack max hit, accuracy, average hit, DPS, and time-to-kill rows
-- Target name and target-health information
-- Prayer, boost, weapon, and attack-style indicators
-- Actual maximum-hit marker
-- Gear-change pulse and DPS-delta indicator
-- Notice rows for missing inputs, unsupported mechanics, and conditional effects
-- Target-attached overlay and detailed hover tooltip
+The estimated chance that one accuracy roll will successfully hit the current target.
 
-The RuneLite settings are grouped into compact sections that match the display modes:
+### DPS
 
-- `HUD` contains visibility, mode, duration, title, and background color.
-- `Minimal HUD rows` contains the max-hit row available in every mode.
-- `Standard HUD rows` contains rows shared by Standard and Advanced modes.
-- `Advanced HUD rows` contains target health, attack speed, observed hits, and technical accuracy details shown only in Advanced mode.
-- `Calculation inputs` contains the few facts RuneLite cannot read, such as the dart stored inside a blowpipe, a manually cast spell, Slayer-task state, or Tombs of Amascut invocation. It also has a combat-type override for unusual hybrid weapons and manual casting.
-- `Effects and advanced details` contains animation and calculation notices.
+Your estimated average basic-attack damage per second, based on accuracy, damage, attack interval, equipment, and target information.
 
-Later versions can add saved setup comparisons, upgrade suggestions, special attacks, raid modifiers, Slayer effects, and detailed hit distributions.
+### Attack interval
 
-## Design principles
+The time between basic attacks, shown in game ticks. With the full Blood Moon set, Dual macuahuitl calculations include the set's accuracy-weighted timing effect.
 
-- Keep RuneLite API code out of the calculation engine.
-- Keep combat effects data-driven and modular so new OSRS items can be added without rewriting the UI.
-- Prefer transparent calculations over a single unexplained number.
-- Treat unsupported mechanics as explicit notices instead of silently giving an inaccurate result.
-- Provide a local personal build first, then prepare a Plugin Hub submission after the calculations are validated.
+### Target
 
-## Current test build
+Advanced mode can show the retained target and its estimated current health in a compact row, such as `Target: Vorkath - 1,247 / 2,000`.
 
-Version `0.3.3-SNAPSHOT` adds the first exact multi-hit basic-attack distributions. Scythe of vitur, Dual macuahuitl, Torag's hammers, Sulphur blades, and Dark bow now calculate their complete attack rather than stopping at single-roll accuracy. The project continues to bundle a compact snapshot of more than 2,800 NPC IDs, including defence levels, Magic levels, stab/slash/crush defence, light/standard/heavy ranged defence, elemental weaknesses, flat armour, size, and combat attributes. It does not contact GearScape or the OSRS Wiki while RuneLite is running.
+Current health is estimated from RuneLite's NPC health-bar information, so it can differ slightly from the NPC's exact server-side health.
 
-The retained NPC target powers real hit-chance and basic-attack DPS rows in both Standard and Advanced modes. A target is confirmed only by an offensive Attack or Cast action, or by one of the local player's hitsplats. Talking, trading, pickpocketing, and other ordinary NPC interactions do not activate or replace it. After a confirmed target dies or despawns, its calculation remains available between repeated kills until another combat target is confirmed or the player logs out. Clicking the ground, eating, drinking a potion, or switching gear also does not discard it. For a supported multi-hit weapon, `Max hit` is the total maximum damage of the complete attack after target flat armour. Advanced mode adds a `Max split` row showing the individual hitsplats. The hit-chance row remains the chance of one accuracy roll, matching the OSRS Wiki calculator.
+### Average hitsplat
 
-Advanced mode can additionally show the player and target accuracy rolls, target defence type, and the local player's observed average hitsplat. The average includes zero-damage hits, displays its sample count, keeps separate samples for separate NPC actors, and resets when the plugin stops or the player logs out. Each hitsplat in a multi-hit attack is counted separately. The two raw accuracy-detail rows default off and have independent visibility switches.
+The observed average of your own hitsplats against the current NPC, including zero-damage hits. Each hitsplat from a multi-hit attack is counted separately. The samples reset when you log out or the plugin stops.
 
-The current live calculation covers:
+## Supported multi-hit basic attacks
 
-- Exact selected stab, slash, or crush attack bonus rather than adding each item's strongest melee bonus.
-- Light ranged for thrown weapons and blowpipes, standard ranged for bows, heavy ranged for crossbows and chinchompas, and mixed ranged for salamanders.
-- Offensive accuracy prayers as well as damage prayers, including separate low-level Attack and Strength prayers, Deadeye, Mystic Vigour, and the currently exposed Ruinous Powers.
-- Accurate, Aggressive, Controlled, Rapid, Longrange, manual casting, Void accuracy multipliers, crystal-armour accuracy, target flat armour, and the 0.6-second game tick.
-- Fang min/max damage and its normal double-roll accuracy, including the different Tombs of Amascut roll behaviour.
-- Twisted bow target-Magic scaling and Tumeken's shadow 3x/4x equipment scaling once a supported target is retained.
-- Salve, Slayer helmet or black mask, common dragonbane/demonbane/kalphite/golem/rat modifiers, elemental weaknesses, Dharok HP scaling, and several other target attributes. The manual Slayer input distinguishes unimbued Melee gear from the imbued Ranged and Magic bonuses, including the Eclipse atlatl's hybrid damage rule.
-- Automatic powered Magic formulas for tridents, Sanguinesti, warped/Accursed/Thammaron's sceptres, Tumeken's shadow, Bone staff, Eye of ayak, Dawnbringer, and Gauntlet staves.
-- Blowpipe arrows or bolts remain ignored; the stored dart is still selected manually because the worn equipment container does not expose it. Ordinary bows and crossbows continue to react to their equipped ammunition.
-- Scurrius's summoned rat is treated as a guaranteed max-damage hit rather than using its ordinary defence roll.
-- Scythe of vitur uses one, two, or three independent accuracy rolls according to target size, with full, half, and quarter maximum hits.
-- Dual macuahuitl splits damage across two hits and rolls the second hit only after the first one is accurate. The full Blood Moon set's accuracy-weighted attack-speed effect is included in basic-attack DPS.
-- Torag's hammers and Sulphur blades split damage across two independent accuracy rolls. Dark bow fires two independent full-damage rolls.
-- Accurate zero rolls are raised to one before non-Magic flat armour is applied. Positive or negative flat armour is applied separately to every accurate hitsplat.
+Version 0.3.3 includes complete basic-attack calculations for:
 
-Some mechanics still need an explicit status instead of a misleading number:
+- Scythe of vitur, with one, two, or three hits based on target size
+- Dual macuahuitl, including its conditional second accuracy roll
+- Torag's hammers
+- Sulphur blades
+- Dark bow ordinary attacks
 
-- Chinchompa multi-target attacks, Venator bow bounces, and Tonalztics of ralos still require dedicated attack behaviour. Their single-roll accuracy can still be shown.
-- Special attacks, enchanted-bolt procs, raid invocation scaling, phase-specific immunity or caps, Wilderness location bonuses, and effects that depend on charges or stacks the client does not expose here. Every displayed weapon value currently describes an ordinary basic attack.
-- Automatic last-cast spell detection. Normal spellbook casting still uses `Calculation inputs > Manual magic spell`; powered weapons are automatic.
-- A small number of duplicated NPC IDs whose variants have different stats. These display `Target variant needed` rather than choosing one silently.
+Special attacks are not included in these values. Every weapon result currently describes an ordinary basic attack.
 
-These exceptions appear as clear HUD statuses or Advanced-mode notices. See `THIRD_PARTY_NOTICES.md` for the bundled data provenance and `TESTING.md` for the focused validation checklist.
+## Calculation inputs
 
-## Opening the starter build on Windows
+Most information is read automatically. Use the **Calculation inputs** section when RuneLite cannot determine a required value, including:
 
-1. Extract this project to a folder such as `D:\CombatInsight`.
-2. In IntelliJ IDEA choose **Open** and select that folder.
-3. Allow IntelliJ to load the Gradle project. If it asks for a Gradle JVM, choose the installed **Temurin 11** JDK.
-4. Open the Gradle tool window and run `Tasks > other > run`, or run `gradlew.bat run` in IntelliJ's terminal.
-5. RuneLite should start in developer mode. Log in to a test world and look for the movable Combat Insight HUD.
+- The dart stored in a toxic blowpipe
+- A manually cast spell
+- Slayer-task status
+- Tombs of Amascut invocation level
+- A combat-type override for unusual hybrid weapons
 
-The first run downloads the RuneLite and Gradle dependencies, so it can take a few minutes. Start the development client from the Gradle `run` task, log in only when you are ready to test, and use Alt-drag to move the overlay. The clean movable HUD is intentionally read-only: it does not send mouse or keyboard input. The RuneLite config panel still uses the plugin name `Combat Insight`; that is the normal RuneLite settings heading. The HUD title itself is controlled separately by `Show HUD title`.
+## Current limitations
 
-See `TESTING.md` for a short melee, ranged, Magic, Dharok, blowpipe, and Slayer checklist.
+Combat Insight shows a notice when a mechanic cannot yet be calculated reliably. Current examples include:
+
+- Special attacks and enchanted-bolt effects
+- Chinchompa multi-target attacks
+- Venator bow bounces
+- Tonalztics of ralos attack behavior
+- Some location, phase, charge, stack, raid, or NPC-variant effects
+
+## Troubleshooting
+
+If a displayed value seems incorrect:
+
+1. Confirm that your equipment and ammunition are correct.
+2. Check your combat style.
+3. Check your active prayers and boosts.
+4. Confirm that the correct NPC is retained as the target.
+5. Review any calculation notice in Advanced mode.
+6. Reload the plugin if RuneLite has not updated the displayed information.
+
+If the problem continues, include the following in your report:
+
+- Equipment and ammunition
+- Combat style
+- Active prayers and boosts
+- Target NPC
+- The value you expected
+- The value Combat Insight displayed
+- Relevant screenshots or logs
+
+## Support
+
+Report bugs and request features in [Combat Insight GitHub Issues](https://github.com/BornDied/combat-insight/issues).
