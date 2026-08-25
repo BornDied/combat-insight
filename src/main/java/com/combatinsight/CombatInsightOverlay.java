@@ -69,6 +69,13 @@ public class CombatInsightOverlay extends OverlayPanel
 					: snapshot.isMaxHitAvailable() ? plugin.getMaxHitChangeColor() : WARNING);
 		}
 
+		if (mode == HudDisplayMode.ADVANCED
+			&& config.showMaxSplit()
+			&& snapshot.hasMultiHitSplit())
+		{
+			addLine("Max split", snapshot.getMultiHitSplitText(), Color.WHITE, ACCENT);
+		}
+
 		if (mode == HudDisplayMode.MINIMAL)
 		{
 			return super.render(graphics);
@@ -147,12 +154,12 @@ public class CombatInsightOverlay extends OverlayPanel
 
 			if (config.showAttackSpeed())
 			{
-				addLine("Attack interval", snapshot.getAttackSpeedTicks() + " ticks", Color.WHITE, Color.WHITE);
+				addLine("Attack interval", snapshot.getAttackSpeedText(), Color.WHITE, Color.WHITE);
 			}
 
 			if (config.showTarget() && snapshot.hasTarget())
 			{
-				addLine("Target", shorten(snapshot.getTargetName(), 24), Color.WHITE, Color.WHITE);
+				addLine("Target", targetText(snapshot), Color.WHITE, Color.WHITE);
 			}
 
 			if (config.showAccuracyRolls())
@@ -172,7 +179,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			if (config.showObservedAverage())
 			{
 				addLine(
-					"Avg hit",
+					snapshot.getObservedHitLabel(),
 					plugin.getObservedAverageHitText(),
 					Color.WHITE,
 					plugin.hasObservedHits() ? SUCCESS : MUTED);
@@ -214,5 +221,17 @@ public class CombatInsightOverlay extends OverlayPanel
 			return value == null ? "" : value;
 		}
 		return value.substring(0, Math.max(0, maximumLength - 3)) + "...";
+	}
+
+	private static String targetText(LiveCombatSnapshot snapshot)
+	{
+		String health = snapshot.getTargetHealthText();
+		if (health.isEmpty())
+		{
+			return shorten(snapshot.getTargetName(), 24);
+		}
+
+		int maximumNameLength = Math.max(4, 31 - health.length() - 3);
+		return shorten(snapshot.getTargetName(), maximumNameLength) + " - " + health;
 	}
 }

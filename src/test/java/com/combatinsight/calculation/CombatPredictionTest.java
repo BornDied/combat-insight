@@ -34,6 +34,28 @@ public class CombatPredictionTest
 	}
 
 	@Test
+	public void raisesAccurateZeroesBeforeApplyingNegativeFlatArmour()
+	{
+		CombatPrediction ordinary = CombatPrediction.calculateWithHitChance(
+			100, 50, 1.0, 0, 2, 4, 0, true);
+		CombatPrediction negativeArmour = CombatPrediction.calculateWithHitChance(
+			100, 50, 1.0, 0, 2, 4, -2, true);
+
+		assertEquals(4.0 / 3.0, ordinary.getAverageSuccessfulHit(), 0.0000001);
+		assertEquals(10.0 / 3.0, negativeArmour.getAverageSuccessfulHit(), 0.0000001);
+	}
+
+	@Test
+	public void doesNotRaiseZeroWhenTheWholeAttackHasNoDamageRoll()
+	{
+		CombatPrediction result = CombatPrediction.calculateWithHitChance(
+			100, 50, 1.0, 0, 0, 4, -2, true);
+
+		assertEquals(0.0, result.getAverageSuccessfulHit(), 0.0000001);
+		assertEquals(0.0, result.getDamagePerSecond(), 0.0000001);
+	}
+
+	@Test
 	public void mapsTargetDefenceToTheSelectedAttackType()
 	{
 		TargetProfile target = new TargetProfile(

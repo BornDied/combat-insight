@@ -5,7 +5,10 @@ import com.combatinsight.calculation.AttackType;
 import com.combatinsight.calculation.CombatPrediction;
 import com.combatinsight.calculation.CombatStyle;
 import com.combatinsight.calculation.CombatStyleOverride;
+import com.combatinsight.calculation.DamageRoll;
 import com.combatinsight.calculation.MagicSpell;
+import com.combatinsight.calculation.MultiHitResult;
+import com.combatinsight.calculation.MultiHitWeapon;
 import com.combatinsight.calculation.TargetProfile;
 import com.combatinsight.calculation.WeaponCategory;
 import java.util.ArrayList;
@@ -19,7 +22,6 @@ import net.runelite.api.GameState;
 import net.runelite.api.Item;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.ItemContainer;
-import net.runelite.api.NPC;
 import net.runelite.api.ParamID;
 import net.runelite.api.Prayer;
 import net.runelite.api.Skill;
@@ -70,6 +72,8 @@ public final class LiveCombatSnapshot
 	private final boolean hybridAtlatl;
 	private final String targetName;
 	private final int targetId;
+	private final int targetCurrentHitpoints;
+	private final int targetMaximumHitpoints;
 	private final boolean maxHitAvailable;
 	private final int maxHit;
 	private final String maxHitStatusText;
@@ -104,6 +108,8 @@ public final class LiveCombatSnapshot
 		boolean hybridAtlatl,
 		String targetName,
 		int targetId,
+		int targetCurrentHitpoints,
+		int targetMaximumHitpoints,
 		boolean maxHitAvailable,
 		int maxHit,
 		String maxHitStatusText,
@@ -137,6 +143,8 @@ public final class LiveCombatSnapshot
 		this.hybridAtlatl = hybridAtlatl;
 		this.targetName = targetName;
 		this.targetId = targetId;
+		this.targetCurrentHitpoints = targetCurrentHitpoints;
+		this.targetMaximumHitpoints = targetMaximumHitpoints;
 		this.maxHitAvailable = maxHitAvailable;
 		this.maxHit = maxHit;
 		this.maxHitStatusText = maxHitStatusText;
@@ -164,6 +172,8 @@ public final class LiveCombatSnapshot
 			false,
 			"",
 			-1,
+			-1,
+			0,
 			false,
 			0,
 			"Unavailable",
@@ -180,7 +190,10 @@ public final class LiveCombatSnapshot
 		MagicSpell manualSpell,
 		boolean applySlayerBonus,
 		int toaInvocationLevel,
-		NPC retainedTarget)
+		int retainedTargetId,
+		String retainedTargetName,
+		int targetHealthRatio,
+		int targetHealthScale)
 	{
 		if (client.getGameState() != GameState.LOGGED_IN)
 		{
@@ -196,14 +209,19 @@ public final class LiveCombatSnapshot
 		PrayerState prayer = getPrayerState(client);
 		List<String> warnings = new ArrayList<>();
 
-		int targetId = retainedTarget == null ? -1 : retainedTarget.getId();
-		String targetName = retainedTarget == null ? "" : retainedTarget.getName();
-		if (retainedTarget != null && (targetName == null || targetName.trim().isEmpty()))
+		int targetId = retainedTargetId;
+		String targetName = retainedTargetName == null ? "" : retainedTargetName;
+		if (targetId >= 0 && targetName.trim().isEmpty())
 		{
 			targetName = "NPC #" + targetId;
 		}
 		TargetProfile target = targetId < 0 ? null : TargetDatabase.find(targetId);
 		boolean targetDataAvailable = target != null && !target.isAmbiguous();
+		int targetMaximumHitpoints = targetDataAvailable ? Math.max(0, target.getHitpoints()) : 0;
+		int targetCurrentHitpoints = estimateTargetCurrentHitpoints(
+			targetHealthRatio,
+			targetHealthScale,
+			targetMaximumHitpoints);
 		if (TargetMechanics.isInTombsOfAmascut(targetId))
 		{
 			warnings.add("ToA invocation input: " + Math.max(0, toaInvocationLevel));
@@ -548,6 +566,8 @@ public final class LiveCombatSnapshot
 			equipment.isAtlatl(),
 			targetName,
 			targetId,
+			targetCurrentHitpoints,
+			targetMaximumHitpoints,
 			maxHitAvailable,
 			maxHit,
 			maxHitStatusText,
@@ -691,28 +711,63 @@ public final class LiveCombatSnapshot
 				"Multi-hit DPS unavailable");
 		}
 
-		CombatPrediction prediction = CombatPrediction.calculateWithHitChance(
-			attackRoll,
-			defenceRoll,
-			chance,
-			guaranteedMaxHit ? maximumHit : minimumHit,
-			maximumHit,
-			attackSpeedTicks,
-			target.getFlatArmour(),
-			style.combatStyle != CombatStyle.MAGIC);
-		double averageSuccessfulHit = prediction.getAverageSuccessfulHit();
-		if (equipment.isSanguinesti())
+		MultiHitWeapon multiHitWeapon = MultiHitWeapon.forWeapon(equipment.weaponNameLower);
+		int targetMaximumHit;
+		String maximumHitSplit = "";
+		double averageSuccessfulHit;
+		double damagePerAttack;
+		double expectedAttackSpeedTicks = Math.max(1, attackSpeedTicks);
+		if (multiHitWeapon != null)
 		{
-			averageSuccessfulHit += 1.6;
+			MultiHitResult multiHit = multiHitWeapon.calculate(
+				minimumHit,
+				maximumHit,
+				target.getFlatArmour(),
+				chance,
+				target.getSize(),
+				attackSpeedTicks,
+				guaranteedMaxHit,
+				equipment.hasFullBloodMoonSet());
+			targetMaximumHit = multiHit.getTotalMaximumHit();
+			maximumHitSplit = formatHitSplit(multiHit.getMaximumHits());
+			averageSuccessfulHit = multiHit.getAverageDamageOnSuccessfulAttack();
+			damagePerAttack = multiHit.getExpectedDamagePerAttack();
+			expectedAttackSpeedTicks = multiHit.getExpectedAttackSpeedTicks();
 		}
-		double damagePerSecond = averageSuccessfulHit * chance / (Math.max(1, attackSpeedTicks) * 0.6);
+		else
+		{
+			boolean applyFlatArmour = style.combatStyle != CombatStyle.MAGIC;
+			int flatArmour = applyFlatArmour ? target.getFlatArmour() : 0;
+			targetMaximumHit = maximumHit <= 0
+				? 0
+				: DamageRoll.maximumSuccessfulHit(maximumHit, flatArmour);
+			CombatPrediction prediction = CombatPrediction.calculateWithHitChance(
+				attackRoll,
+				defenceRoll,
+				chance,
+				guaranteedMaxHit ? maximumHit : minimumHit,
+				maximumHit,
+				attackSpeedTicks,
+				target.getFlatArmour(),
+				applyFlatArmour);
+			averageSuccessfulHit = prediction.getAverageSuccessfulHit();
+			if (equipment.isSanguinesti())
+			{
+				averageSuccessfulHit += 1.6;
+			}
+			damagePerAttack = averageSuccessfulHit * chance;
+		}
+		double damagePerSecond = damagePerAttack / (expectedAttackSpeedTicks * 0.6);
 		return TargetResult.complete(
 			attackRoll,
 			defenceRoll,
 			effectiveAccuracy,
 			chance,
+			targetMaximumHit,
+			maximumHitSplit,
 			averageSuccessfulHit,
-			damagePerSecond);
+			damagePerSecond,
+			expectedAttackSpeedTicks);
 	}
 
 	private static int applyTargetAccuracyModifiers(
@@ -1603,11 +1658,11 @@ public final class LiveCombatSnapshot
 	private static void addConditionalWeaponWarnings(EquipmentState equipment, List<String> warnings)
 	{
 		String weapon = equipment.weaponNameLower;
-		if (containsAny(weapon, "scythe of vitur", "dual macuahuitl", "torag's hammers",
-			"sulphur blades", "venator bow", "chinchompa", "dark bow", "tonalztics of ralos"))
+		if (containsAny(weapon, "venator bow", "chinchompa", "tonalztics of ralos"))
 		{
 			warnings.add("Multi-hit total needs target size and attack behaviour");
 		}
+
 		if (containsAny(weapon, "dragon hunter lance", "dragon hunter crossbow", "arclight",
 			"emberlight", "barronite mace", "keris", "leaf-bladed", "rat bone", "scorching bow"))
 		{
@@ -1643,6 +1698,20 @@ public final class LiveCombatSnapshot
 			}
 		}
 		return false;
+	}
+
+	private static String formatHitSplit(int[] hits)
+	{
+		StringBuilder text = new StringBuilder();
+		for (int hit : hits)
+		{
+			if (text.length() > 0)
+			{
+				text.append(" / ");
+			}
+			text.append(hit);
+		}
+		return text.toString();
 	}
 
 	public boolean isLoggedIn()
@@ -1698,6 +1767,16 @@ public final class LiveCombatSnapshot
 		return attackSpeedTicks;
 	}
 
+	public String getAttackSpeedText()
+	{
+		double expectedTicks = targetResult.expectedAttackSpeedTicks;
+		if (expectedTicks > 0.0 && Math.abs(expectedTicks - attackSpeedTicks) > 0.0001)
+		{
+			return String.format(Locale.ROOT, "%.2f ticks avg", expectedTicks);
+		}
+		return attackSpeedTicks + " ticks";
+	}
+
 	public int getStyleStrengthBonus()
 	{
 		return styleDamageBonus;
@@ -1745,7 +1824,9 @@ public final class LiveCombatSnapshot
 
 	public int getMaxHit()
 	{
-		return maxHit;
+		return targetResult.dpsAvailable && targetResult.maximumHit >= 0
+			? targetResult.maximumHit
+			: maxHit;
 	}
 
 	public boolean isMaxHitAvailable()
@@ -1760,7 +1841,27 @@ public final class LiveCombatSnapshot
 
 	public String getMaxHitText()
 	{
-		return targetImmune ? "Immune" : maxHitAvailable ? Integer.toString(maxHit) : maxHitStatusText;
+		return targetImmune ? "Immune" : maxHitAvailable ? Integer.toString(getMaxHit()) : maxHitStatusText;
+	}
+
+	public boolean hasMultiHitSplit()
+	{
+		return targetResult.dpsAvailable && !targetResult.maximumHitSplit.isEmpty();
+	}
+
+	public String getMultiHitSplitText()
+	{
+		return targetResult.maximumHitSplit;
+	}
+
+	public boolean isMultiHitWeapon()
+	{
+		return MultiHitWeapon.forWeapon(weaponOrSpellName) != null;
+	}
+
+	public String getObservedHitLabel()
+	{
+		return isMultiHitWeapon() ? "Avg hitsplat" : "Avg hit";
 	}
 
 	public String getLevelLabel()
@@ -1887,6 +1988,18 @@ public final class LiveCombatSnapshot
 		return targetId;
 	}
 
+	public boolean hasTargetHealth()
+	{
+		return targetCurrentHitpoints >= 0 && targetMaximumHitpoints > 0;
+	}
+
+	public String getTargetHealthText()
+	{
+		return hasTargetHealth()
+			? String.format(Locale.ROOT, "%,d / %,d", targetCurrentHitpoints, targetMaximumHitpoints)
+			: "";
+	}
+
 	public boolean isAccuracyAvailable()
 	{
 		return targetResult.accuracyAvailable;
@@ -1944,6 +2057,40 @@ public final class LiveCombatSnapshot
 	private static String signed(int value)
 	{
 		return value >= 0 ? "+" + value : Integer.toString(value);
+	}
+
+	/**
+	 * Reverses the health-ratio calculation used by the game server and returns
+	 * the midpoint of the possible live-hitpoint range. The client does not
+	 * receive an NPC's exact live hitpoints, so unavailable or invalid inputs
+	 * deliberately return -1 instead of presenting a misleading value.
+	 */
+	static int estimateTargetCurrentHitpoints(int healthRatio, int healthScale, int maximumHitpoints)
+	{
+		if (healthRatio < 0 || healthScale <= 0 || healthRatio > healthScale || maximumHitpoints <= 0)
+		{
+			return -1;
+		}
+		if (healthRatio == 0)
+		{
+			return 0;
+		}
+
+		long minimum = 1;
+		long maximum = maximumHitpoints;
+		if (healthScale > 1)
+		{
+			long denominator = healthScale - 1L;
+			if (healthRatio > 1)
+			{
+				minimum = ((long) maximumHitpoints * (healthRatio - 1L) + healthScale - 2L)
+					/ denominator;
+			}
+			maximum = ((long) maximumHitpoints * healthRatio - 1L) / denominator;
+			maximum = Math.min(maximum, maximumHitpoints);
+		}
+
+		return (int) ((minimum + maximum + 1L) / 2L);
 	}
 
 	private static final class StyleState
@@ -2060,8 +2207,11 @@ public final class LiveCombatSnapshot
 		private final int defenceRoll;
 		private final int effectiveAccuracyLevel;
 		private final double hitChance;
+		private final int maximumHit;
+		private final String maximumHitSplit;
 		private final double averageSuccessfulHit;
 		private final double damagePerSecond;
+		private final double expectedAttackSpeedTicks;
 
 		private TargetResult(
 			boolean accuracyAvailable,
@@ -2072,8 +2222,11 @@ public final class LiveCombatSnapshot
 			int defenceRoll,
 			int effectiveAccuracyLevel,
 			double hitChance,
+			int maximumHit,
+			String maximumHitSplit,
 			double averageSuccessfulHit,
-			double damagePerSecond)
+			double damagePerSecond,
+			double expectedAttackSpeedTicks)
 		{
 			this.accuracyAvailable = accuracyAvailable;
 			this.dpsAvailable = dpsAvailable;
@@ -2083,8 +2236,11 @@ public final class LiveCombatSnapshot
 			this.defenceRoll = defenceRoll;
 			this.effectiveAccuracyLevel = effectiveAccuracyLevel;
 			this.hitChance = hitChance;
+			this.maximumHit = maximumHit;
+			this.maximumHitSplit = maximumHitSplit;
 			this.averageSuccessfulHit = averageSuccessfulHit;
 			this.damagePerSecond = damagePerSecond;
+			this.expectedAttackSpeedTicks = expectedAttackSpeedTicks;
 		}
 
 		private static TargetResult noTarget()
@@ -2094,13 +2250,16 @@ public final class LiveCombatSnapshot
 
 		private static TargetResult unavailable(String status)
 		{
-			return new TargetResult(false, false, status, status, 0, 0, 0, 0.0, 0.0, 0.0);
+			return new TargetResult(
+				false, false, status, status, 0, 0, 0, 0.0,
+				-1, "", 0.0, 0.0, 0.0);
 		}
 
 		private static TargetResult immune(int attackRoll, int defenceRoll, int effectiveAccuracyLevel)
 		{
 			return new TargetResult(
-				true, true, "", "", attackRoll, defenceRoll, effectiveAccuracyLevel, 0.0, 0.0, 0.0);
+				true, true, "", "", attackRoll, defenceRoll, effectiveAccuracyLevel, 0.0,
+				0, "", 0.0, 0.0, 0.0);
 		}
 
 		private static TargetResult accuracyOnly(
@@ -2112,7 +2271,7 @@ public final class LiveCombatSnapshot
 		{
 			return new TargetResult(
 				true, false, "", dpsStatus, attackRoll, defenceRoll,
-				effectiveAccuracyLevel, hitChance, 0.0, 0.0);
+				effectiveAccuracyLevel, hitChance, -1, "", 0.0, 0.0, 0.0);
 		}
 
 		private static TargetResult complete(
@@ -2120,12 +2279,16 @@ public final class LiveCombatSnapshot
 			int defenceRoll,
 			int effectiveAccuracyLevel,
 			double hitChance,
+			int maximumHit,
+			String maximumHitSplit,
 			double averageSuccessfulHit,
-			double damagePerSecond)
+			double damagePerSecond,
+			double expectedAttackSpeedTicks)
 		{
 			return new TargetResult(
 				true, true, "", "", attackRoll, defenceRoll,
-				effectiveAccuracyLevel, hitChance, averageSuccessfulHit, damagePerSecond);
+				effectiveAccuracyLevel, hitChance, maximumHit, maximumHitSplit,
+				averageSuccessfulHit, damagePerSecond, expectedAttackSpeedTicks);
 		}
 	}
 
@@ -2217,6 +2380,9 @@ public final class LiveCombatSnapshot
 		private boolean crystalHelm;
 		private boolean crystalBody;
 		private boolean crystalLegs;
+		private boolean bloodMoonHelm;
+		private boolean bloodMoonChestplate;
+		private boolean bloodMoonTassets;
 		private boolean chaosGauntlets;
 		private boolean smokeStaff;
 		private boolean tome;
@@ -2266,6 +2432,9 @@ public final class LiveCombatSnapshot
 			crystalHelm |= name.equals("crystal helm");
 			crystalBody |= name.equals("crystal body");
 			crystalLegs |= name.equals("crystal legs");
+			bloodMoonHelm |= name.startsWith("blood moon helm");
+			bloodMoonChestplate |= name.startsWith("blood moon chestplate");
+			bloodMoonTassets |= name.startsWith("blood moon tassets");
 			chaosGauntlets |= name.equals("chaos gauntlets");
 			smokeStaff |= name.contains("smoke battlestaff")
 				|| name.contains("mystic smoke staff")
@@ -2524,6 +2693,12 @@ public final class LiveCombatSnapshot
 			return weaponNameLower.contains("osmumten's fang");
 		}
 
+		private boolean hasFullBloodMoonSet()
+		{
+			return weaponNameLower.contains("dual macuahuitl")
+				&& bloodMoonHelm && bloodMoonChestplate && bloodMoonTassets;
+		}
+
 		private double getObsidianDamageModifier()
 		{
 			if (!isObsidianWeapon())
@@ -2578,13 +2753,8 @@ public final class LiveCombatSnapshot
 		private boolean hasUnsupportedMultiHitDps()
 		{
 			return containsAny(weaponNameLower,
-				"scythe of vitur",
-				"dual macuahuitl",
-				"torag's hammers",
-				"sulphur blades",
 				"venator bow",
 				"chinchompa",
-				"dark bow",
 				"tonalztics of ralos");
 		}
 

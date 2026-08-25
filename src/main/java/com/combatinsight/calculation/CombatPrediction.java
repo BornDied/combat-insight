@@ -64,10 +64,12 @@ public final class CombatPrediction
 		boolean applyFlatArmour)
 	{
 		double chance = Math.max(0.0, Math.min(1.0, hitChance));
-		double average = averageSuccessfulHit(
-			minimumHit,
-			maximumHit,
-			applyFlatArmour ? flatArmour : 0);
+		double average = maximumHit <= 0
+			? 0.0
+			: DamageRoll.averageSuccessfulHit(
+				minimumHit,
+				maximumHit,
+				applyFlatArmour ? flatArmour : 0);
 		double dps = average * chance / (Math.max(1, attackSpeedTicks) * SECONDS_PER_TICK);
 		return new CombatPrediction(attackRoll, defenceRoll, chance, average, dps);
 	}
@@ -160,22 +162,6 @@ public final class CombatPrediction
 			return 1.0 - (defence + 2.0) / (2.0 * (attack + 1.0));
 		}
 		return attack / (2.0 * (defence + 1.0));
-	}
-
-	private static double averageSuccessfulHit(int minimumHit, int maximumHit, int flatArmour)
-	{
-		int minimum = Math.max(0, Math.min(minimumHit, maximumHit));
-		int maximum = Math.max(minimum, maximumHit);
-		int count = maximum - minimum + 1;
-		int firstDamagingHit = Math.max(minimum, flatArmour + 1);
-		if (firstDamagingHit > maximum)
-		{
-			return 0.0;
-		}
-
-		int damagingCount = maximum - firstDamagingHit + 1;
-		double sumHits = (firstDamagingHit + maximum) * damagingCount / 2.0;
-		return (sumHits - (double) flatArmour * damagingCount) / count;
 	}
 
 	public int getAttackRoll()
