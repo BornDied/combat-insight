@@ -1671,7 +1671,7 @@ public final class LiveCombatSnapshot
 		if (containsAny(weapon, "craw's bow", "webweaver bow", "viggora's chainmace",
 			"ursine chainmace", "thammaron's sceptre", "accursed sceptre"))
 		{
-			warnings.add("Wildeness weapon modifier needs location data");
+			warnings.add("Wilderness weapon modifier needs location data");
 		}
 		if (weapon.contains("salamander"))
 		{
