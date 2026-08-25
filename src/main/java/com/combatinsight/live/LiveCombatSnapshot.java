@@ -1662,14 +1662,7 @@ public final class LiveCombatSnapshot
 		{
 			warnings.add("Multi-hit total needs target size and attack behaviour");
 		}
-		if (MultiHitWeapon.forWeapon(weapon) == MultiHitWeapon.DUAL_MACUAHUITL)
-		{
-			warnings.add("Dual macuahuitl's second roll requires the first to land");
-			if (equipment.hasFullBloodMoonSet())
-			{
-				warnings.add("Blood Moon set timing is included in DPS");
-			}
-		}
+
 		if (containsAny(weapon, "dragon hunter lance", "dragon hunter crossbow", "arclight",
 			"emberlight", "barronite mace", "keris", "leaf-bladed", "rat bone", "scorching bow"))
 		{
@@ -1678,7 +1671,7 @@ public final class LiveCombatSnapshot
 		if (containsAny(weapon, "craw's bow", "webweaver bow", "viggora's chainmace",
 			"ursine chainmace", "thammaron's sceptre", "accursed sceptre"))
 		{
-			warnings.add("Wilderness weapon modifier needs location data");
+			warnings.add("Wildeness weapon modifier needs location data");
 		}
 		if (weapon.contains("salamander"))
 		{
