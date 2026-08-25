@@ -20,6 +20,12 @@ public class CombatInsightPluginTest
 		assertFalse(CombatInsightPlugin.isCombatMenuOption(null));
 	}
 
+	@Test
+	public void maxSplitDefaultsToVisible()
+	{
+		assertTrue(new CombatInsightConfig() { }.showMaxSplit());
+	}
+
 	public static void main(String[] args) throws Exception
 	{
 		ExternalPluginManager.loadBuiltin(CombatInsightPlugin.class);

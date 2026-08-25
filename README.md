@@ -54,7 +54,7 @@ The time between basic attacks, shown in game ticks. With the full Blood Moon se
 
 ### Target
 
-Advanced mode can show the retained target and its estimated current health in a compact row, such as `Target: Vorkath - 1,247 / 2,000`.
+Advanced mode can show the retained target and its estimated current health in a compact row, such as `Target: Vorkath - 401 / 750`.
 
 Current health is estimated from RuneLite's NPC health-bar information, so it can differ slightly from the NPC's exact server-side health.
 

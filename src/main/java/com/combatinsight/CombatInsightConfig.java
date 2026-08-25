@@ -159,6 +159,18 @@ public interface CombatInsightConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showMaxSplit",
+		name = "Show max split",
+		description = "In Advanced mode, show the individual maximum hitsplats for supported multi-hit weapons",
+		position = 1,
+		section = advancedRowsSection
+	)
+	default boolean showMaxSplit()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showAccuracy",
 		name = "Show hit chance",
 		description = "Display the calculated chance for the current attack to pass the retained target's defence roll",
@@ -186,7 +198,7 @@ public interface CombatInsightConfig extends Config
 		keyName = "showObservedAverage",
 		name = "Show average hitsplat",
 		description = "In Advanced mode, show the average of your actual hitsplats against the current NPC, including zero-damage hits; multi-hit attacks count each splat separately",
-		position = 2,
+		position = 3,
 		section = advancedRowsSection
 	)
 	default boolean showObservedAverage()
@@ -198,7 +210,7 @@ public interface CombatInsightConfig extends Config
 		keyName = "showAccuracyRolls",
 		name = "Show accuracy rolls",
 		description = "In Advanced mode, show your attack roll beside the target's defence roll",
-		position = 3,
+		position = 4,
 		section = advancedRowsSection
 	)
 	default boolean showAccuracyRolls()
@@ -210,7 +222,7 @@ public interface CombatInsightConfig extends Config
 		keyName = "showDefenceType",
 		name = "Show target defence",
 		description = "In Advanced mode, show which target defence type the current attack checks",
-		position = 4,
+		position = 5,
 		section = advancedRowsSection
 	)
 	default boolean showDefenceType()
@@ -318,7 +330,7 @@ public interface CombatInsightConfig extends Config
 		keyName = "showAttackSpeed",
 		name = "Show attack speed",
 		description = "Display the weapon attack interval in ticks (Advanced mode)",
-		position = 1,
+		position = 2,
 		section = advancedRowsSection
 	)
 	default boolean showAttackSpeed()

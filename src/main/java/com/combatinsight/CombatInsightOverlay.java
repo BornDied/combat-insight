@@ -69,7 +69,9 @@ public class CombatInsightOverlay extends OverlayPanel
 					: snapshot.isMaxHitAvailable() ? plugin.getMaxHitChangeColor() : WARNING);
 		}
 
-		if (mode == HudDisplayMode.ADVANCED && snapshot.hasMultiHitSplit())
+		if (mode == HudDisplayMode.ADVANCED
+			&& config.showMaxSplit()
+			&& snapshot.hasMultiHitSplit())
 		{
 			addLine("Max split", snapshot.getMultiHitSplitText(), Color.WHITE, ACCENT);
 		}
