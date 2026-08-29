@@ -1,8 +1,13 @@
 package com.combatinsight.live;
 
+import com.combatinsight.calculation.AttackType;
+import com.combatinsight.calculation.TargetProfile;
+import java.util.Collections;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class LiveCombatSnapshotHealthTest
 {
@@ -28,5 +33,42 @@ public class LiveCombatSnapshotHealthTest
 		assertEquals(-1, LiveCombatSnapshot.estimateTargetCurrentHitpoints(16, -1, 750));
 		assertEquals(-1, LiveCombatSnapshot.estimateTargetCurrentHitpoints(31, 30, 750));
 		assertEquals(-1, LiveCombatSnapshot.estimateTargetCurrentHitpoints(16, 30, 0));
+	}
+
+	@Test
+	public void inquisitorNoticeOnlyAppearsOutsideCrush()
+	{
+		assertFalse(LiveCombatSnapshot.shouldShowInquisitorAttackTypeWarning(1, AttackType.CRUSH));
+		assertTrue(LiveCombatSnapshot.shouldShowInquisitorAttackTypeWarning(1, AttackType.STAB));
+		assertTrue(LiveCombatSnapshot.shouldShowInquisitorAttackTypeWarning(1, AttackType.SLASH));
+		assertFalse(LiveCombatSnapshot.shouldShowInquisitorAttackTypeWarning(0, AttackType.STAB));
+	}
+
+	@Test
+	public void targetTypeNoticeOnlyAppearsWithoutSupportedTargetData()
+	{
+		assertFalse(LiveCombatSnapshot.shouldShowTargetTypeWarning("Emberlight", true));
+		assertFalse(LiveCombatSnapshot.shouldShowTargetTypeWarning("Arclight", true));
+		assertTrue(LiveCombatSnapshot.shouldShowTargetTypeWarning("Emberlight", false));
+		assertFalse(LiveCombatSnapshot.shouldShowTargetTypeWarning("Dragon dagger", false));
+	}
+
+	@Test
+	public void calculatesTheCompleteMagicDefenceRoll()
+	{
+		TargetProfile scurrius = new TargetProfile(
+			7222, 60, 1, 500, 1, 3, 0,
+			0, 0, 0, 10, 0, 0, 0,
+			"", 0, false, Collections.emptySet(), false);
+		assertEquals(740, LiveCombatSnapshot.targetMagicDefenceRoll(scurrius, 7222, 0));
+		assertEquals(640, LiveCombatSnapshot.targetMagicDefenceRoll(
+			scurrius.withCombatStats(60, 1, 0), 7222, 0));
+	}
+
+	@Test
+	public void seercullSpecialUsesOnlyRangedLevelAndAmmoStrength()
+	{
+		assertEquals(21, LiveCombatSnapshot.seercullMaximumHit(99, 60));
+		assertEquals(7, LiveCombatSnapshot.seercullMaximumHit(50, 10));
 	}
 }

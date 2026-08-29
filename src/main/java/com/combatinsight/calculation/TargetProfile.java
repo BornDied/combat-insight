@@ -129,6 +129,31 @@ public final class TargetProfile
 		return ambiguous;
 	}
 
+	/** Returns a derived live profile without mutating the bundled target data. */
+	public TargetProfile withCombatStats(int liveDefenceLevel, int liveMagicLevel, int liveMagicDefence)
+	{
+		return new TargetProfile(
+			id,
+			Math.max(0, liveDefenceLevel),
+			Math.max(0, liveMagicLevel),
+			hitpoints,
+			offensiveMagic,
+			size,
+			flatArmour,
+			stabDefence,
+			slashDefence,
+			crushDefence,
+			liveMagicDefence,
+			lightRangedDefence,
+			standardRangedDefence,
+			heavyRangedDefence,
+			weaknessElement,
+			weaknessSeverity,
+			slayerMonster,
+			attributes,
+			ambiguous);
+	}
+
 	public int defenceBonus(AttackType attackType)
 	{
 		switch (attackType)

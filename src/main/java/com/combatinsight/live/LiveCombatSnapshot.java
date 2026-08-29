@@ -9,6 +9,9 @@ import com.combatinsight.calculation.DamageRoll;
 import com.combatinsight.calculation.MagicSpell;
 import com.combatinsight.calculation.MultiHitResult;
 import com.combatinsight.calculation.MultiHitWeapon;
+import com.combatinsight.calculation.SpecialAttackCalculator;
+import com.combatinsight.calculation.SpecialAttackResult;
+import com.combatinsight.calculation.SpecialAttackWeapon;
 import com.combatinsight.calculation.TargetProfile;
 import com.combatinsight.calculation.WeaponCategory;
 import java.util.ArrayList;
@@ -70,6 +73,7 @@ public final class LiveCombatSnapshot
 	private final boolean prayerAffectsCurrentStyle;
 	private final boolean slayerHelmetEquipped;
 	private final boolean hybridAtlatl;
+	private final boolean combatDummy;
 	private final String targetName;
 	private final int targetId;
 	private final int targetCurrentHitpoints;
@@ -78,6 +82,10 @@ public final class LiveCombatSnapshot
 	private final int maxHit;
 	private final String maxHitStatusText;
 	private final TargetResult targetResult;
+	private final SpecialAttackResult specialAttackResult;
+	private final TargetEffectSnapshot targetEffects;
+	private final int baseTargetMagicDefenceRoll;
+	private final int currentTargetMagicDefenceRoll;
 	private final boolean targetImmune;
 	private final List<String> warnings;
 
@@ -106,6 +114,7 @@ public final class LiveCombatSnapshot
 		boolean prayerAffectsCurrentStyle,
 		boolean slayerHelmetEquipped,
 		boolean hybridAtlatl,
+		boolean combatDummy,
 		String targetName,
 		int targetId,
 		int targetCurrentHitpoints,
@@ -114,6 +123,10 @@ public final class LiveCombatSnapshot
 		int maxHit,
 		String maxHitStatusText,
 		TargetResult targetResult,
+		SpecialAttackResult specialAttackResult,
+		TargetEffectSnapshot targetEffects,
+		int baseTargetMagicDefenceRoll,
+		int currentTargetMagicDefenceRoll,
 		boolean targetImmune,
 		List<String> warnings)
 	{
@@ -141,6 +154,7 @@ public final class LiveCombatSnapshot
 		this.prayerAffectsCurrentStyle = prayerAffectsCurrentStyle;
 		this.slayerHelmetEquipped = slayerHelmetEquipped;
 		this.hybridAtlatl = hybridAtlatl;
+		this.combatDummy = combatDummy;
 		this.targetName = targetName;
 		this.targetId = targetId;
 		this.targetCurrentHitpoints = targetCurrentHitpoints;
@@ -149,6 +163,10 @@ public final class LiveCombatSnapshot
 		this.maxHit = maxHit;
 		this.maxHitStatusText = maxHitStatusText;
 		this.targetResult = targetResult;
+		this.specialAttackResult = specialAttackResult;
+		this.targetEffects = targetEffects;
+		this.baseTargetMagicDefenceRoll = baseTargetMagicDefenceRoll;
+		this.currentTargetMagicDefenceRoll = currentTargetMagicDefenceRoll;
 		this.targetImmune = targetImmune;
 		this.warnings = Collections.unmodifiableList(new ArrayList<>(warnings));
 	}
@@ -170,6 +188,7 @@ public final class LiveCombatSnapshot
 			false,
 			false,
 			false,
+			false,
 			"",
 			-1,
 			-1,
@@ -178,6 +197,10 @@ public final class LiveCombatSnapshot
 			0,
 			"Unavailable",
 			TargetResult.noTarget(),
+			SpecialAttackResult.noWeapon(),
+			TargetEffectSnapshot.empty(),
+			-1,
+			-1,
 			false,
 			Collections.emptyList());
 	}
@@ -193,7 +216,42 @@ public final class LiveCombatSnapshot
 		int retainedTargetId,
 		String retainedTargetName,
 		int targetHealthRatio,
-		int targetHealthScale)
+		int targetHealthScale,
+		TargetEffectSnapshot targetEffectSnapshot,
+		boolean targetHasLocalHits)
+	{
+		return capture(
+			client,
+			itemManager,
+			combatStyleOverride,
+			blowpipeDart,
+			manualSpell,
+			applySlayerBonus,
+			toaInvocationLevel,
+			retainedTargetId,
+			retainedTargetName,
+			targetHealthRatio,
+			targetHealthScale,
+			targetEffectSnapshot,
+			targetHasLocalHits,
+			null);
+	}
+
+	public static LiveCombatSnapshot capture(
+		Client client,
+		ItemManager itemManager,
+		CombatStyleOverride combatStyleOverride,
+		BlowpipeDart blowpipeDart,
+		MagicSpell manualSpell,
+		boolean applySlayerBonus,
+		int toaInvocationLevel,
+		int retainedTargetId,
+		String retainedTargetName,
+		int targetHealthRatio,
+		int targetHealthScale,
+		TargetEffectSnapshot targetEffectSnapshot,
+		boolean targetHasLocalHits,
+		CombatDummy selectedCombatDummy)
 	{
 		if (client.getGameState() != GameState.LOGGED_IN)
 		{
@@ -209,15 +267,34 @@ public final class LiveCombatSnapshot
 		PrayerState prayer = getPrayerState(client);
 		List<String> warnings = new ArrayList<>();
 
-		int targetId = retainedTargetId;
-		String targetName = retainedTargetName == null ? "" : retainedTargetName;
+		boolean combatDummy = selectedCombatDummy != null;
+		int targetId = combatDummy ? selectedCombatDummy.getNpcId() : retainedTargetId;
+		String targetName = combatDummy
+			? selectedCombatDummy.getDisplayName()
+			: retainedTargetName == null ? "" : retainedTargetName;
 		if (targetId >= 0 && targetName.trim().isEmpty())
 		{
 			targetName = "NPC #" + targetId;
 		}
-		TargetProfile target = targetId < 0 ? null : TargetDatabase.find(targetId);
+		TargetProfile target = combatDummy
+			? selectedCombatDummy.getTargetProfile()
+			: targetId < 0 ? null : TargetDatabase.find(targetId);
 		boolean targetDataAvailable = target != null && !target.isAmbiguous();
+		TargetEffectSnapshot liveTargetEffects = !combatDummy && targetEffectSnapshot != null
+			&& targetEffectSnapshot.appliesTo(targetId)
+			? targetEffectSnapshot
+			: TargetEffectSnapshot.empty();
 		int targetMaximumHitpoints = targetDataAvailable ? Math.max(0, target.getHitpoints()) : 0;
+		int baseTargetMagicDefenceRoll = targetDataAvailable
+			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
+			: -1;
+		if (targetDataAvailable && liveTargetEffects.hasTargetStats())
+		{
+			target = liveTargetEffects.applyTo(target);
+		}
+		int currentTargetMagicDefenceRoll = targetDataAvailable
+			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
+			: -1;
 		int targetCurrentHitpoints = estimateTargetCurrentHitpoints(
 			targetHealthRatio,
 			targetHealthScale,
@@ -243,20 +320,27 @@ public final class LiveCombatSnapshot
 		int attackSpeedTicks = getAttackSpeedTicks(equipment, style, manualSpell, targetId);
 		int effectiveDamageLevel = 0;
 		int magicBaseMaxHit = 0;
+		int specialMagicMaximumHit = -1;
 		int minimumHit = 0;
 		int maxHit = 0;
 		boolean maxHitAvailable = true;
 		String maxHitStatusText = "";
 		String weaponOrSpellName = equipment.weaponName;
 
+		boolean slayerInputApplies = slayerInputApplies(applySlayerBonus, selectedCombatDummy);
 		boolean eligibleSlayerGear = equipment.hasSlayerDamageBonus(style.combatStyle, equipment.isAtlatl());
-		boolean useSlayerBonus = applySlayerBonus && eligibleSlayerGear;
+		boolean useSlayerBonus = slayerInputApplies && eligibleSlayerGear;
 		boolean slayerInputUsedByWeapon = equipment.isEnhancedSlayerStaff()
-			&& manualSpell == MagicSpell.MAGIC_DART;
+			&& manualSpell == MagicSpell.MAGIC_DART
+			&& slayerInputApplies;
 		boolean eligibleSlayerAccuracyGear = equipment.hasSlayerAccuracyBonus(style.combatStyle);
-		boolean useAccuracySlayerBonus = applySlayerBonus
+		boolean useAccuracySlayerBonus = slayerInputApplies
 			&& eligibleSlayerAccuracyGear;
-		if (applySlayerBonus && !eligibleSlayerGear && !slayerInputUsedByWeapon)
+		if (applySlayerBonus && combatDummy && !slayerInputApplies)
+		{
+			warnings.add("Slayer bonus does not apply to this dummy");
+		}
+		else if (slayerInputApplies && !eligibleSlayerGear && !slayerInputUsedByWeapon)
 		{
 			warnings.add(style.combatStyle == CombatStyle.MELEE
 				? "Slayer bonus needs an eligible helm or mask"
@@ -266,11 +350,11 @@ public final class LiveCombatSnapshot
 		{
 			warnings.add("Slayer bonus is off in Calculation inputs");
 		}
-		else if (applySlayerBonus)
+		else if (slayerInputApplies)
 		{
 			warnings.add("Slayer target is being manually assumed");
 		}
-		if (applySlayerBonus && equipment.isAtlatl()
+		if (slayerInputApplies && equipment.isAtlatl()
 			&& eligibleSlayerGear && !eligibleSlayerAccuracyGear)
 		{
 			warnings.add("Atlatl accuracy needs an imbued helm or mask");
@@ -396,7 +480,7 @@ public final class LiveCombatSnapshot
 					boostedMagic,
 					manualSpell,
 					targetDataAvailable,
-					applySlayerBonus);
+					slayerInputApplies);
 				magicBaseMaxHit = magicBase.baseMaxHit;
 				if (magicBase.poweredWeapon)
 				{
@@ -449,14 +533,38 @@ public final class LiveCombatSnapshot
 					additiveMagicDamage += equipment.salveEnhanced ? 0.20 : 0.15;
 				}
 
+				int specialMagicBase = -1;
+				if (equipment.weaponNameLower.contains("eye of ayak"))
+				{
+					specialMagicBase = scale(magicBaseMaxHit, 13, 10);
+				}
+				else if (equipment.weaponNameLower.contains("accursed sceptre"))
+				{
+					specialMagicBase = scale(magicBaseMaxHit, 3, 2);
+				}
+
 				maxHit = (int) Math.floor(magicBaseMaxHit * (1.0 + additiveMagicDamage));
+				if (specialMagicBase >= 0)
+				{
+					specialMagicMaximumHit = (int) Math.floor(
+						specialMagicBase * (1.0 + additiveMagicDamage));
+				}
 				if (!(targetDataAvailable && equipment.hasApplicableMagicSalve(target)) && useSlayerBonus)
 				{
 					maxHit = scale(maxHit, 23, 20);
+					if (specialMagicMaximumHit >= 0)
+					{
+						specialMagicMaximumHit = scale(specialMagicMaximumHit, 23, 20);
+					}
 				}
 				if (targetDataAvailable)
 				{
 					maxHit = applyMagicTargetDamage(maxHit, equipment, target);
+					if (specialMagicMaximumHit >= 0)
+					{
+						specialMagicMaximumHit = applyMagicTargetDamage(
+							specialMagicMaximumHit, equipment, target);
+					}
 					if (manualSpell.isSet()
 						&& manualSpell.getElementName().equals(target.getWeaknessElement()))
 					{
@@ -500,7 +608,7 @@ public final class LiveCombatSnapshot
 				break;
 		}
 
-		addConditionalWeaponWarnings(equipment, warnings);
+		addConditionalWeaponWarnings(equipment, style.attackType, target, targetDataAvailable, warnings);
 		if (targetDataAvailable && isTargetImmune(targetId, style, equipment, target))
 		{
 			warnings.add("Target is immune to " + style.attackType.toString().toLowerCase(Locale.ROOT));
@@ -536,8 +644,29 @@ public final class LiveCombatSnapshot
 			maxHit,
 			maxHitAvailable,
 			maxHitStatusText,
-			attackSpeedTicks);
+			attackSpeedTicks,
+			combatDummy);
 		boolean targetImmune = targetDataAvailable && isTargetImmune(targetId, style, equipment, target);
+		SpecialAttackResult specialAttackResult = calculateSpecialAttackResult(
+			style,
+			equipment,
+			prayer,
+			targetId,
+			targetName,
+			target,
+			targetDataAvailable,
+			liveTargetEffects,
+			boostedAttack,
+			boostedRanged,
+			boostedMagic,
+			manualSpell,
+			useAccuracySlayerBonus,
+			toaInvocationLevel,
+			maxHit,
+			maxHitAvailable,
+			specialMagicMaximumHit,
+			targetHasLocalHits,
+			combatDummy);
 
 		return new LiveCombatSnapshot(
 			true,
@@ -564,6 +693,7 @@ public final class LiveCombatSnapshot
 			prayer.affects(style.combatStyle),
 			equipment.slayerHelmet || equipment.blackMask,
 			equipment.isAtlatl(),
+			combatDummy,
 			targetName,
 			targetId,
 			targetCurrentHitpoints,
@@ -572,8 +702,121 @@ public final class LiveCombatSnapshot
 			maxHit,
 			maxHitStatusText,
 			targetResult,
+			specialAttackResult,
+			liveTargetEffects,
+			baseTargetMagicDefenceRoll,
+			currentTargetMagicDefenceRoll,
 			targetImmune,
 			warnings);
+	}
+
+	private static SpecialAttackResult calculateSpecialAttackResult(
+		StyleState currentStyle,
+		EquipmentState equipment,
+		PrayerState prayer,
+		int targetId,
+		String targetName,
+		TargetProfile target,
+		boolean targetDataAvailable,
+		TargetEffectSnapshot targetEffects,
+		int boostedAttack,
+		int boostedRanged,
+		int boostedMagic,
+		MagicSpell manualSpell,
+		boolean useAccuracySlayerBonus,
+		int toaInvocationLevel,
+		int baseMaximumHit,
+		boolean baseMaximumAvailable,
+		int specialMagicMaximumHit,
+		boolean targetHasLocalHits,
+		boolean combatDummy)
+	{
+		SpecialAttackWeapon weapon = SpecialAttackWeapon.forWeapon(equipment.weaponNameLower);
+		if (weapon == null)
+		{
+			return SpecialAttackResult.noWeapon();
+		}
+
+		int attackRoll = 0;
+		int defenceRoll = 0;
+		boolean specialImmune = false;
+		if (targetDataAvailable)
+		{
+			AttackType specialAttackType = weapon == SpecialAttackWeapon.BURNING_CLAWS
+				&& (currentStyle.attackType == AttackType.STAB
+					|| currentStyle.attackType == AttackType.SLASH)
+				? currentStyle.attackType
+				: weapon.getAttackType();
+			StyleState specialStyle = new StyleState(
+				weapon.getCombatStyle(),
+				specialAttackType,
+				currentStyle.name,
+				currentStyle.accuracyStyleBonus,
+				currentStyle.damageStyleBonus);
+			if (!combatDummy)
+			{
+				AccuracyRolls accuracyRolls = calculateAccuracyRolls(
+					specialStyle,
+					equipment,
+					prayer,
+					targetId,
+					target,
+					boostedAttack,
+					boostedRanged,
+					boostedMagic,
+					manualSpell,
+					useAccuracySlayerBonus,
+					toaInvocationLevel);
+				attackRoll = accuracyRolls.attackRoll;
+				defenceRoll = accuracyRolls.defenceRoll;
+			}
+			specialImmune = isTargetImmune(targetId, specialStyle, equipment, target);
+		}
+
+		boolean firstTektonReduction = TargetEffectRules.isTekton(targetId, targetName)
+			&& (weapon == SpecialAttackWeapon.DRAGON_WARHAMMER
+				|| weapon == SpecialAttackWeapon.ELDER_MAUL)
+			&& !targetEffects.isTektonDefenceSpecialAttempted();
+		boolean guaranteedMaximum = combatDummy || targetDataAvailable
+			&& TargetMechanics.isGuaranteedMaxHitTarget(targetId);
+		int specialMaximumHitOverride = -1;
+		if (weapon == SpecialAttackWeapon.EYE_OF_AYAK
+			|| weapon == SpecialAttackWeapon.ACCURSED_SCEPTRE)
+		{
+			specialMaximumHitOverride = specialMagicMaximumHit;
+		}
+		else if (weapon == SpecialAttackWeapon.SEERCULL)
+		{
+			specialMaximumHitOverride = seercullMaximumHit(
+				boostedRanged,
+				equipment.ammoRangedStrength);
+		}
+		return SpecialAttackCalculator.calculate(
+			weapon,
+			baseMaximumHit,
+			baseMaximumAvailable,
+			attackRoll,
+			defenceRoll,
+			targetDataAvailable,
+			targetDataAvailable ? target.getFlatArmour() : 0,
+			specialImmune,
+			combatDummy || firstTektonReduction || guaranteedMaximum,
+			guaranteedMaximum,
+			equipment.hasTwoDarkBowArrows(),
+			equipment.hasDragonArrows(),
+			equipment.hasArrowEquipped(),
+			targetDataAvailable ? target.getDefenceLevel() : 0,
+			targetDataAvailable ? target.getMagicLevel() : 0,
+			targetDataAvailable ? TargetEffectRules.defenceFloor(target) : 0,
+			specialMaximumHitOverride,
+			!targetHasLocalHits);
+	}
+
+	static int seercullMaximumHit(int boostedRanged, int ammoRangedStrength)
+	{
+		long numerator = (long) (Math.max(0, boostedRanged) + 10)
+			* (Math.max(0, ammoRangedStrength) + 64) + 320L;
+		return (int) Math.max(0L, numerator / 640L);
 	}
 
 	private static TargetResult calculateTargetResult(
@@ -592,7 +835,8 @@ public final class LiveCombatSnapshot
 		int maximumHit,
 		boolean maxHitAvailable,
 		String maxHitStatus,
-		int attackSpeedTicks)
+		int attackSpeedTicks,
+		boolean combatDummy)
 	{
 		if (targetId < 0)
 		{
@@ -610,61 +854,33 @@ public final class LiveCombatSnapshot
 		{
 			return TargetResult.unavailable("Attack type unavailable");
 		}
-
-		int boostedAccuracyLevel;
-		double accuracyPrayer;
-		double voidMultiplier;
-		int baseOffset;
-		switch (style.combatStyle)
+		if (combatDummy)
 		{
-			case RANGED:
-				boostedAccuracyLevel = boostedRanged;
-				accuracyPrayer = prayer.rangedAccuracyMultiplier;
-				voidMultiplier = equipment.hasRangedVoid() ? 1.10 : 1.0;
-				baseOffset = 8;
-				break;
-			case MAGIC:
-				boostedAccuracyLevel = boostedMagic;
-				accuracyPrayer = prayer.magicAccuracyMultiplier;
-				voidMultiplier = equipment.hasMageVoid() ? 1.45 : 1.0;
-				baseOffset = 9;
-				break;
-			case MELEE:
-			default:
-				boostedAccuracyLevel = boostedAttack;
-				accuracyPrayer = prayer.meleeAccuracyMultiplier;
-				voidMultiplier = equipment.hasMeleeVoid() ? 1.10 : 1.0;
-				baseOffset = 8;
-				break;
+			return calculateDummyTargetResult(
+				equipment,
+				target,
+				minimumHit,
+				maximumHit,
+				maxHitAvailable,
+				maxHitStatus,
+				attackSpeedTicks);
 		}
 
-		int effectiveAccuracy = CombatPrediction.effectiveAccuracyLevel(
-			boostedAccuracyLevel,
-			accuracyPrayer,
-			style.accuracyStyleBonus,
-			voidMultiplier,
-			baseOffset);
-		int selectedAttackBonus = equipment.attackBonus(style.attackType);
-		if (style.combatStyle == CombatStyle.MAGIC && equipment.isShadow())
-		{
-			selectedAttackBonus *= TargetMechanics.isInTombsOfAmascut(targetId) ? 4 : 3;
-		}
-		int baseAttackRoll = effectiveAccuracy * (selectedAttackBonus + 64);
-		int attackRoll = applyTargetAccuracyModifiers(
-			baseAttackRoll,
+		AccuracyRolls accuracyRolls = calculateAccuracyRolls(
 			style,
 			equipment,
+			prayer,
+			targetId,
 			target,
+			boostedAttack,
+			boostedRanged,
+			boostedMagic,
 			manualSpell,
-			useAccuracySlayerBonus);
-		int defenceRoll = CombatPrediction.defenceRoll(
-			target,
-			style.attackType,
-			TargetMechanics.magicUsesDefenceLevel(targetId));
-		if (TargetMechanics.scalesWithToaInvocation(targetId) && toaInvocationLevel > 0)
-		{
-			defenceRoll = scale(defenceRoll, 250 + Math.max(0, toaInvocationLevel), 250);
-		}
+			useAccuracySlayerBonus,
+			toaInvocationLevel);
+		int attackRoll = accuracyRolls.attackRoll;
+		int defenceRoll = accuracyRolls.defenceRoll;
+		int effectiveAccuracy = accuracyRolls.effectiveAccuracy;
 
 		if (isTargetImmune(targetId, style, equipment, target))
 		{
@@ -770,6 +986,116 @@ public final class LiveCombatSnapshot
 			expectedAttackSpeedTicks);
 	}
 
+	private static TargetResult calculateDummyTargetResult(
+		EquipmentState equipment,
+		TargetProfile target,
+		int minimumHit,
+		int maximumHit,
+		boolean maxHitAvailable,
+		String maxHitStatus,
+		int attackSpeedTicks)
+	{
+		if (!maxHitAvailable)
+		{
+			return TargetResult.dummy(
+				-1,
+				"",
+				maxHitStatus == null || maxHitStatus.isEmpty()
+					? "Max hit unavailable"
+					: maxHitStatus);
+		}
+
+		MultiHitWeapon multiHitWeapon = MultiHitWeapon.forWeapon(equipment.weaponNameLower);
+		if (multiHitWeapon == null)
+		{
+			return TargetResult.dummy(Math.max(0, maximumHit), "", "Dummy target");
+		}
+
+		MultiHitResult multiHit = multiHitWeapon.calculate(
+			minimumHit,
+			maximumHit,
+			0,
+			1.0,
+			target.getSize(),
+			attackSpeedTicks,
+			true,
+			equipment.hasFullBloodMoonSet());
+		return TargetResult.dummy(
+			multiHit.getTotalMaximumHit(),
+			formatHitSplit(multiHit.getMaximumHits()),
+			"Dummy target");
+	}
+
+	private static AccuracyRolls calculateAccuracyRolls(
+		StyleState style,
+		EquipmentState equipment,
+		PrayerState prayer,
+		int targetId,
+		TargetProfile target,
+		int boostedAttack,
+		int boostedRanged,
+		int boostedMagic,
+		MagicSpell manualSpell,
+		boolean useAccuracySlayerBonus,
+		int toaInvocationLevel)
+	{
+		int boostedAccuracyLevel;
+		double accuracyPrayer;
+		double voidMultiplier;
+		int baseOffset;
+		switch (style.combatStyle)
+		{
+			case RANGED:
+				boostedAccuracyLevel = boostedRanged;
+				accuracyPrayer = prayer.rangedAccuracyMultiplier;
+				voidMultiplier = equipment.hasRangedVoid() ? 1.10 : 1.0;
+				baseOffset = 8;
+				break;
+			case MAGIC:
+				boostedAccuracyLevel = boostedMagic;
+				accuracyPrayer = prayer.magicAccuracyMultiplier;
+				voidMultiplier = equipment.hasMageVoid() ? 1.45 : 1.0;
+				baseOffset = 9;
+				break;
+			case MELEE:
+			default:
+				boostedAccuracyLevel = boostedAttack;
+				accuracyPrayer = prayer.meleeAccuracyMultiplier;
+				voidMultiplier = equipment.hasMeleeVoid() ? 1.10 : 1.0;
+				baseOffset = 8;
+				break;
+		}
+
+		int effectiveAccuracy = CombatPrediction.effectiveAccuracyLevel(
+			boostedAccuracyLevel,
+			accuracyPrayer,
+			style.accuracyStyleBonus,
+			voidMultiplier,
+			baseOffset);
+		int selectedAttackBonus = equipment.attackBonus(style.attackType);
+		if (style.combatStyle == CombatStyle.MAGIC && equipment.isShadow())
+		{
+			selectedAttackBonus *= TargetMechanics.isInTombsOfAmascut(targetId) ? 4 : 3;
+		}
+		int baseAttackRoll = effectiveAccuracy * (selectedAttackBonus + 64);
+		int attackRoll = applyTargetAccuracyModifiers(
+			baseAttackRoll,
+			style,
+			equipment,
+			target,
+			manualSpell,
+			useAccuracySlayerBonus);
+		int defenceRoll = CombatPrediction.defenceRoll(
+			target,
+			style.attackType,
+			TargetMechanics.magicUsesDefenceLevel(targetId));
+		if (TargetMechanics.scalesWithToaInvocation(targetId) && toaInvocationLevel > 0)
+		{
+			defenceRoll = scale(defenceRoll, 250 + Math.max(0, toaInvocationLevel), 250);
+		}
+		return new AccuracyRolls(attackRoll, defenceRoll, effectiveAccuracy);
+	}
+
 	private static int applyTargetAccuracyModifiers(
 		int baseAttackRoll,
 		StyleState style,
@@ -802,6 +1128,10 @@ public final class LiveCombatSnapshot
 				else if (containsAny(weapon, "silverlight", "darklight") && target.hasAttribute("demon"))
 				{
 					attackRoll += scale(attackRoll, 60, 100);
+				}
+				if (containsAny(weapon, "bone claws", "burning claws") && target.hasAttribute("demon"))
+				{
+					attackRoll += scale(attackRoll, 5, 100);
 				}
 				if (weapon.contains("dragon hunter lance") && target.hasAttribute("dragon"))
 				{
@@ -908,6 +1238,7 @@ public final class LiveCombatSnapshot
 		TargetProfile target)
 	{
 		String weapon = equipment.weaponNameLower;
+		maxHit = applyWildernessDamage(maxHit, weapon, CombatStyle.MELEE, target);
 		if (containsAny(weapon, "arclight", "emberlight") && target.hasAttribute("demon"))
 		{
 			maxHit += scale(maxHit, 70, 100);
@@ -963,6 +1294,7 @@ public final class LiveCombatSnapshot
 		TargetProfile target)
 	{
 		String weapon = equipment.weaponNameLower;
+		maxHit = applyWildernessDamage(maxHit, weapon, CombatStyle.RANGED, target);
 		if (weapon.contains("dragon hunter crossbow") && target.hasAttribute("dragon"))
 		{
 			maxHit = scale(maxHit, 5, 4);
@@ -984,6 +1316,7 @@ public final class LiveCombatSnapshot
 		TargetProfile target)
 	{
 		String weapon = equipment.weaponNameLower;
+		maxHit = applyWildernessDamage(maxHit, weapon, CombatStyle.MAGIC, target);
 		if (target.hasAttribute("dragon"))
 		{
 			if (weapon.contains("dragon hunter crossbow"))
@@ -1057,6 +1390,26 @@ public final class LiveCombatSnapshot
 	private static int scale(int value, int numerator, int denominator)
 	{
 		return denominator == 0 ? value : (int) ((long) value * numerator / denominator);
+	}
+
+	static int applyWildernessDamage(
+		int maximumHit,
+		String weaponName,
+		CombatStyle combatStyle,
+		TargetProfile target)
+	{
+		if (target == null || !target.hasAttribute("wilderness"))
+		{
+			return maximumHit;
+		}
+
+		String weapon = weaponName == null ? "" : weaponName.toLowerCase(Locale.ROOT);
+		boolean applies = combatStyle == CombatStyle.MELEE
+			? containsAny(weapon, "viggora's chainmace", "ursine chainmace")
+			: combatStyle == CombatStyle.RANGED
+				? containsAny(weapon, "craw's bow", "webweaver bow")
+				: containsAny(weapon, "thammaron's sceptre", "accursed sceptre");
+		return applies ? scale(maximumHit, 3, 2) : maximumHit;
 	}
 
 	private static String targetStatus(int targetId, TargetProfile target)
@@ -1139,6 +1492,31 @@ public final class LiveCombatSnapshot
 		}
 
 		Item[] items = worn.getItems();
+		int weaponSlot = EquipmentInventorySlot.WEAPON.getSlotIdx();
+		if (weaponSlot >= 0 && weaponSlot < items.length)
+		{
+			Item weapon = items[weaponSlot];
+			if (weapon != null && weapon.getId() != -1)
+			{
+				ItemComposition composition = client.getItemDefinition(weapon.getId());
+				String itemName = composition == null || composition.getName() == null
+					? ""
+					: composition.getName();
+				ItemStats stats = itemManager.getItemStats(weapon.getId());
+				ItemEquipmentStats equipment = stats == null ? null : stats.getEquipment();
+				result.weaponId = weapon.getId();
+				result.weaponName = itemName.isEmpty() ? "Unknown weapon" : itemName;
+				result.weaponNameLower = itemName.toLowerCase(Locale.ROOT);
+				result.weaponCategory = WeaponCategoryDatabase.find(weapon.getId());
+				result.weaponStats = equipment;
+				if (equipment != null && equipment.getAspeed() > 0)
+				{
+					result.attackSpeedTicks = equipment.getAspeed();
+				}
+			}
+		}
+
+		AmmunitionState wornAmmo = AmmunitionState.empty();
 		for (int slot = 0; slot < items.length; slot++)
 		{
 			Item item = items[slot];
@@ -1152,39 +1530,116 @@ public final class LiveCombatSnapshot
 				? ""
 				: composition.getName();
 			String lowerName = itemName.toLowerCase(Locale.ROOT);
-			result.inspectItemName(lowerName);
+			if (slot == EquipmentInventorySlot.AMMO.getSlotIdx())
+			{
+				wornAmmo = readAmmunition(item, lowerName, itemManager);
+				continue;
+			}
 
 			ItemStats stats = itemManager.getItemStats(item.getId());
 			ItemEquipmentStats equipment = stats == null ? null : stats.getEquipment();
-			boolean wornAmmoContributes = slot != EquipmentInventorySlot.AMMO.getSlotIdx()
-				|| AmmunitionRules.wornAmmoContributes(result.weaponNameLower);
-			if (equipment != null && wornAmmoContributes)
-			{
-				result.stabAttack += equipment.getAstab();
-				result.slashAttack += equipment.getAslash();
-				result.crushAttack += equipment.getAcrush();
-				result.meleeStrength += equipment.getStr();
-				result.rangedAttack += equipment.getArange();
-				result.rangedStrength += equipment.getRstr();
-				result.magicAttack += equipment.getAmagic();
-				result.magicDamage += equipment.getMdmg();
-			}
+			result.inspectItemName(lowerName);
+			addEquipmentBonuses(result, equipment);
+		}
 
-			if (slot == EquipmentInventorySlot.WEAPON.getSlotIdx())
+		AmmunitionState quiverAmmo = result.dizanasQuiverEquipped
+			? readQuiverAmmunition(client, itemManager)
+			: AmmunitionState.empty();
+		AmmunitionRules.Source ammoSource = AmmunitionRules.selectSource(
+			result.weaponNameLower,
+			wornAmmo.nameLower,
+			quiverAmmo.nameLower);
+		AmmunitionState activeAmmo = ammoSource == AmmunitionRules.Source.WORN
+			? wornAmmo
+			: ammoSource == AmmunitionRules.Source.QUIVER
+				? quiverAmmo
+				: AmmunitionState.empty();
+		if (activeAmmo.isPresent())
+		{
+			result.ammoNameLower = activeAmmo.nameLower;
+			result.ammoQuantity = activeAmmo.quantity;
+			result.ammoRangedStrength = activeAmmo.equipmentStats == null
+				? 0
+				: activeAmmo.equipmentStats.getRstr();
+			result.inspectItemName(activeAmmo.nameLower);
+			addEquipmentBonuses(result, activeAmmo.equipmentStats);
+
+			boolean sunfireActive = result.permanentDizanasSunfire
+				|| (result.dizanasQuiverEquipped
+					&& client.getVarbitValue(VarbitID.WORN_ITEMS_DIZANAS_QUIVER_CHARGED) > 0);
+			if (sunfireActive
+				&& AmmunitionRules.sunfireBonusApplies(result.weaponNameLower, activeAmmo.nameLower))
 			{
-				result.weaponId = item.getId();
-				result.weaponName = itemName.isEmpty() ? "Unknown weapon" : itemName;
-				result.weaponNameLower = lowerName;
-				result.weaponCategory = WeaponCategoryDatabase.find(item.getId());
-				result.weaponStats = equipment;
-				if (equipment != null && equipment.getAspeed() > 0)
-				{
-					result.attackSpeedTicks = equipment.getAspeed();
-				}
+				result.rangedAttack += 10;
+				result.rangedStrength += 1;
 			}
 		}
 
 		return result;
+	}
+
+	private static AmmunitionState readQuiverAmmunition(Client client, ItemManager itemManager)
+	{
+		int[] values = readQuiverAmmunitionValues(client);
+		int itemId = values[0];
+		int quantity = values[1];
+		if (itemId < 0 || quantity <= 0)
+		{
+			return AmmunitionState.empty();
+		}
+
+		ItemComposition composition = client.getItemDefinition(itemId);
+		String itemName = composition == null || composition.getName() == null
+			? ""
+			: composition.getName().toLowerCase(Locale.ROOT);
+		ItemStats stats = itemManager.getItemStats(itemId);
+		return new AmmunitionState(
+			itemName,
+			quantity,
+			stats == null ? null : stats.getEquipment());
+	}
+
+	static int[] readQuiverAmmunitionValues(Client client)
+	{
+		return new int[]
+		{
+			client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO),
+			client.getVarpValue(VarPlayerID.DIZANAS_QUIVER_TEMP_AMMO_AMOUNT)
+		};
+	}
+
+	private static AmmunitionState readAmmunition(
+		Item item,
+		String itemNameLower,
+		ItemManager itemManager)
+	{
+		if (item == null || item.getId() == -1 || itemNameLower == null || itemNameLower.isEmpty())
+		{
+			return AmmunitionState.empty();
+		}
+		ItemStats stats = itemManager.getItemStats(item.getId());
+		return new AmmunitionState(
+			itemNameLower,
+			Math.max(0, item.getQuantity()),
+			stats == null ? null : stats.getEquipment());
+	}
+
+	private static void addEquipmentBonuses(
+		EquipmentState result,
+		ItemEquipmentStats equipment)
+	{
+		if (equipment == null)
+		{
+			return;
+		}
+		result.stabAttack += equipment.getAstab();
+		result.slashAttack += equipment.getAslash();
+		result.crushAttack += equipment.getAcrush();
+		result.meleeStrength += equipment.getStr();
+		result.rangedAttack += equipment.getArange();
+		result.rangedStrength += equipment.getRstr();
+		result.magicAttack += equipment.getAmagic();
+		result.magicDamage += equipment.getMdmg();
 	}
 
 	private static StyleState getStyleState(
@@ -1655,7 +2110,12 @@ public final class LiveCombatSnapshot
 		return (magicLevel * (hiddenStrengthBonus + 64) + 320) / 640;
 	}
 
-	private static void addConditionalWeaponWarnings(EquipmentState equipment, List<String> warnings)
+	private static void addConditionalWeaponWarnings(
+		EquipmentState equipment,
+		AttackType attackType,
+		TargetProfile target,
+		boolean targetDataAvailable,
+		List<String> warnings)
 	{
 		String weapon = equipment.weaponNameLower;
 		if (containsAny(weapon, "venator bow", "chinchompa", "tonalztics of ralos"))
@@ -1663,12 +2123,12 @@ public final class LiveCombatSnapshot
 			warnings.add("Multi-hit total needs target size and attack behaviour");
 		}
 
-		if (containsAny(weapon, "dragon hunter lance", "dragon hunter crossbow", "arclight",
-			"emberlight", "barronite mace", "keris", "leaf-bladed", "rat bone", "scorching bow"))
+		if (shouldShowTargetTypeWarning(weapon, targetDataAvailable))
 		{
 			warnings.add("Weapon damage modifier needs the target type");
 		}
-		if (containsAny(weapon, "craw's bow", "webweaver bow", "viggora's chainmace",
+		if (!(targetDataAvailable && target.hasAttribute("wilderness"))
+			&& containsAny(weapon, "craw's bow", "webweaver bow", "viggora's chainmace",
 			"ursine chainmace", "thammaron's sceptre", "accursed sceptre"))
 		{
 			warnings.add("Wilderness weapon modifier needs location data");
@@ -1677,10 +2137,44 @@ public final class LiveCombatSnapshot
 		{
 			warnings.add("Salamander fuel and style formulas need a dedicated input");
 		}
-		if (equipment.inquisitorPoints > 0)
+		if (shouldShowInquisitorAttackTypeWarning(equipment.inquisitorPoints, attackType))
 		{
 			warnings.add("Inquisitor damage only applies on a crush attack type");
 		}
+	}
+
+	static boolean shouldShowTargetTypeWarning(String weaponName, boolean targetDataAvailable)
+	{
+		String weapon = weaponName == null ? "" : weaponName.toLowerCase(Locale.ROOT);
+		return !targetDataAvailable && containsAny(weapon,
+			"dragon hunter lance", "dragon hunter crossbow", "arclight", "emberlight",
+			"barronite mace", "keris", "leaf-bladed", "rat bone", "scorching bow");
+	}
+
+	static boolean shouldShowInquisitorAttackTypeWarning(int inquisitorPoints, AttackType attackType)
+	{
+		return inquisitorPoints > 0 && attackType != AttackType.CRUSH;
+	}
+
+	static boolean slayerInputApplies(boolean applySlayerBonus, CombatDummy combatDummy)
+	{
+		return applySlayerBonus
+			&& (combatDummy == null || combatDummy.getTargetProfile().isSlayerMonster());
+	}
+
+	static int targetMagicDefenceRoll(TargetProfile target, int targetId, int toaInvocationLevel)
+	{
+		if (target == null || target.isAmbiguous())
+		{
+			return -1;
+		}
+		int roll = CombatPrediction.defenceRoll(
+			target,
+			AttackType.MAGIC,
+			TargetMechanics.magicUsesDefenceLevel(targetId));
+		return TargetMechanics.scalesWithToaInvocation(targetId) && toaInvocationLevel > 0
+			? scale(roll, 250 + Math.max(0, toaInvocationLevel), 250)
+			: roll;
 	}
 
 	private static int baseMaxHit(int effectiveLevel, int damageBonus)
@@ -1846,12 +2340,107 @@ public final class LiveCombatSnapshot
 
 	public boolean hasMultiHitSplit()
 	{
-		return targetResult.dpsAvailable && !targetResult.maximumHitSplit.isEmpty();
+		return !targetResult.maximumHitSplit.isEmpty();
 	}
 
 	public String getMultiHitSplitText()
 	{
 		return targetResult.maximumHitSplit;
+	}
+
+	public boolean hasSupportedSpecialAttack()
+	{
+		return specialAttackResult.hasSupportedWeapon();
+	}
+
+	public boolean isSpecialMaximumAvailable()
+	{
+		return specialAttackResult.isMaximumAvailable();
+	}
+
+	public String getSpecialMaximumText(boolean includeSplit)
+	{
+		return specialAttackResult.getMaximumHitText(includeSplit);
+	}
+
+	public boolean isSpecialAccuracyAvailable()
+	{
+		return specialAttackResult.isAccuracyAvailable();
+	}
+
+	public String getSpecialHitChanceText()
+	{
+		return specialAttackResult.getHitChanceText();
+	}
+
+	public boolean isSpecialExpectedDamageAvailable()
+	{
+		return specialAttackResult.isExpectedDamageAvailable();
+	}
+
+	public String getSpecialExpectedDamageText()
+	{
+		return specialAttackResult.getExpectedDamageText();
+	}
+
+	public String getSpecialOnHitText()
+	{
+		return specialAttackResult.getOnHitText();
+	}
+
+	public boolean hasLiveTargetEffects()
+	{
+		return targetEffects.hasTargetStats();
+	}
+
+	public boolean hasTrackedTargetEffect()
+	{
+		return targetEffects.hasTrackedEffect();
+	}
+
+	public boolean hasTrackedTargetDefence()
+	{
+		return targetEffects.hasTrackedDefence();
+	}
+
+	public String getTargetDefenceText()
+	{
+		return targetEffects.getDefenceText();
+	}
+
+	public boolean hasTrackedTargetMagic()
+	{
+		return targetEffects.hasTrackedMagic();
+	}
+
+	public String getTargetMagicText()
+	{
+		return targetEffects.getMagicText();
+	}
+
+	public boolean hasTrackedTargetMagicDefence()
+	{
+		return targetEffects.hasTrackedMagicDefence();
+	}
+
+	public String getTargetMagicDefenceText()
+	{
+		return targetEffects.getMagicDefenceText();
+	}
+
+	public int getBaseTargetMagicDefenceRoll()
+	{
+		return baseTargetMagicDefenceRoll;
+	}
+
+	public int getCurrentTargetMagicDefenceRoll()
+	{
+		return currentTargetMagicDefenceRoll;
+	}
+
+	public boolean isMagicDefenceRollUsingDefenceLevel()
+	{
+		return TargetMechanics.magicUsesDefenceLevel(targetId);
 	}
 
 	public boolean isMultiHitWeapon()
@@ -1978,6 +2567,11 @@ public final class LiveCombatSnapshot
 		return targetId >= 0 || !targetName.isEmpty();
 	}
 
+	public boolean isCombatDummy()
+	{
+		return combatDummy;
+	}
+
 	public String getTargetName()
 	{
 		return targetName;
@@ -2091,6 +2685,20 @@ public final class LiveCombatSnapshot
 		}
 
 		return (int) ((minimum + maximum + 1L) / 2L);
+	}
+
+	private static final class AccuracyRolls
+	{
+		private final int attackRoll;
+		private final int defenceRoll;
+		private final int effectiveAccuracy;
+
+		private AccuracyRolls(int attackRoll, int defenceRoll, int effectiveAccuracy)
+		{
+			this.attackRoll = attackRoll;
+			this.defenceRoll = defenceRoll;
+			this.effectiveAccuracy = effectiveAccuracy;
+		}
 	}
 
 	private static final class StyleState
@@ -2274,6 +2882,16 @@ public final class LiveCombatSnapshot
 				effectiveAccuracyLevel, hitChance, -1, "", 0.0, 0.0, 0.0);
 		}
 
+		private static TargetResult dummy(
+			int maximumHit,
+			String maximumHitSplit,
+			String status)
+		{
+			return new TargetResult(
+				false, false, status, status, 0, 0, 0, 0.0,
+				maximumHit, maximumHitSplit, 0.0, 0.0, 0.0);
+		}
+
 		private static TargetResult complete(
 			int attackRoll,
 			int defenceRoll,
@@ -2341,6 +2959,35 @@ public final class LiveCombatSnapshot
 		}
 	}
 
+	private static final class AmmunitionState
+	{
+		private static final AmmunitionState EMPTY = new AmmunitionState("", 0, null);
+
+		private final String nameLower;
+		private final int quantity;
+		private final ItemEquipmentStats equipmentStats;
+
+		private AmmunitionState(
+			String nameLower,
+			int quantity,
+			ItemEquipmentStats equipmentStats)
+		{
+			this.nameLower = nameLower == null ? "" : nameLower;
+			this.quantity = Math.max(0, quantity);
+			this.equipmentStats = equipmentStats;
+		}
+
+		private static AmmunitionState empty()
+		{
+			return EMPTY;
+		}
+
+		private boolean isPresent()
+		{
+			return !nameLower.isEmpty() && quantity > 0;
+		}
+	}
+
 	private static final class EquipmentState
 	{
 		private int stabAttack;
@@ -2349,14 +2996,19 @@ public final class LiveCombatSnapshot
 		private int meleeStrength;
 		private int rangedAttack;
 		private int rangedStrength;
+		private int ammoRangedStrength;
 		private int magicAttack;
 		private float magicDamage;
 		private int attackSpeedTicks = DEFAULT_ATTACK_SPEED_TICKS;
 		private int weaponId = -1;
 		private String weaponName = "Unarmed";
 		private String weaponNameLower = "unarmed";
+		private String ammoNameLower = "";
+		private int ammoQuantity;
 		private WeaponCategory weaponCategory = WeaponCategory.UNARMED;
 		private ItemEquipmentStats weaponStats;
+		private boolean dizanasQuiverEquipped;
+		private boolean permanentDizanasSunfire;
 
 		private boolean slayerHelmet;
 		private boolean slayerHelmetImbued;
@@ -2401,6 +3053,13 @@ public final class LiveCombatSnapshot
 
 		private void inspectItemName(String name)
 		{
+			if (name.contains("dizana")
+				&& (name.contains("quiver") || name.contains("max cape")))
+			{
+				dizanasQuiverEquipped = true;
+				permanentDizanasSunfire |= name.contains("blessed")
+					|| name.contains("max cape");
+			}
 			if (name.contains("slayer helmet"))
 			{
 				slayerHelmet = true;
@@ -2654,6 +3313,21 @@ public final class LiveCombatSnapshot
 		private boolean isBlowpipe()
 		{
 			return weaponNameLower.contains("blowpipe");
+		}
+
+		private boolean hasTwoDarkBowArrows()
+		{
+			return ammoQuantity >= 2 && ammoNameLower.contains("arrow");
+		}
+
+		private boolean hasDragonArrows()
+		{
+			return ammoNameLower.contains("dragon arrow");
+		}
+
+		private boolean hasArrowEquipped()
+		{
+			return ammoQuantity >= 1 && ammoNameLower.contains("arrow");
 		}
 
 		private boolean hasBuiltInMagicAttack()

@@ -1,9 +1,16 @@
 package com.combatinsight;
 
 import com.combatinsight.calculation.HudDisplayDuration;
+import com.combatinsight.calculation.CombatStyle;
+import com.combatinsight.calculation.SpecialAttackWeapon;
+import com.combatinsight.calculation.TargetDefenceDisplay;
+import com.combatinsight.calculation.TargetMagicDisplay;
 import com.combatinsight.live.LiveCombatSnapshot;
 import com.combatinsight.live.LiveTargetTracker;
 import com.combatinsight.live.ObservedHitTracker;
+import com.combatinsight.live.CombatDummy;
+import com.combatinsight.live.SpecialAttackTracker;
+import com.combatinsight.live.TargetEffectSnapshot;
 import com.google.inject.Provides;
 import java.awt.Color;
 import java.util.Locale;
@@ -11,21 +18,28 @@ import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.HitsplatID;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
 import net.runelite.api.Player;
+import net.runelite.api.Skill;
 import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.HitsplatApplied;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.game.ItemManager;
+import net.runelite.client.game.SkillIconManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.ui.overlay.infobox.InfoBoxManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,18 +67,30 @@ public class CombatInsightPlugin extends Plugin
 	@Inject
 	private CombatInsightOverlay overlay;
 
+	@Inject
+	private InfoBoxManager infoBoxManager;
+
+	@Inject
+	private SkillIconManager skillIconManager;
+
 	private volatile LiveCombatSnapshot snapshot = LiveCombatSnapshot.empty();
 	private volatile long lastCombatAt;
 	private volatile long maxHitChangedAt;
 	private volatile boolean maxHitIncreased;
+	private TargetDefenceInfoBox targetDefenceInfoBox;
+	private TargetMagicInfoBox targetMagicInfoBox;
 	private boolean captureFailureLogged;
+	private CombatDummy selectedCombatDummy;
+	private NPC selectedCombatDummyActor;
 	private final LiveTargetTracker targetTracker = new LiveTargetTracker();
 	private final ObservedHitTracker observedHitTracker = new ObservedHitTracker();
+	private final SpecialAttackTracker specialAttackTracker = new SpecialAttackTracker();
 
 	@Override
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
+		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
 		refreshSnapshot();
 		log.debug("Combat Insight started");
 	}
@@ -72,10 +98,13 @@ public class CombatInsightPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		removeTargetInfoBoxes();
 		overlayManager.remove(overlay);
 		snapshot = LiveCombatSnapshot.empty();
 		targetTracker.clear();
+		clearCombatDummyTarget();
 		observedHitTracker.clear();
+		specialAttackTracker.clear();
 		lastCombatAt = 0L;
 		maxHitChangedAt = 0L;
 		log.debug("Combat Insight stopped");
@@ -84,7 +113,14 @@ public class CombatInsightPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		specialAttackTracker.onGameTick(client.getTickCount());
 		LiveCombatSnapshot previous = snapshot;
+		NPC activeTarget = targetTracker.getActiveTarget();
+		if (activeTarget != null && activeTarget.isDead())
+		{
+			removeTargetInfoBoxesIfSame(activeTarget);
+			specialAttackTracker.remove(activeTarget);
+		}
 		if (targetTracker.endActiveIfDead())
 		{
 			markCombatActivity();
@@ -112,14 +148,63 @@ public class CombatInsightPlugin extends Plugin
 	{
 		if (event.getGameState() != GameState.LOGGED_IN)
 		{
+			removeTargetInfoBoxes();
 			snapshot = LiveCombatSnapshot.empty();
 			targetTracker.clear();
+			clearCombatDummyTarget();
 			observedHitTracker.clear();
+			specialAttackTracker.clear();
 			lastCombatAt = 0L;
 			return;
 		}
 
+		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
 		refreshSnapshot();
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (!"combatinsight".equals(event.getGroup()))
+		{
+			return;
+		}
+		if ("targetDefenceDisplay".equals(event.getKey())
+			|| "targetMagicDisplay".equals(event.getKey())
+			|| "animateChanges".equals(event.getKey())
+			|| "targetDefenceTextColor".equals(event.getKey())
+			|| "targetDefenceFlashColor".equals(event.getKey())
+			|| "targetMagicTextColor".equals(event.getKey())
+			|| "targetMagicFlashColor".equals(event.getKey()))
+		{
+			refreshSnapshot();
+		}
+	}
+
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		if (event.getVarpId() != VarPlayerID.SA_ENERGY)
+		{
+			return;
+		}
+
+		NPC target = targetTracker.getActiveTarget();
+		Player player = client.getLocalPlayer();
+		if (target == null && player != null && player.getInteracting() instanceof NPC)
+		{
+			target = (NPC) player.getInteracting();
+		}
+		if (target != null && CombatDummy.forNpcId(target.getId()) != null)
+		{
+			target = null;
+		}
+		SpecialAttackWeapon weapon = SpecialAttackWeapon.forWeapon(snapshot.getWeaponOrSpellName());
+		specialAttackTracker.onEnergyChanged(
+			event.getValue(),
+			weapon,
+			target,
+			client.getTickCount());
 	}
 
 	@Subscribe
@@ -131,7 +216,29 @@ public class CombatInsightPlugin extends Plugin
 			return;
 		}
 
-		confirmCombatTarget(menuEntry.getNpc());
+		NPC npc = menuEntry.getNpc();
+		if (npc != null)
+		{
+			CombatDummy combatDummy = resolveCombatDummy(npc.getId(), -1);
+			if (combatDummy != null)
+			{
+				selectCombatDummy(combatDummy, npc);
+			}
+			else
+			{
+				confirmCombatTarget(npc);
+			}
+			return;
+		}
+
+		if ("Attack".equalsIgnoreCase(menuEntry.getOption().trim()))
+		{
+			CombatDummy combatDummy = resolveCombatDummy(-1, menuEntry.getIdentifier());
+			if (combatDummy != null)
+			{
+				selectCombatDummy(combatDummy, null);
+			}
+		}
 	}
 
 	@Subscribe
@@ -142,14 +249,34 @@ public class CombatInsightPlugin extends Plugin
 			&& event.getHitsplat().isMine())
 		{
 			NPC combatTarget = (NPC) event.getActor();
+			CombatDummy combatDummy = CombatDummy.forNpcId(combatTarget.getId());
+			if (combatDummy != null)
+			{
+				selectCombatDummy(combatDummy, combatTarget);
+				return;
+			}
 			confirmCombatTarget(combatTarget);
 			observedHitTracker.record(combatTarget, event.getHitsplat().getAmount());
+			if (specialAttackTracker.onHitsplat(
+				combatTarget,
+				event.getHitsplat().getAmount(),
+				event.getHitsplat().getHitsplatType() != HitsplatID.BLOCK_ME,
+				client.getTickCount()))
+			{
+				refreshSnapshot();
+			}
 		}
 	}
 
 	@Subscribe
 	public void onActorDeath(ActorDeath event)
 	{
+		if (event.getActor() instanceof NPC)
+		{
+			NPC target = (NPC) event.getActor();
+			removeTargetInfoBoxesIfSame(target);
+			specialAttackTracker.remove(target);
+		}
 		if (targetTracker.endActiveIfSame(event.getActor()))
 		{
 			markCombatActivity();
@@ -159,6 +286,12 @@ public class CombatInsightPlugin extends Plugin
 	@Subscribe
 	public void onNpcDespawned(NpcDespawned event)
 	{
+		if (event.getNpc() == selectedCombatDummyActor && clearCombatDummyTarget())
+		{
+			refreshSnapshot();
+		}
+		removeTargetInfoBoxesIfSame(event.getNpc());
+		specialAttackTracker.remove(event.getNpc());
 		if (targetTracker.endActiveIfSame(event.getNpc()))
 		{
 			markCombatActivity();
@@ -242,7 +375,10 @@ public class CombatInsightPlugin extends Plugin
 		try
 		{
 			NPC activeTarget = targetTracker.getActiveTarget();
-			snapshot = LiveCombatSnapshot.capture(
+			TargetEffectSnapshot targetEffects = specialAttackTracker.getTargetEffects(
+				activeTarget,
+				client.getTickCount());
+			LiveCombatSnapshot captured = LiveCombatSnapshot.capture(
 				client,
 				itemManager,
 				config.combatStyleOverride(),
@@ -253,7 +389,13 @@ public class CombatInsightPlugin extends Plugin
 				targetTracker.getRetainedTargetId(),
 				targetTracker.getRetainedTargetName(),
 				activeTarget == null ? -1 : activeTarget.getHealthRatio(),
-				activeTarget == null ? -1 : activeTarget.getHealthScale());
+				activeTarget == null ? -1 : activeTarget.getHealthScale(),
+				targetEffects,
+				observedHitTracker.hasSamples(),
+				selectedCombatDummy);
+			snapshot = captured;
+			updateTargetDefenceInfoBox(activeTarget, targetEffects);
+			updateTargetMagicInfoBox(activeTarget, targetEffects, captured);
 			captureFailureLogged = false;
 		}
 		catch (RuntimeException ex)
@@ -266,6 +408,122 @@ public class CombatInsightPlugin extends Plugin
 		}
 	}
 
+	private void updateTargetDefenceInfoBox(
+		NPC activeTarget,
+		TargetEffectSnapshot targetEffects)
+	{
+		TargetDefenceDisplay display = config.targetDefenceDisplay();
+		if (display == null || !display.showsInfoBox()
+			|| activeTarget == null || !targetEffects.hasTargetStats())
+		{
+			removeTargetDefenceInfoBox();
+			return;
+		}
+
+		if (targetDefenceInfoBox == null)
+		{
+			targetDefenceInfoBox = new TargetDefenceInfoBox(
+				skillIconManager.getSkillImage(Skill.DEFENCE),
+				this);
+			infoBoxManager.addInfoBox(targetDefenceInfoBox);
+		}
+		targetDefenceInfoBox.update(
+			activeTarget,
+			activeTarget.getName(),
+			targetEffects.getCurrentDefence(),
+			targetEffects.getBaseDefence(),
+			targetEffects.hasTrackedEffect(),
+			targetEffects.isEstimatedRecovery(),
+			config.animateChanges(),
+			config.targetDefenceTextColor(),
+			config.targetDefenceFlashColor(),
+			System.currentTimeMillis());
+	}
+
+	private void removeTargetDefenceInfoBoxIfSame(NPC target)
+	{
+		if (targetDefenceInfoBox != null && targetDefenceInfoBox.appliesTo(target))
+		{
+			removeTargetDefenceInfoBox();
+		}
+	}
+
+	private void removeTargetDefenceInfoBox()
+	{
+		if (targetDefenceInfoBox == null)
+		{
+			return;
+		}
+		infoBoxManager.removeInfoBox(targetDefenceInfoBox);
+		targetDefenceInfoBox = null;
+	}
+
+	private void updateTargetMagicInfoBox(
+		NPC activeTarget,
+		TargetEffectSnapshot targetEffects,
+		LiveCombatSnapshot captured)
+	{
+		TargetMagicDisplay display = config.targetMagicDisplay();
+		if (display == null || !display.showsInfoBox()
+			|| activeTarget == null || captured.getCombatStyle() != CombatStyle.MAGIC
+			|| !targetEffects.hasTargetStats())
+		{
+			removeTargetMagicInfoBox();
+			return;
+		}
+
+		if (targetMagicInfoBox == null)
+		{
+			targetMagicInfoBox = new TargetMagicInfoBox(
+				skillIconManager.getSkillImage(Skill.MAGIC),
+				this);
+			infoBoxManager.addInfoBox(targetMagicInfoBox);
+		}
+		targetMagicInfoBox.update(
+			activeTarget,
+			activeTarget.getName(),
+			targetEffects.displaysMagicDefenceBonus()
+				? targetEffects.getCurrentMagicDefence()
+				: targetEffects.getCurrentMagic(),
+			targetEffects.displaysMagicDefenceBonus()
+				? targetEffects.getBaseMagicDefence()
+				: targetEffects.getBaseMagic(),
+			targetEffects.displaysMagicDefenceBonus()
+				? "Magic Defence bonus"
+				: "Magic level",
+			targetEffects.displaysMagicDefenceBonus(),
+			targetEffects.isEstimatedRecovery(),
+			config.animateChanges(),
+			config.targetMagicTextColor(),
+			config.targetMagicFlashColor(),
+			System.currentTimeMillis());
+	}
+
+	private void removeTargetInfoBoxesIfSame(NPC target)
+	{
+		removeTargetDefenceInfoBoxIfSame(target);
+		if (targetMagicInfoBox != null && targetMagicInfoBox.appliesTo(target))
+		{
+			removeTargetMagicInfoBox();
+		}
+	}
+
+	private void removeTargetInfoBoxes()
+	{
+		removeTargetDefenceInfoBox();
+		removeTargetMagicInfoBox();
+	}
+
+	private void removeTargetMagicInfoBox()
+	{
+		if (targetMagicInfoBox == null)
+		{
+			return;
+		}
+		infoBoxManager.removeInfoBox(targetMagicInfoBox);
+		targetMagicInfoBox = null;
+	}
+
 	private void confirmCombatTarget(NPC target)
 	{
 		if (target == null)
@@ -273,13 +531,45 @@ public class CombatInsightPlugin extends Plugin
 			return;
 		}
 
+		boolean dummyChanged = clearCombatDummyTarget();
 		boolean changed = targetTracker.confirmCombatTarget(target);
 		observedHitTracker.selectTarget(target);
+		markCombatActivity();
+		if (changed || dummyChanged)
+		{
+			refreshSnapshot();
+		}
+	}
+
+	private void selectCombatDummy(CombatDummy combatDummy, NPC actor)
+	{
+		if (combatDummy == null)
+		{
+			return;
+		}
+
+		boolean changed = selectedCombatDummy != combatDummy
+			|| selectedCombatDummyActor != actor;
+		selectedCombatDummy = combatDummy;
+		selectedCombatDummyActor = actor;
+		targetTracker.clear();
+		observedHitTracker.clear();
+		specialAttackTracker.clear();
+		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
+		removeTargetInfoBoxes();
 		markCombatActivity();
 		if (changed)
 		{
 			refreshSnapshot();
 		}
+	}
+
+	private boolean clearCombatDummyTarget()
+	{
+		boolean changed = selectedCombatDummy != null || selectedCombatDummyActor != null;
+		selectedCombatDummy = null;
+		selectedCombatDummyActor = null;
+		return changed;
 	}
 
 	private boolean isPlayerEngagedWithConfirmedTarget()
@@ -303,6 +593,12 @@ public class CombatInsightPlugin extends Plugin
 		String normalized = option.trim();
 		return "Attack".equalsIgnoreCase(normalized)
 			|| "Cast".equalsIgnoreCase(normalized);
+	}
+
+	static CombatDummy resolveCombatDummy(int npcId, int objectId)
+	{
+		CombatDummy npcDummy = CombatDummy.forNpcId(npcId);
+		return npcDummy != null ? npcDummy : CombatDummy.forObjectId(objectId);
 	}
 
 	private static Color blend(Color from, Color to, double amount)
