@@ -1,6 +1,9 @@
 package com.combatinsight;
 
 import com.combatinsight.calculation.HudDisplayMode;
+import com.combatinsight.calculation.CombatStyle;
+import com.combatinsight.calculation.TargetDefenceDisplay;
+import com.combatinsight.calculation.TargetMagicDisplay;
 import com.combatinsight.live.LiveCombatSnapshot;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -81,7 +84,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			return super.render(graphics);
 		}
 
-		if (config.showAccuracy())
+		if (shouldShowDefenceBasedRow(config.showAccuracy(), snapshot.isCombatDummy()))
 		{
 			addLine(
 				"Hit chance",
@@ -90,13 +93,33 @@ public class CombatInsightOverlay extends OverlayPanel
 				snapshot.isAccuracyAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
 		}
 
-		if (config.showDps())
+		if (shouldShowDefenceBasedRow(config.showDps(), snapshot.isCombatDummy()))
 		{
 			addLine(
 				"DPS",
 				snapshot.getDpsText(),
 				Color.WHITE,
 				snapshot.isDpsAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+		}
+
+		if (snapshot.hasSupportedSpecialAttack())
+		{
+			if (config.showSpecMax())
+			{
+				addLine(
+					"Spec max",
+					snapshot.getSpecialMaximumText(mode == HudDisplayMode.ADVANCED),
+					Color.WHITE,
+					snapshot.isSpecialMaximumAvailable() ? ACCENT : WARNING);
+			}
+			if (shouldShowDefenceBasedRow(config.showSpecChance(), snapshot.isCombatDummy()))
+			{
+				addLine(
+					"Spec chance",
+					snapshot.getSpecialHitChanceText(),
+					Color.WHITE,
+					snapshot.isSpecialAccuracyAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+			}
 		}
 
 		if (config.showStyle())
@@ -134,6 +157,53 @@ public class CombatInsightOverlay extends OverlayPanel
 
 		if (mode == HudDisplayMode.ADVANCED)
 		{
+			if (snapshot.hasSupportedSpecialAttack() && config.showExpectedSpec())
+			{
+				addLine(
+					"Avg spec dmg",
+					snapshot.getSpecialExpectedDamageText(),
+					Color.WHITE,
+					snapshot.isSpecialExpectedDamageAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+			}
+
+			if (snapshot.hasSupportedSpecialAttack() && config.showSpecOnHit())
+			{
+				addLine(
+					"On hit",
+					shorten(snapshot.getSpecialOnHitText(), 27),
+					Color.WHITE,
+					ACCENT);
+			}
+
+			TargetDefenceDisplay targetDefenceDisplay = config.targetDefenceDisplay();
+			if (targetDefenceDisplay.showsHudRow() && snapshot.hasLiveTargetEffects())
+			{
+				addLine(
+					"Target Def",
+					snapshot.getTargetDefenceText(),
+					Color.WHITE,
+					snapshot.hasTrackedTargetDefence() ? SUCCESS : MUTED);
+			}
+			TargetMagicDisplay targetMagicDisplay = config.targetMagicDisplay();
+			boolean showMagicRows = snapshot.getCombatStyle() == CombatStyle.MAGIC
+				&& targetMagicDisplay.showsHudRows();
+			if (showMagicRows && snapshot.hasTrackedTargetMagic())
+			{
+				addLine(
+					"Target Magic",
+					snapshot.getTargetMagicText(),
+					Color.WHITE,
+					SUCCESS);
+			}
+			if (showMagicRows && snapshot.hasTrackedTargetMagicDefence())
+			{
+				addLine(
+					"Magic def bonus",
+					snapshot.getTargetMagicDefenceText(),
+					Color.WHITE,
+					SUCCESS);
+			}
+
 			if (config.showLevels())
 			{
 				addLine(
@@ -162,7 +232,7 @@ public class CombatInsightOverlay extends OverlayPanel
 				addLine("Target", targetText(snapshot), Color.WHITE, Color.WHITE);
 			}
 
-			if (config.showAccuracyRolls())
+			if (shouldShowDefenceBasedRow(config.showAccuracyRolls(), snapshot.isCombatDummy()))
 			{
 				addLine(
 					"Your / target roll",
@@ -212,6 +282,11 @@ public class CombatInsightOverlay extends OverlayPanel
 			.leftColor(leftColor)
 			.rightColor(rightColor)
 			.build());
+	}
+
+	static boolean shouldShowDefenceBasedRow(boolean configured, boolean combatDummy)
+	{
+		return configured && !combatDummy;
 	}
 
 	private static String shorten(String value, int maximumLength)

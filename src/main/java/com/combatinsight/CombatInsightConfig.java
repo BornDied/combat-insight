@@ -5,6 +5,8 @@ import com.combatinsight.calculation.CombatStyleOverride;
 import com.combatinsight.calculation.HudDisplayMode;
 import com.combatinsight.calculation.HudDisplayDuration;
 import com.combatinsight.calculation.MagicSpell;
+import com.combatinsight.calculation.TargetDefenceDisplay;
+import com.combatinsight.calculation.TargetMagicDisplay;
 import java.awt.Color;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
@@ -47,9 +49,17 @@ public interface CombatInsightConfig extends Config
 	String advancedRowsSection = "advancedRowsSection";
 
 	@ConfigSection(
+		name = "Special attack rows",
+		description = "Rows for supported special attacks and locally tracked target effects",
+		position = 4,
+		closedByDefault = true
+	)
+	String specialRowsSection = "specialRowsSection";
+
+	@ConfigSection(
 		name = "Calculation inputs",
 		description = "Extra inputs for mechanics the client cannot expose safely",
-		position = 4,
+		position = 5,
 		closedByDefault = true
 	)
 	String calculationSection = "calculationSection";
@@ -57,7 +67,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Effects and advanced details",
 		description = "Animation, calculation details, and conditional-mechanic notices",
-		position = 5,
+		position = 6,
 		closedByDefault = true
 	)
 	String effectsSection = "effectsSection";
@@ -267,6 +277,126 @@ public interface CombatInsightConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "showSpecMax",
+		name = "Show spec max",
+		description = "Display the supported weapon's special-attack maximum in Standard and Advanced modes",
+		position = 0,
+		section = specialRowsSection
+	)
+	default boolean showSpecMax()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showSpecChance",
+		name = "Show spec chance",
+		description = "Display the chance that at least one special-attack accuracy roll succeeds in Standard and Advanced modes",
+		position = 1,
+		section = specialRowsSection
+	)
+	default boolean showSpecChance()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showExpectedSpec",
+		name = "Show average spec damage",
+		description = "In Advanced mode, display average total damage for one special-attack use",
+		position = 2,
+		section = specialRowsSection
+	)
+	default boolean showExpectedSpec()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "showSpecOnHit",
+		name = "Show on-hit effect",
+		description = "In Advanced mode, summarize the supported special attack's hit behaviour or target effect",
+		position = 3,
+		section = specialRowsSection
+	)
+	default boolean showSpecOnHit()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "targetDefenceDisplay",
+		name = "Target Defence display",
+		description = "Choose where locally tracked target Defence is displayed",
+		position = 4,
+		section = specialRowsSection
+	)
+	default TargetDefenceDisplay targetDefenceDisplay()
+	{
+		return TargetDefenceDisplay.INFOBOX;
+	}
+
+	@ConfigItem(
+		keyName = "targetMagicDisplay",
+		name = "Target Magic display",
+		description = "Show tracked Magic stats only while your current combat style is Magic",
+		position = 5,
+		section = specialRowsSection
+	)
+	default TargetMagicDisplay targetMagicDisplay()
+	{
+		return TargetMagicDisplay.INFOBOX;
+	}
+
+	@ConfigItem(
+		keyName = "targetDefenceTextColor",
+		name = "Defence number color",
+		description = "Color of the target Defence number in the movable infobox",
+		position = 6,
+		section = specialRowsSection
+	)
+	default Color targetDefenceTextColor()
+	{
+		return new Color(255, 152, 31);
+	}
+
+	@ConfigItem(
+		keyName = "targetDefenceFlashColor",
+		name = "Defence flash color",
+		description = "Color briefly shown when a confirmed target Defence reduction lands",
+		position = 7,
+		section = specialRowsSection
+	)
+	default Color targetDefenceFlashColor()
+	{
+		return new Color(100, 235, 130);
+	}
+
+	@ConfigItem(
+		keyName = "targetMagicTextColor",
+		name = "Magic number color",
+		description = "Color of the tracked target Magic stat in the movable Magic infobox",
+		position = 8,
+		section = specialRowsSection
+	)
+	default Color targetMagicTextColor()
+	{
+		return new Color(255, 220, 80);
+	}
+
+	@ConfigItem(
+		keyName = "targetMagicFlashColor",
+		name = "Magic flash color",
+		description = "Color briefly shown when a confirmed Magic-related reduction lowers the displayed stat",
+		position = 9,
+		section = specialRowsSection
+	)
+	default Color targetMagicFlashColor()
+	{
+		return new Color(100, 235, 130);
+	}
+
+	@ConfigItem(
 		keyName = "combatStyleOverride",
 		name = "Combat type",
 		description = "Automatic is recommended; force a type for unusual weapons or manual spell casting",
@@ -353,7 +483,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "animateChanges",
 		name = "Animate changes",
-		description = "Briefly pulse the max hit green when it rises and red when it falls",
+		description = "Briefly pulse max-hit changes and confirmed target Defence reductions",
 		position = 1,
 		section = effectsSection
 	)
