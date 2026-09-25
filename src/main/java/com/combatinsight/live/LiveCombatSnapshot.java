@@ -253,6 +253,19 @@ public final class LiveCombatSnapshot
 		boolean targetHasLocalHits,
 		CombatDummy selectedCombatDummy)
 	{
+		return capture(client, itemManager, combatStyleOverride, blowpipeDart, manualSpell,
+			applySlayerBonus, toaInvocationLevel, retainedTargetId, retainedTargetName,
+			targetHealthRatio, targetHealthScale, targetEffectSnapshot, targetHasLocalHits,
+			selectedCombatDummy, RaidScaling.DEFAULT);
+	}
+
+	public static LiveCombatSnapshot capture(
+		Client client, ItemManager itemManager, CombatStyleOverride combatStyleOverride,
+		BlowpipeDart blowpipeDart, MagicSpell manualSpell, boolean applySlayerBonus,
+		int toaInvocationLevel, int retainedTargetId, String retainedTargetName,
+		int targetHealthRatio, int targetHealthScale, TargetEffectSnapshot targetEffectSnapshot,
+		boolean targetHasLocalHits, CombatDummy selectedCombatDummy, RaidScaling raidScaling)
+	{
 		if (client.getGameState() != GameState.LOGGED_IN)
 		{
 			return empty();
@@ -278,7 +291,9 @@ public final class LiveCombatSnapshot
 		}
 		TargetProfile target = combatDummy
 			? selectedCombatDummy.getTargetProfile()
-			: targetId < 0 ? null : TargetDatabase.find(targetId);
+			: targetId < 0 ? null : raidScaling.apply(TargetDatabase.find(targetId));
+		String raidNotice = raidScaling.notice(target);
+		if (!raidNotice.isEmpty()) warnings.add(raidNotice);
 		boolean targetDataAvailable = target != null && !target.isAmbiguous();
 		TargetEffectSnapshot liveTargetEffects = !combatDummy && targetEffectSnapshot != null
 			&& targetEffectSnapshot.appliesTo(targetId)
@@ -618,6 +633,15 @@ public final class LiveCombatSnapshot
 			warnings.add("Salve bonuses need supported target attributes");
 		}
 
+		String raidDamageStatus = combatDummy ? "" : RaidDamageRules.unavailableReason(
+			targetId, style.attackType, style.combatStyle == CombatStyle.MAGIC
+				&& !equipment.hasBuiltInMagicAttack() && "fire".equals(manualSpell.getElementName()));
+		if (!raidDamageStatus.isEmpty())
+		{
+			maxHitAvailable = false;
+			maxHitStatusText = raidDamageStatus;
+			warnings.add(raidDamageStatus);
+		}
 		maxHit = Math.min(GLOBAL_DAMAGE_CAP, Math.max(0, maxHit));
 		minimumHit = Math.min(maxHit, Math.max(0, minimumHit));
 		int displayedAttackBonus = equipment.attackBonus(style.attackType);
@@ -736,27 +760,39 @@ public final class LiveCombatSnapshot
 		{
 			return SpecialAttackResult.noWeapon();
 		}
+		String raidDamageStatus = combatDummy ? "" : RaidDamageRules.unavailableReason(
+			targetId, weapon.getAttackType(), false);
+		if (!raidDamageStatus.isEmpty()) return SpecialAttackResult.unavailable(weapon, raidDamageStatus);
 
 		int attackRoll = 0;
 		int defenceRoll = 0;
 		boolean specialImmune = false;
 		if (targetDataAvailable)
 		{
-			AttackType specialAttackType = weapon == SpecialAttackWeapon.BURNING_CLAWS
-				&& (currentStyle.attackType == AttackType.STAB
-					|| currentStyle.attackType == AttackType.SLASH)
-				? currentStyle.attackType
-				: weapon.getAttackType();
-			StyleState specialStyle = new StyleState(
+			AttackType offensiveAttackType = specialOffensiveAttackType(
+				weapon,
+				currentStyle.combatStyle,
+				currentStyle.attackType);
+			AttackType defenceAttackType = specialDefenceAttackType(
+				weapon,
+				currentStyle.attackType);
+			StyleState offensiveSpecialStyle = new StyleState(
 				weapon.getCombatStyle(),
-				specialAttackType,
+				offensiveAttackType,
+				currentStyle.name,
+				currentStyle.accuracyStyleBonus,
+				currentStyle.damageStyleBonus);
+			StyleState defensiveSpecialStyle = new StyleState(
+				weapon.getCombatStyle(),
+				defenceAttackType,
 				currentStyle.name,
 				currentStyle.accuracyStyleBonus,
 				currentStyle.damageStyleBonus);
 			if (!combatDummy)
 			{
 				AccuracyRolls accuracyRolls = calculateAccuracyRolls(
-					specialStyle,
+					offensiveSpecialStyle,
+					defenceAttackType,
 					equipment,
 					prayer,
 					targetId,
@@ -770,7 +806,11 @@ public final class LiveCombatSnapshot
 				attackRoll = accuracyRolls.attackRoll;
 				defenceRoll = accuracyRolls.defenceRoll;
 			}
-			specialImmune = isTargetImmune(targetId, specialStyle, equipment, target);
+			specialImmune = isTargetImmune(
+				targetId,
+				defensiveSpecialStyle,
+				equipment,
+				target);
 		}
 
 		boolean firstTektonReduction = TargetEffectRules.isTekton(targetId, targetName)
@@ -785,9 +825,11 @@ public final class LiveCombatSnapshot
 		{
 			specialMaximumHitOverride = specialMagicMaximumHit;
 		}
-		else if (weapon == SpecialAttackWeapon.SEERCULL)
+		else if (weapon == SpecialAttackWeapon.SEERCULL
+			|| weapon == SpecialAttackWeapon.MAGIC_SHORTBOW
+			|| weapon == SpecialAttackWeapon.MAGIC_LONGBOW)
 		{
-			specialMaximumHitOverride = seercullMaximumHit(
+			specialMaximumHitOverride = ammoOnlyRangedSpecialMaximumHit(
 				boostedRanged,
 				equipment.ammoRangedStrength);
 		}
@@ -802,7 +844,7 @@ public final class LiveCombatSnapshot
 			specialImmune,
 			combatDummy || firstTektonReduction || guaranteedMaximum,
 			guaranteedMaximum,
-			equipment.hasTwoDarkBowArrows(),
+			equipment.hasTwoArrowsEquipped(),
 			equipment.hasDragonArrows(),
 			equipment.hasArrowEquipped(),
 			targetDataAvailable ? target.getDefenceLevel() : 0,
@@ -812,7 +854,35 @@ public final class LiveCombatSnapshot
 			!targetHasLocalHits);
 	}
 
-	static int seercullMaximumHit(int boostedRanged, int ammoRangedStrength)
+	static AttackType specialOffensiveAttackType(
+		SpecialAttackWeapon weapon,
+		CombatStyle currentCombatStyle,
+		AttackType currentAttackType)
+	{
+		if (weapon != null
+			&& weapon.getCombatStyle() == currentCombatStyle
+			&& currentAttackType != null
+			&& currentAttackType != AttackType.UNKNOWN)
+		{
+			return currentAttackType;
+		}
+		return weapon == null ? AttackType.UNKNOWN : weapon.getAttackType();
+	}
+
+	static AttackType specialDefenceAttackType(
+		SpecialAttackWeapon weapon,
+		AttackType currentAttackType)
+	{
+		if (weapon == SpecialAttackWeapon.BURNING_CLAWS
+			&& (currentAttackType == AttackType.STAB
+				|| currentAttackType == AttackType.SLASH))
+		{
+			return currentAttackType;
+		}
+		return weapon == null ? AttackType.UNKNOWN : weapon.getAttackType();
+	}
+
+	static int ammoOnlyRangedSpecialMaximumHit(int boostedRanged, int ammoRangedStrength)
 	{
 		long numerator = (long) (Math.max(0, boostedRanged) + 10)
 			* (Math.max(0, ammoRangedStrength) + 64) + 320L;
@@ -868,6 +938,7 @@ public final class LiveCombatSnapshot
 
 		AccuracyRolls accuracyRolls = calculateAccuracyRolls(
 			style,
+			style.attackType,
 			equipment,
 			prayer,
 			targetId,
@@ -1028,6 +1099,7 @@ public final class LiveCombatSnapshot
 
 	private static AccuracyRolls calculateAccuracyRolls(
 		StyleState style,
+		AttackType defenceAttackType,
 		EquipmentState equipment,
 		PrayerState prayer,
 		int targetId,
@@ -1087,7 +1159,7 @@ public final class LiveCombatSnapshot
 			useAccuracySlayerBonus);
 		int defenceRoll = CombatPrediction.defenceRoll(
 			target,
-			style.attackType,
+			defenceAttackType,
 			TargetMechanics.magicUsesDefenceLevel(targetId));
 		if (TargetMechanics.scalesWithToaInvocation(targetId) && toaInvocationLevel > 0)
 		{
@@ -3315,7 +3387,7 @@ public final class LiveCombatSnapshot
 			return weaponNameLower.contains("blowpipe");
 		}
 
-		private boolean hasTwoDarkBowArrows()
+		private boolean hasTwoArrowsEquipped()
 		{
 			return ammoQuantity >= 2 && ammoNameLower.contains("arrow");
 		}

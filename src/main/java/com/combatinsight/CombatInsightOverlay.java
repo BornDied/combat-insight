@@ -8,6 +8,7 @@ import com.combatinsight.live.LiveCombatSnapshot;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,7 +39,6 @@ public class CombatInsightOverlay extends OverlayPanel
 		setPriority(OverlayPriority.HIGH);
 		setMovable(true);
 		setResettable(true);
-		setPreferredSize(new Dimension(225, 0));
 	}
 
 	@Override
@@ -52,14 +52,17 @@ public class CombatInsightOverlay extends OverlayPanel
 
 		LiveCombatSnapshot snapshot = plugin.getSnapshot();
 		HudDisplayMode mode = config.displayMode();
-		panelComponent.setBackgroundColor(config.backgroundColor());
-		panelComponent.setPreferredSize(mode == HudDisplayMode.MINIMAL
-			? new Dimension(155, 0)
-			: mode == HudDisplayMode.ADVANCED ? new Dimension(280, 0) : new Dimension(225, 0));
+		boolean compact = config.compactHud();
+		panelComponent.setBackgroundColor(config.hudBackgroundMode().resolve(config.backgroundColor()));
+		int width = mode == HudDisplayMode.MINIMAL ? (compact ? 145 : 155)
+			: mode == HudDisplayMode.ADVANCED ? (compact ? 250 : 280) : (compact ? 190 : 225);
+		// OverlayPanel applies the user's resize, when present, on top of this default.
+		panelComponent.setPreferredSize(new Dimension(width, 0));
+		panelComponent.setBorder(compact ? new Rectangle(4, 3, 4, 3) : new Rectangle(6, 6, 6, 6));
 
 		if (config.showTitle())
 		{
-			addLine("Combat Insight", snapshot.getCombatStyleName(), ACCENT, SUCCESS);
+			addLine("Combat Insight", snapshot.getCombatStyleName(), ACCENT, routineColor(SUCCESS));
 		}
 
 		if (config.showMaxHit())
@@ -76,7 +79,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			&& config.showMaxSplit()
 			&& snapshot.hasMultiHitSplit())
 		{
-			addLine("Max split", snapshot.getMultiHitSplitText(), Color.WHITE, ACCENT);
+			addLine("Max split", snapshot.getMultiHitSplitText(), Color.WHITE, routineColor(ACCENT));
 		}
 
 		if (mode == HudDisplayMode.MINIMAL)
@@ -90,7 +93,7 @@ public class CombatInsightOverlay extends OverlayPanel
 				"Hit chance",
 				snapshot.getHitChanceText(),
 				Color.WHITE,
-				snapshot.isAccuracyAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+				snapshot.isAccuracyAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 		}
 
 		if (shouldShowDefenceBasedRow(config.showDps(), snapshot.isCombatDummy()))
@@ -99,7 +102,7 @@ public class CombatInsightOverlay extends OverlayPanel
 				"DPS",
 				snapshot.getDpsText(),
 				Color.WHITE,
-				snapshot.isDpsAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+				snapshot.isDpsAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 		}
 
 		if (snapshot.hasSupportedSpecialAttack())
@@ -110,7 +113,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"Spec max",
 					snapshot.getSpecialMaximumText(mode == HudDisplayMode.ADVANCED),
 					Color.WHITE,
-					snapshot.isSpecialMaximumAvailable() ? ACCENT : WARNING);
+					snapshot.isSpecialMaximumAvailable() ? routineColor(ACCENT) : WARNING);
 			}
 			if (shouldShowDefenceBasedRow(config.showSpecChance(), snapshot.isCombatDummy()))
 			{
@@ -118,7 +121,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"Spec chance",
 					snapshot.getSpecialHitChanceText(),
 					Color.WHITE,
-					snapshot.isSpecialAccuracyAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+					snapshot.isSpecialAccuracyAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 			}
 		}
 
@@ -163,7 +166,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"Avg spec dmg",
 					snapshot.getSpecialExpectedDamageText(),
 					Color.WHITE,
-					snapshot.isSpecialExpectedDamageAvailable() ? SUCCESS : snapshot.hasTarget() ? WARNING : MUTED);
+					snapshot.isSpecialExpectedDamageAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 			}
 
 			if (snapshot.hasSupportedSpecialAttack() && config.showSpecOnHit())
@@ -172,7 +175,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"On hit",
 					shorten(snapshot.getSpecialOnHitText(), 27),
 					Color.WHITE,
-					ACCENT);
+					routineColor(ACCENT));
 			}
 
 			TargetDefenceDisplay targetDefenceDisplay = config.targetDefenceDisplay();
@@ -182,7 +185,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"Target Def",
 					snapshot.getTargetDefenceText(),
 					Color.WHITE,
-					snapshot.hasTrackedTargetDefence() ? SUCCESS : MUTED);
+					snapshot.hasTrackedTargetDefence() ? routineColor(SUCCESS) : MUTED);
 			}
 			TargetMagicDisplay targetMagicDisplay = config.targetMagicDisplay();
 			boolean showMagicRows = snapshot.getCombatStyle() == CombatStyle.MAGIC
@@ -193,7 +196,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"Target Magic",
 					snapshot.getTargetMagicText(),
 					Color.WHITE,
-					SUCCESS);
+					routineColor(SUCCESS));
 			}
 			if (showMagicRows && snapshot.hasTrackedTargetMagicDefence())
 			{
@@ -201,7 +204,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					"Magic def bonus",
 					snapshot.getTargetMagicDefenceText(),
 					Color.WHITE,
-					SUCCESS);
+					routineColor(SUCCESS));
 			}
 
 			if (config.showLevels())
@@ -252,7 +255,7 @@ public class CombatInsightOverlay extends OverlayPanel
 					snapshot.getObservedHitLabel(),
 					plugin.getObservedAverageHitText(),
 					Color.WHITE,
-					plugin.hasObservedHits() ? SUCCESS : MUTED);
+					plugin.hasObservedHits() ? routineColor(SUCCESS) : MUTED);
 			}
 
 			if (config.showWarnings())
@@ -282,6 +285,11 @@ public class CombatInsightOverlay extends OverlayPanel
 			.leftColor(leftColor)
 			.rightColor(rightColor)
 			.build());
+	}
+
+	private Color routineColor(Color classicColor)
+	{
+		return config.quietHudColors() ? Color.WHITE : classicColor;
 	}
 
 	static boolean shouldShowDefenceBasedRow(boolean configured, boolean combatDummy)

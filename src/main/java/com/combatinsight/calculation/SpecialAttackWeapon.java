@@ -119,7 +119,73 @@ public enum SpecialAttackWeapon
 		CombatStyle.RANGED,
 		AttackType.RANGED_STANDARD,
 		"Magic -damage if undrained",
-		true);
+		true),
+	CRIMSON_KISTEN(
+		"Crimson kisten",
+		CombatStyle.MELEE,
+		AttackType.CRUSH,
+		"4 Crush rolls; 70-170% hit",
+		false),
+	DRAGON_LONGSWORD(
+		"Dragon longsword",
+		CombatStyle.MELEE,
+		AttackType.SLASH,
+		"25% increased damage",
+		false),
+	DRAGON_MACE(
+		"Dragon mace",
+		CombatStyle.MELEE,
+		AttackType.CRUSH,
+		"50% increased damage",
+		false),
+	DRAGON_SWORD(
+		"Dragon sword",
+		CombatStyle.MELEE,
+		AttackType.STAB,
+		"25% damage; ignores Protect Melee",
+		false),
+	ABYSSAL_DAGGER(
+		"Abyssal dagger",
+		CombatStyle.MELEE,
+		AttackType.SLASH,
+		"2 hits; one accuracy roll",
+		false),
+	TOXIC_BLOWPIPE(
+		"Toxic blowpipe",
+		CombatStyle.RANGED,
+		AttackType.RANGED_LIGHT,
+		"Heals 50% of damage dealt",
+		false),
+	WEBWEAVER_BOW(
+		"Webweaver bow",
+		CombatStyle.RANGED,
+		AttackType.RANGED_STANDARD,
+		"4 hits; poison not averaged",
+		false),
+	MAGIC_SHORTBOW(
+		"Magic shortbow",
+		CombatStyle.RANGED,
+		AttackType.RANGED_STANDARD,
+		"2 arrows; custom max hit",
+		false),
+	ROSEWOOD_BLOWPIPE(
+		"Rosewood blowpipe",
+		CombatStyle.RANGED,
+		AttackType.RANGED_LIGHT,
+		"2 darts; normal accuracy/damage",
+		false),
+	DRAGON_KNIFE(
+		"Dragon knife",
+		CombatStyle.RANGED,
+		AttackType.RANGED_LIGHT,
+		"2 independent hits",
+		false),
+	MAGIC_LONGBOW(
+		"Magic longbow",
+		CombatStyle.RANGED,
+		AttackType.RANGED_STANDARD,
+		"Guaranteed hit; custom max",
+		false);
 
 	private final String displayName;
 	private final CombatStyle combatStyle;
@@ -237,6 +303,50 @@ public enum SpecialAttackWeapon
 		if (weapon.contains("seercull"))
 		{
 			return SEERCULL;
+		}
+		if (weapon.contains("crimson kisten"))
+		{
+			return CRIMSON_KISTEN;
+		}
+		if (weapon.contains("dragon longsword"))
+		{
+			return DRAGON_LONGSWORD;
+		}
+		if (weapon.contains("dragon mace"))
+		{
+			return DRAGON_MACE;
+		}
+		if (weapon.contains("dragon sword"))
+		{
+			return DRAGON_SWORD;
+		}
+		if (weapon.contains("abyssal dagger"))
+		{
+			return ABYSSAL_DAGGER;
+		}
+		if (weapon.contains("toxic blowpipe") || weapon.contains("blazing blowpipe"))
+		{
+			return TOXIC_BLOWPIPE;
+		}
+		if (weapon.contains("webweaver bow"))
+		{
+			return WEBWEAVER_BOW;
+		}
+		if (weapon.contains("magic shortbow"))
+		{
+			return MAGIC_SHORTBOW;
+		}
+		if (weapon.contains("rosewood blowpipe"))
+		{
+			return ROSEWOOD_BLOWPIPE;
+		}
+		if (weapon.contains("dragon knife"))
+		{
+			return DRAGON_KNIFE;
+		}
+		if (weapon.contains("magic longbow") || weapon.contains("magic comp bow"))
+		{
+			return MAGIC_LONGBOW;
 		}
 		return null;
 	}

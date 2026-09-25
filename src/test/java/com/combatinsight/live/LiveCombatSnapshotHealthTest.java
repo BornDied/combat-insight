@@ -1,6 +1,8 @@
 package com.combatinsight.live;
 
 import com.combatinsight.calculation.AttackType;
+import com.combatinsight.calculation.CombatStyle;
+import com.combatinsight.calculation.SpecialAttackWeapon;
 import com.combatinsight.calculation.TargetProfile;
 import java.util.Collections;
 import org.junit.Test;
@@ -66,9 +68,34 @@ public class LiveCombatSnapshotHealthTest
 	}
 
 	@Test
-	public void seercullSpecialUsesOnlyRangedLevelAndAmmoStrength()
+	public void legacyBowSpecialUsesOnlyRangedLevelAndAmmoStrength()
 	{
-		assertEquals(21, LiveCombatSnapshot.seercullMaximumHit(99, 60));
-		assertEquals(7, LiveCombatSnapshot.seercullMaximumHit(50, 10));
+		assertEquals(21, LiveCombatSnapshot.ammoOnlyRangedSpecialMaximumHit(99, 60));
+		assertEquals(7, LiveCombatSnapshot.ammoOnlyRangedSpecialMaximumHit(50, 10));
+	}
+
+	@Test
+	public void specialAttackCanUseSelectedOffenceAgainstForcedDefence()
+	{
+		assertEquals(AttackType.STAB, LiveCombatSnapshot.specialOffensiveAttackType(
+			SpecialAttackWeapon.DRAGON_LONGSWORD,
+			CombatStyle.MELEE,
+			AttackType.STAB));
+		assertEquals(AttackType.SLASH, LiveCombatSnapshot.specialDefenceAttackType(
+			SpecialAttackWeapon.DRAGON_LONGSWORD,
+			AttackType.STAB));
+		assertEquals(AttackType.STAB, LiveCombatSnapshot.specialOffensiveAttackType(
+			SpecialAttackWeapon.ABYSSAL_DAGGER,
+			CombatStyle.MELEE,
+			AttackType.STAB));
+		assertEquals(AttackType.SLASH, LiveCombatSnapshot.specialDefenceAttackType(
+			SpecialAttackWeapon.ABYSSAL_DAGGER,
+			AttackType.STAB));
+		assertEquals(AttackType.CRUSH, LiveCombatSnapshot.specialDefenceAttackType(
+			SpecialAttackWeapon.CRIMSON_KISTEN,
+			AttackType.STAB));
+		assertEquals(AttackType.STAB, LiveCombatSnapshot.specialDefenceAttackType(
+			SpecialAttackWeapon.BURNING_CLAWS,
+			AttackType.STAB));
 	}
 }

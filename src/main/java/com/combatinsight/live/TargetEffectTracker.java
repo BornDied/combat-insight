@@ -10,6 +10,16 @@ import net.runelite.api.NPC;
 final class TargetEffectTracker
 {
 	private final Map<NPC, TargetEffectState> states = new IdentityHashMap<>();
+	private RaidScaling raidScaling = RaidScaling.DEFAULT;
+
+	void setRaidScaling(RaidScaling next)
+	{
+		if (!raidScaling.equals(next))
+		{
+			states.clear();
+			raidScaling = next;
+		}
+	}
 
 	boolean record(
 		SpecialAttackWeapon weapon,
@@ -23,7 +33,7 @@ final class TargetEffectTracker
 			return false;
 		}
 
-		TargetProfile baseTarget = TargetDatabase.find(target.getId());
+		TargetProfile baseTarget = raidScaling.apply(TargetDatabase.find(target.getId()));
 		if (baseTarget == null || baseTarget.isAmbiguous())
 		{
 			return false;
@@ -54,7 +64,7 @@ final class TargetEffectTracker
 			return TargetEffectSnapshot.empty();
 		}
 
-		TargetProfile baseTarget = TargetDatabase.find(target.getId());
+		TargetProfile baseTarget = raidScaling.apply(TargetDatabase.find(target.getId()));
 		if (baseTarget == null || baseTarget.isAmbiguous())
 		{
 			return TargetEffectSnapshot.empty();

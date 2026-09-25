@@ -1,0 +1,162 @@
+# Audited raid combat IDs: OSRS Wiki Bucket + RuneLite gameval IDs, 2026-09-25
+# Presence verifies data coverage, not full encounter mechanics.
+7527	Vanguard#Melee
+7528	Vanguard#Ranged
+7529	Vanguard#Magic
+7530	Vespula#Normal
+7531	Vespula#Normal
+7532	Vespula#Normal
+7533	Abyssal portal#Normal
+7538	Vespine soldier#Normal
+7539	Vespine soldier#Normal
+7540	Tekton#Normal
+7541	Tekton#Normal
+7542	Tekton#Normal
+7543	Tekton#Enraged
+7544	Tekton#Enraged (CM base)
+7545	Tekton#Normal (CM base)
+7548	Scavenger beast#Normal
+7549	Scavenger beast#Normal (CM base)
+7550	Great Olm#Right claw (Normal)
+7551	Great Olm#Head (Normal)
+7552	Great Olm#Left claw (Normal)
+7553	Great Olm#Right claw (Normal) (CM base)
+7554	Great Olm#Head (Normal) (CM base)
+7555	Great Olm#Left claw (Normal) (CM base)
+7559	Deathly ranger#Normal
+7560	Deathly mage#Normal
+7561	Muttadile#Large
+7562	Muttadile#Small
+7563	Muttadile#Large
+7566	Vasa Nistirio#Normal
+7567	Vasa Nistirio#Normal
+7568	Glowing crystal#Normal
+7569	Guardian (Chambers of Xeric)#Normal
+7570	Guardian (Chambers of Xeric)#Normal (CM base)
+7571	Guardian (Chambers of Xeric)#Normal
+7572	Guardian (Chambers of Xeric)#Normal (CM base)
+7573	Lizardman shaman (Chambers of Xeric)#Normal
+7574	Lizardman shaman (Chambers of Xeric)#Normal
+7584	Ice demon#Normal
+7585	Ice demon#Normal (CM base)
+7604	Skeletal Mystic#Normal
+7605	Skeletal Mystic#Normal
+7606	Skeletal Mystic#Normal
+8340	Xarpus#Normal mode
+8342	Nylocas Ischyros#Small
+8343	Nylocas Toxobolos#Small
+8344	Nylocas Hagios#Small
+8345	Nylocas Ischyros#Big
+8346	Nylocas Toxobolos#Big
+8347	Nylocas Hagios#Big
+8348	Nylocas Ischyros#Small
+8349	Nylocas Toxobolos#Small
+8350	Nylocas Hagios#Small
+8351	Nylocas Ischyros#Big
+8352	Nylocas Toxobolos#Big
+8353	Nylocas Hagios#Big
+8354	Nylocas Vasilias#Normal
+8355	Nylocas Vasilias#Normal
+8356	Nylocas Vasilias#Normal
+8357	Nylocas Vasilias#Normal
+8359	Pestilent Bloat#Normal
+8360	The Maiden of Sugadinti#Normal
+8361	The Maiden of Sugadinti#70% Health
+8362	The Maiden of Sugadinti#50% Health
+8363	The Maiden of Sugadinti#30% Health
+8366	Nylocas Matomenos#Normal Mode Maiden
+8367	Blood spawn#Normal
+8369	Verzik Vitur#Normal mode, Phase 1
+8370	Verzik Vitur#Normal mode, Phase 1
+8371	Verzik Vitur#Normal mode, Phase 1
+8372	Verzik Vitur#Normal mode, Phase 2
+8373	Verzik Vitur#Normal mode, Phase 2
+8374	Verzik Vitur#Normal mode, Phase 3
+8375	Verzik Vitur#Normal mode, Phase 3
+8381	Nylocas Ischyros#Small
+8382	Nylocas Toxobolos#Small
+8383	Nylocas Hagios#Small
+8384	Nylocas Athanatos#Normal
+8385	Nylocas Matomenos#Normal Mode Verzik
+8387	Sotetseg#Normal
+8388	Sotetseg#Normal
+10768	Xarpus#Entry mode
+10772	Xarpus#Hard mode
+10774	Nylocas Ischyros#Small (Entry mode)
+10775	Nylocas Toxobolos#Small (Entry mode)
+10776	Nylocas Hagios#Small (Entry mode)
+10777	Nylocas Ischyros#Big (Entry mode)
+10778	Nylocas Toxobolos#Big (Entry mode)
+10779	Nylocas Hagios#Big (Entry mode)
+10780	Nylocas Ischyros#Small (Entry mode)
+10781	Nylocas Toxobolos#Small (Entry mode)
+10782	Nylocas Hagios#Small (Entry mode)
+10783	Nylocas Ischyros#Big (Entry mode)
+10784	Nylocas Toxobolos#Big (Entry mode)
+10785	Nylocas Hagios#Big (Entry mode)
+10786	Nylocas Vasilias#Entry
+10787	Nylocas Vasilias#Entry
+10788	Nylocas Vasilias#Entry
+10789	Nylocas Vasilias#Entry
+10791	Nylocas Ischyros#Small
+10792	Nylocas Toxobolos#Small
+10793	Nylocas Hagios#Small
+10794	Nylocas Ischyros#Big
+10795	Nylocas Toxobolos#Big
+10796	Nylocas Hagios#Big
+10797	Nylocas Ischyros#Small
+10798	Nylocas Toxobolos#Small
+10799	Nylocas Hagios#Small
+10800	Nylocas Ischyros#Big
+10801	Nylocas Toxobolos#Big
+10802	Nylocas Hagios#Big
+10803	Nylocas Prinkipas#Melee
+10804	Nylocas Prinkipas#Melee
+10805	Nylocas Prinkipas#Magic
+10806	Nylocas Prinkipas#Ranged
+10807	Nylocas Vasilias#Hard
+10808	Nylocas Vasilias#Hard
+10809	Nylocas Vasilias#Hard
+10810	Nylocas Vasilias#Hard
+10812	Pestilent Bloat#Entry
+10813	Pestilent Bloat#Hard
+10814	The Maiden of Sugadinti#Entry Mode
+10815	The Maiden of Sugadinti#Entry Mode
+10816	The Maiden of Sugadinti#Entry Mode
+10817	The Maiden of Sugadinti#Entry Mode
+10820	Nylocas Matomenos#Entry Mode Maiden
+10821	Blood spawn#Entry
+10822	The Maiden of Sugadinti#Hard Mode
+10823	The Maiden of Sugadinti#Hard Mode
+10824	The Maiden of Sugadinti#Hard Mode
+10825	The Maiden of Sugadinti#Hard Mode
+10828	Nylocas Matomenos#Hard Mode Maiden
+10829	Blood spawn#Normal
+10830	Verzik Vitur#Entry mode, Phase 1
+10831	Verzik Vitur#Entry mode, Phase 1
+10832	Verzik Vitur#Entry mode, Phase 1
+10833	Verzik Vitur#Entry mode, Phase 2
+10834	Verzik Vitur#Entry mode, Phase 2
+10835	Verzik Vitur#Entry mode, Phase 3
+10836	Verzik Vitur#Entry mode, Phase 3
+10841	Nylocas Ischyros#Small (Entry mode)
+10842	Nylocas Toxobolos#Small (Entry mode)
+10843	Nylocas Hagios#Small (Entry mode)
+10844	Nylocas Athanatos#Entry
+10845	Nylocas Matomenos#Entry Mode Verzik
+10847	Verzik Vitur#Hard mode, Phase 1
+10848	Verzik Vitur#Hard mode, Phase 1
+10849	Verzik Vitur#Hard mode, Phase 1
+10850	Verzik Vitur#Hard mode, Phase 2
+10851	Verzik Vitur#Hard mode, Phase 2
+10852	Verzik Vitur#Hard mode, Phase 3
+10853	Verzik Vitur#Hard mode, Phase 3
+10858	Nylocas Ischyros#Small
+10859	Nylocas Toxobolos#Small
+10860	Nylocas Hagios#Small
+10861	Nylocas Athanatos#Normal
+10862	Nylocas Matomenos#Hard Mode Verzik
+10864	Sotetseg#Entry
+10865	Sotetseg#Entry
+10867	Sotetseg#Hard
+10868	Sotetseg#Hard

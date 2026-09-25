@@ -3,6 +3,7 @@ package com.combatinsight;
 import com.combatinsight.calculation.BlowpipeDart;
 import com.combatinsight.calculation.CombatStyleOverride;
 import com.combatinsight.calculation.HudDisplayMode;
+import com.combatinsight.calculation.HudBackgroundMode;
 import com.combatinsight.calculation.HudDisplayDuration;
 import com.combatinsight.calculation.MagicSpell;
 import com.combatinsight.calculation.TargetDefenceDisplay;
@@ -13,6 +14,7 @@ import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.Range;
 
 @ConfigGroup("combatinsight")
 public interface CombatInsightConfig extends Config
@@ -72,6 +74,32 @@ public interface CombatInsightConfig extends Config
 	)
 	String effectsSection = "effectsSection";
 
+	@ConfigSection(name = "Raid inputs", description = "Party scaling inputs; set before entering the raid", position = 7, closedByDefault = true)
+	String raidSection = "raidSection";
+
+	@Range(min = 1, max = 100)
+	@ConfigItem(keyName = "coxPartySize", name = "CoX scaled party size", description = "Include extra scaling players. Applies only to Chambers targets.", position = 0, section = raidSection)
+	default int coxPartySize() { return 1; }
+
+	@ConfigItem(keyName = "coxChallengeMode", name = "CoX Challenge Mode", description = "Enable for CM, including rooms whose NPC IDs are shared with normal mode", position = 1, section = raidSection)
+	default boolean coxChallengeMode() { return false; }
+
+	@Range(min = 60, max = 126)
+	@ConfigItem(keyName = "coxHighestCombat", name = "CoX highest combat level", description = "Highest combat level in the party at raid start; 126 assumes a max-combat teammate", position = 2, section = raidSection)
+	default int coxHighestCombat() { return 126; }
+
+	@Range(min = 1, max = 99)
+	@ConfigItem(keyName = "coxHighestHitpoints", name = "CoX highest Hitpoints", description = "Highest unboosted Hitpoints level in the party at raid start", position = 3, section = raidSection)
+	default int coxHighestHitpoints() { return 99; }
+
+	@Range(min = 1, max = 99)
+	@ConfigItem(keyName = "coxAverageMining", name = "CoX average Mining", description = "Unboosted party Mining total divided by party size, rounded down; affects Guardian HP", position = 4, section = raidSection)
+	default int coxAverageMining() { return 99; }
+
+	@Range(min = 1, max = 5)
+	@ConfigItem(keyName = "tobPartySize", name = "ToB starting party size", description = "Party size at raid start, including players who later die. Normal/Hard solos and duos use trio health scaling.", position = 5, section = raidSection)
+	default int tobPartySize() { return 5; }
+
 	@ConfigItem(
 		keyName = "showHud",
 		name = "Show HUD",
@@ -119,6 +147,27 @@ public interface CombatInsightConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+		keyName = "compactHud", name = "Compact HUD",
+		description = "Use narrower default widths and less outer padding. A manually resized overlay keeps its chosen width.",
+		position = 5, section = hudSection
+	)
+	default boolean compactHud() { return true; }
+
+	@ConfigItem(
+		keyName = "quietHudColors", name = "Quiet HUD colors",
+		description = "Use neutral colors for routine values; keep warnings and max-hit change flashes visible",
+		position = 6, section = hudSection
+	)
+	default boolean quietHudColors() { return true; }
+
+	@ConfigItem(
+		keyName = "hudBackgroundMode", name = "Background style",
+		description = "Choose a subtle background or text only; Custom color restores your saved background color",
+		position = 7, section = hudSection
+	)
+	default HudBackgroundMode hudBackgroundMode() { return HudBackgroundMode.CUSTOM; }
 
 	@ConfigItem(
 		keyName = "showMaxHit",
@@ -496,7 +545,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "backgroundColor",
 		name = "Background color",
-		description = "HUD background color",
+		description = "Saved HUD background color, used when Background style is Custom color",
 		position = 4,
 		section = hudSection
 	)

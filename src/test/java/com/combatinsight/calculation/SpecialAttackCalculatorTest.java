@@ -53,6 +53,132 @@ public class SpecialAttackCalculatorTest
 			SpecialAttackWeapon.forWeapon("Emberlight"));
 		assertSame(SpecialAttackWeapon.SEERCULL,
 			SpecialAttackWeapon.forWeapon("Seercull"));
+		assertSame(SpecialAttackWeapon.CRIMSON_KISTEN,
+			SpecialAttackWeapon.forWeapon("Crimson kisten"));
+		assertSame(SpecialAttackWeapon.DRAGON_LONGSWORD,
+			SpecialAttackWeapon.forWeapon("Dragon longsword (bh)"));
+		assertSame(SpecialAttackWeapon.DRAGON_MACE,
+			SpecialAttackWeapon.forWeapon("Dragon mace (bh)"));
+		assertSame(SpecialAttackWeapon.DRAGON_SWORD,
+			SpecialAttackWeapon.forWeapon("Dragon sword"));
+		assertSame(SpecialAttackWeapon.ABYSSAL_DAGGER,
+			SpecialAttackWeapon.forWeapon("Abyssal dagger(p++)"));
+		assertSame(SpecialAttackWeapon.TOXIC_BLOWPIPE,
+			SpecialAttackWeapon.forWeapon("Toxic blowpipe"));
+		assertSame(SpecialAttackWeapon.TOXIC_BLOWPIPE,
+			SpecialAttackWeapon.forWeapon("Blazing blowpipe"));
+		assertSame(SpecialAttackWeapon.WEBWEAVER_BOW,
+			SpecialAttackWeapon.forWeapon("Webweaver bow (u)"));
+		assertSame(SpecialAttackWeapon.MAGIC_SHORTBOW,
+			SpecialAttackWeapon.forWeapon("Magic shortbow (i)"));
+		assertSame(SpecialAttackWeapon.ROSEWOOD_BLOWPIPE,
+			SpecialAttackWeapon.forWeapon("Rosewood blowpipe"));
+		assertSame(SpecialAttackWeapon.DRAGON_KNIFE,
+			SpecialAttackWeapon.forWeapon("Dragon knife(p++)"));
+		assertSame(SpecialAttackWeapon.MAGIC_LONGBOW,
+			SpecialAttackWeapon.forWeapon("Magic longbow"));
+		assertSame(SpecialAttackWeapon.MAGIC_LONGBOW,
+			SpecialAttackWeapon.forWeapon("Magic comp bow"));
+	}
+
+	@Test
+	public void crimsonKistenUsesFourCrushRollsAndLiveDamageRanges()
+	{
+		SpecialAttackResult result = calculate(
+			SpecialAttackWeapon.CRIMSON_KISTEN, 50, 100, 100, false, false, true, false);
+		double chance = CombatPrediction.hitChance(100, 100);
+		double expected = 0.0;
+		int[] coefficients = {0, 4, 6, 4, 1};
+		for (int successes = 1; successes <= 4; successes++)
+		{
+			double branch = coefficients[successes]
+				* Math.pow(chance, successes)
+				* Math.pow(1.0 - chance, 4 - successes);
+			int minimum = 50 * (50 + successes * 20) / 100;
+			int maximum = 50 * (90 + successes * 20) / 100;
+			expected += branch * DamageRoll.averageSuccessfulHit(minimum, maximum, 0);
+		}
+
+		assertArrayEquals(new int[]{85}, result.getMaximumHits());
+		assertEquals(1.0 - Math.pow(1.0 - chance, 4), result.getHitChance(), EPSILON);
+		assertEquals(expected, result.getExpectedDamage(), EPSILON);
+
+		SpecialAttackResult guaranteed = calculate(
+			SpecialAttackWeapon.CRIMSON_KISTEN, 50, 0, 9999, true, false, true, false);
+		assertEquals("Guaranteed", guaranteed.getHitChanceText());
+		assertEquals(DamageRoll.averageSuccessfulHit(65, 85, 0),
+			guaranteed.getExpectedDamage(), EPSILON);
+	}
+
+	@Test
+	public void waveTwoMeleeWeaponsUseTheirDistinctRollAndDamageRules()
+	{
+		SpecialAttackResult longsword = calculate(
+			SpecialAttackWeapon.DRAGON_LONGSWORD, 41, 100, 100, false, false, true, false);
+		SpecialAttackResult mace = calculate(
+			SpecialAttackWeapon.DRAGON_MACE, 40, 100, 100, false, false, true, false);
+		SpecialAttackResult sword = calculate(
+			SpecialAttackWeapon.DRAGON_SWORD, 40, 100, 100, false, false, true, false);
+		SpecialAttackResult dagger = calculate(
+			SpecialAttackWeapon.ABYSSAL_DAGGER, 40, 100, 100, false, false, true, false);
+		double boostedChance = CombatPrediction.hitChance(125, 100);
+
+		assertEquals(51, longsword.getTotalMaximumHit());
+		assertEquals(CombatPrediction.hitChance(100, 100), longsword.getHitChance(), EPSILON);
+		assertEquals(60, mace.getTotalMaximumHit());
+		assertEquals(50, sword.getTotalMaximumHit());
+		assertEquals(boostedChance, mace.getHitChance(), EPSILON);
+		assertEquals(boostedChance, sword.getHitChance(), EPSILON);
+		assertArrayEquals(new int[]{34, 34}, dagger.getMaximumHits());
+		assertEquals(boostedChance, dagger.getHitChance(), EPSILON);
+		assertEquals(2.0 * boostedChance * DamageRoll.averageSuccessfulHit(0, 34, 0),
+			dagger.getExpectedDamage(), EPSILON);
+	}
+
+	@Test
+	public void waveTwoRangedWeaponsUseTheirIndependentHitsAndRounding()
+	{
+		SpecialAttackResult blowpipe = calculate(
+			SpecialAttackWeapon.TOXIC_BLOWPIPE, 40, 100, 100, false, false, true, false);
+		SpecialAttackResult webweaver = calculate(
+			SpecialAttackWeapon.WEBWEAVER_BOW, 41, 100, 100, false, false, true, false);
+		SpecialAttackResult shortbow = calculateWithOverride(
+			SpecialAttackWeapon.MAGIC_SHORTBOW, 99, 100, 100, 23, false);
+		double doubledChance = CombatPrediction.hitChance(200, 100);
+		double shortbowChance = CombatPrediction.hitChance(142, 100);
+
+		assertEquals(60, blowpipe.getTotalMaximumHit());
+		assertEquals(doubledChance, blowpipe.getHitChance(), EPSILON);
+		assertArrayEquals(new int[]{17, 17, 17, 17}, webweaver.getMaximumHits());
+		assertEquals(1.0 - Math.pow(1.0 - doubledChance, 4),
+			webweaver.getHitChance(), EPSILON);
+		assertArrayEquals(new int[]{23, 23}, shortbow.getMaximumHits());
+		assertEquals(1.0 - Math.pow(1.0 - shortbowChance, 2),
+			shortbow.getHitChance(), EPSILON);
+	}
+
+	@Test
+	public void waveTwoBRangedWeaponsUseTheirCurrentSimpleRules()
+	{
+		SpecialAttackResult rosewood = calculate(
+			SpecialAttackWeapon.ROSEWOOD_BLOWPIPE, 41, 100, 100, false, false, true, false);
+		SpecialAttackResult knives = calculate(
+			SpecialAttackWeapon.DRAGON_KNIFE, 41, 100, 100, false, false, true, false);
+		SpecialAttackResult longbow = calculateWithOverride(
+			SpecialAttackWeapon.MAGIC_LONGBOW, 99, 0, 9999, 23, false);
+		double normalChance = CombatPrediction.hitChance(100, 100);
+
+		assertArrayEquals(new int[]{41, 41}, rosewood.getMaximumHits());
+		assertEquals(1.0 - Math.pow(1.0 - normalChance, 2),
+			rosewood.getHitChance(), EPSILON);
+		assertEquals(2.0 * normalChance * DamageRoll.averageSuccessfulHit(0, 41, 0),
+			rosewood.getExpectedDamage(), EPSILON);
+		assertArrayEquals(new int[]{41, 41}, knives.getMaximumHits());
+		assertEquals(rosewood.getHitChance(), knives.getHitChance(), EPSILON);
+		assertArrayEquals(new int[]{23}, longbow.getMaximumHits());
+		assertEquals("Guaranteed", longbow.getHitChanceText());
+		assertEquals(DamageRoll.averageSuccessfulHit(0, 23, 0),
+			longbow.getExpectedDamage(), EPSILON);
 	}
 
 	@Test
@@ -209,12 +335,22 @@ public class SpecialAttackCalculatorTest
 			SpecialAttackWeapon.DARK_BOW,
 			40, true, 100, 100, true, 0, false, false, false, false, false,
 			true, 100, 100, 0, -1, false);
+		SpecialAttackResult shortbowNoArrows = SpecialAttackCalculator.calculate(
+			SpecialAttackWeapon.MAGIC_SHORTBOW,
+			40, true, 100, 100, true, 0, false, false, false, false, false,
+			true, 100, 100, 0, 20, false);
+		SpecialAttackResult longbowNoArrows = SpecialAttackCalculator.calculate(
+			SpecialAttackWeapon.MAGIC_LONGBOW,
+			40, true, 100, 100, true, 0, false, false, false, true, false,
+			false, 100, 100, 0, 20, false);
 
 		assertTrue(noTarget.isMaximumAvailable());
 		assertFalse(noTarget.isAccuracyAvailable());
 		assertEquals("Select target", noTarget.getHitChanceText());
 		assertFalse(noArrows.isMaximumAvailable());
 		assertEquals("Equip 2 arrows", noArrows.getMaximumHitText(false));
+		assertEquals("Equip 2 arrows", shortbowNoArrows.getMaximumHitText(false));
+		assertEquals("Equip arrows", longbowNoArrows.getMaximumHitText(false));
 	}
 
 	@Test

@@ -11,6 +11,17 @@ public final class SpecialAttackTracker
 	private final TargetEffectTracker targetEffects = new TargetEffectTracker();
 	private int previousEnergy = -1;
 	private PendingSpecial pendingSpecial;
+	private RaidScaling raidScaling = RaidScaling.DEFAULT;
+
+	public void setRaidScaling(RaidScaling next)
+	{
+		if (!raidScaling.equals(next))
+		{
+			pendingSpecial = null;
+			raidScaling = next;
+			targetEffects.setRaidScaling(next);
+		}
+	}
 
 	public void resetEnergy(int specialEnergy)
 	{

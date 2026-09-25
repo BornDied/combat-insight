@@ -11,6 +11,7 @@ import com.combatinsight.live.ObservedHitTracker;
 import com.combatinsight.live.CombatDummy;
 import com.combatinsight.live.SpecialAttackTracker;
 import com.combatinsight.live.TargetEffectSnapshot;
+import com.combatinsight.live.RaidScaling;
 import com.google.inject.Provides;
 import java.awt.Color;
 import java.util.Locale;
@@ -374,6 +375,9 @@ public class CombatInsightPlugin extends Plugin
 	{
 		try
 		{
+			RaidScaling raidScaling = new RaidScaling(config.coxPartySize(), config.coxChallengeMode(),
+				config.coxHighestCombat(), config.coxHighestHitpoints(), config.coxAverageMining(), config.tobPartySize());
+			specialAttackTracker.setRaidScaling(raidScaling);
 			NPC activeTarget = targetTracker.getActiveTarget();
 			TargetEffectSnapshot targetEffects = specialAttackTracker.getTargetEffects(
 				activeTarget,
@@ -392,7 +396,8 @@ public class CombatInsightPlugin extends Plugin
 				activeTarget == null ? -1 : activeTarget.getHealthScale(),
 				targetEffects,
 				observedHitTracker.hasSamples(),
-				selectedCombatDummy);
+				selectedCombatDummy,
+				raidScaling);
 			snapshot = captured;
 			updateTargetDefenceInfoBox(activeTarget, targetEffects);
 			updateTargetMagicInfoBox(activeTarget, targetEffects, captured);

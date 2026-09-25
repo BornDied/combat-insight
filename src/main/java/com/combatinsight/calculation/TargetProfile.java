@@ -177,4 +177,13 @@ public final class TargetProfile
 				return standardRangedDefence;
 		}
 	}
+
+	/** Derived raid profile; bundled records always retain unscaled base values. */
+	public TargetProfile withRaidStats(int defence, int magic, int maximumHitpoints)
+	{
+		return new TargetProfile(id, defence, magic, maximumHitpoints, offensiveMagic,
+			size, flatArmour, stabDefence, slashDefence, crushDefence, magicDefence,
+			lightRangedDefence, standardRangedDefence, heavyRangedDefence,
+			weaknessElement, weaknessSeverity, slayerMonster, attributes, ambiguous);
+	}
 }

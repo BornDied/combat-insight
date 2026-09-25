@@ -94,7 +94,7 @@ public final class SpecialAttackResult
 			"", "", "");
 	}
 
-	static SpecialAttackResult unavailable(SpecialAttackWeapon weapon, String status)
+	public static SpecialAttackResult unavailable(SpecialAttackWeapon weapon, String status)
 	{
 		String safeStatus = safe(status);
 		return new SpecialAttackResult(

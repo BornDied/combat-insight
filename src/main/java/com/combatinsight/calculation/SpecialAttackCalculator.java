@@ -18,9 +18,9 @@ public final class SpecialAttackCalculator
 		boolean targetImmune,
 		boolean guaranteedAccuracy,
 		boolean guaranteedMaximum,
-		boolean darkBowAmmoAvailable,
+		boolean twoArrowsAvailable,
 		boolean dragonArrows,
-		boolean seercullAmmoAvailable,
+		boolean arrowAvailable,
 		int targetDefenceLevel,
 		int targetMagicLevel,
 		int targetDefenceFloor,
@@ -35,11 +35,15 @@ public final class SpecialAttackCalculator
 		{
 			return SpecialAttackResult.unavailable(weapon, "Max hit unavailable");
 		}
-		if (weapon == SpecialAttackWeapon.DARK_BOW && !darkBowAmmoAvailable)
+		if ((weapon == SpecialAttackWeapon.DARK_BOW
+			|| weapon == SpecialAttackWeapon.MAGIC_SHORTBOW)
+			&& !twoArrowsAvailable)
 		{
 			return SpecialAttackResult.unavailable(weapon, "Equip 2 arrows");
 		}
-		if (weapon == SpecialAttackWeapon.SEERCULL && !seercullAmmoAvailable)
+		if ((weapon == SpecialAttackWeapon.SEERCULL
+			|| weapon == SpecialAttackWeapon.MAGIC_LONGBOW)
+			&& !arrowAvailable)
 		{
 			return SpecialAttackResult.unavailable(weapon, "Equip arrows");
 		}
@@ -53,6 +57,7 @@ public final class SpecialAttackCalculator
 			&& (guaranteedAccuracy
 				|| weapon == SpecialAttackWeapon.VOIDWAKER
 				|| weapon == SpecialAttackWeapon.SEERCULL
+				|| weapon == SpecialAttackWeapon.MAGIC_LONGBOW
 				|| weapon == SpecialAttackWeapon.BONE_DAGGER && boneDaggerGuaranteed);
 		double perRollChance = targetAvailable
 			? trulyGuaranteedAccuracy
@@ -104,6 +109,10 @@ public final class SpecialAttackCalculator
 		{
 			case ELDER_MAUL:
 				return scale(attackRoll, 5, 4);
+			case DRAGON_MACE:
+			case DRAGON_SWORD:
+			case ABYSSAL_DAGGER:
+				return scale(attackRoll, 5, 4);
 			case BANDOS_GODSWORD:
 			case ARMADYL_GODSWORD:
 			case SARADOMIN_GODSWORD:
@@ -117,6 +126,11 @@ public final class SpecialAttackCalculator
 				return scale(attackRoll, 3, 2);
 			case EYE_OF_AYAK:
 				return scale(attackRoll, 2, 1);
+			case TOXIC_BLOWPIPE:
+			case WEBWEAVER_BOW:
+				return scale(attackRoll, 2, 1);
+			case MAGIC_SHORTBOW:
+				return scale(attackRoll, 10, 7);
 			case DRAGON_WARHAMMER:
 			case BURNING_CLAWS:
 			case DRAGON_CLAWS:
@@ -126,6 +140,11 @@ public final class SpecialAttackCalculator
 			case ARCLIGHT:
 			case EMBERLIGHT:
 			case SEERCULL:
+			case CRIMSON_KISTEN:
+			case DRAGON_LONGSWORD:
+			case ROSEWOOD_BLOWPIPE:
+			case DRAGON_KNIFE:
+			case MAGIC_LONGBOW:
 			default:
 				return attackRoll;
 		}
@@ -139,13 +158,19 @@ public final class SpecialAttackCalculator
 			case BURNING_CLAWS:
 				return 1.0 - Math.pow(1.0 - chance, 3);
 			case DRAGON_CLAWS:
+			case CRIMSON_KISTEN:
+			case WEBWEAVER_BOW:
 				return 1.0 - Math.pow(1.0 - chance, 4);
 			case DRAGON_DAGGER:
 			case DARK_BOW:
 			case TONALZTICS_OF_RALOS:
+			case MAGIC_SHORTBOW:
+			case ROSEWOOD_BLOWPIPE:
+			case DRAGON_KNIFE:
 				return 1.0 - Math.pow(1.0 - chance, 2);
 			case VOIDWAKER:
 			case SEERCULL:
+			case MAGIC_LONGBOW:
 				return 1.0;
 			case DRAGON_WARHAMMER:
 			case ELDER_MAUL:
@@ -159,6 +184,11 @@ public final class SpecialAttackCalculator
 			case BONE_DAGGER:
 			case ARCLIGHT:
 			case EMBERLIGHT:
+			case DRAGON_LONGSWORD:
+			case DRAGON_MACE:
+			case DRAGON_SWORD:
+			case ABYSSAL_DAGGER:
+			case TOXIC_BLOWPIPE:
 			default:
 				return chance;
 		}
@@ -254,12 +284,117 @@ public final class SpecialAttackCalculator
 					0,
 					flatArmour,
 					1.0);
+			case CRIMSON_KISTEN:
+				return crimsonKisten(baseMaximumHit, flatArmour, perRollChance);
+			case DRAGON_LONGSWORD:
+			case DRAGON_SWORD:
+				return singleHit(
+					scale(baseMaximumHit, 5, 4),
+					0,
+					flatArmour,
+					perRollChance);
+			case DRAGON_MACE:
+			case TOXIC_BLOWPIPE:
+				return singleHit(
+					scale(baseMaximumHit, 3, 2),
+					0,
+					flatArmour,
+					perRollChance);
+			case ABYSSAL_DAGGER:
+				return independentHits(
+					2,
+					scale(baseMaximumHit, 17, 20),
+					0,
+					flatArmour,
+					perRollChance);
+			case WEBWEAVER_BOW:
+				int webweaverMaximum = baseMaximumHit - scale(baseMaximumHit, 6, 10);
+				return independentHits(
+					4,
+					webweaverMaximum,
+					0,
+					flatArmour,
+					perRollChance);
+			case MAGIC_SHORTBOW:
+				return independentHits(
+					2,
+					Math.max(0, specialMaximumHitOverride),
+					0,
+					flatArmour,
+					perRollChance);
+			case ROSEWOOD_BLOWPIPE:
+			case DRAGON_KNIFE:
+				return independentHits(
+					2,
+					baseMaximumHit,
+					0,
+					flatArmour,
+					perRollChance);
+			case MAGIC_LONGBOW:
+				return singleHit(
+					Math.max(0, specialMaximumHitOverride),
+					0,
+					flatArmour,
+					1.0);
 			case BONE_DAGGER:
 			case ARCLIGHT:
 			case EMBERLIGHT:
 			default:
 				return singleHit(baseMaximumHit, 0, flatArmour, perRollChance);
 		}
+	}
+
+	private static DamageSummary crimsonKisten(
+		int baseMaximumHit,
+		int flatArmour,
+		double accuracy)
+	{
+		double chance = Math.max(0.0, Math.min(1.0, accuracy));
+		double expectedDamage = 0.0;
+		int maximum = scale(baseMaximumHit, 170, 100);
+
+		for (int successfulRolls = 1; successfulRolls <= 4; successfulRolls++)
+		{
+			double branchChance = binomialCoefficient(4, successfulRolls)
+				* Math.pow(chance, successfulRolls)
+				* Math.pow(1.0 - chance, 4 - successfulRolls);
+			int minimumPercent = 50 + successfulRolls * 20;
+			int maximumPercent = 90 + successfulRolls * 20;
+			int minimumHit = scale(baseMaximumHit, minimumPercent, 100);
+			int maximumHit = scale(baseMaximumHit, maximumPercent, 100);
+			if (maximumHit > 0)
+			{
+				expectedDamage += branchChance * DamageRoll.averageSuccessfulHit(
+					minimumHit,
+					maximumHit,
+					flatArmour);
+			}
+		}
+
+		// The release proposal described subtracting one after all four rolls,
+		// but the live game does not currently apply that proposed cap.
+		int transformedMaximum = maximum <= 0
+			? 0
+			: DamageRoll.maximumSuccessfulHit(maximum, flatArmour);
+		return new DamageSummary(
+			new int[]{transformedMaximum},
+			expectedDamage,
+			transformedMaximum);
+	}
+
+	private static int binomialCoefficient(int trials, int successes)
+	{
+		if (successes < 0 || successes > trials)
+		{
+			return 0;
+		}
+		int selected = Math.min(successes, trials - successes);
+		int result = 1;
+		for (int i = 1; i <= selected; i++)
+		{
+			result = result * (trials - selected + i) / i;
+		}
+		return result;
 	}
 
 	private static DamageSummary tonalztics(

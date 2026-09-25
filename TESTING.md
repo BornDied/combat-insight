@@ -1,4 +1,86 @@
-# Combat Insight 0.4.0 Wave 1A and 1B test checklist
+# Combat Insight 0.5.0 local test checklist
+
+## Start here: September 25 raid review
+
+This source package combines Wave 2A, Wave 2B and the raid review. Keep your
+existing working folder intact. Extract the full source ZIP into a new folder,
+open the extracted `combat-insight` directory (the one containing `build.gradle`)
+in IntelliJ, and let Gradle finish importing. In its terminal, run:
+
+```powershell
+.\gradlew.bat test
+```
+
+Only after `BUILD SUCCESSFUL`, launch the local RuneLite client with:
+
+```powershell
+.\gradlew.bat run
+```
+
+Enable Combat Insight in that client. This tests the local source; opening your
+ordinary RuneLite launcher does not load these uncommitted changes. The package
+keeps the existing HUD structure and includes the approved compact appearance
+controls. The earlier larger card designs and detail-key proposal are not included.
+
+### Quick HUD checks
+
+1. Open **HUD** settings. Toggle **Compact HUD** and confirm a smaller default
+   width and outer padding. A manually resized overlay deliberately retains its
+   chosen width; reset its overlay size to compare the automatic defaults.
+2. Switch Minimal, Standard and Advanced. Row selections should stay saved in
+   their existing groups, with Standard/Advanced rows absent from Minimal.
+3. Toggle **Quiet HUD colors**. Routine values become neutral; unavailable
+   values stay amber and max-hit changes still flash when animations are enabled.
+4. Try **Background style > Subtle**, then **Text only**, then **Custom color**.
+   Your previously saved custom color and opacity should return unchanged.
+5. Check one long unavailable message, such as Verzik P1. It should wrap and stay
+   readable. Basic attacks, specs and separate stat-reduction infoboxes should
+   continue behaving as before.
+
+### Focused raid checks
+
+Set **Raid inputs** before selecting your target. Use Advanced mode for the
+target name/HP and diagnostic rows. Record your actual party inputs and weapon.
+
+1. **ToB Maiden:** normal three-player maximum HP should be 2,625, five-player
+   3,500. Entry solo should be 500. Confirm the estimated HP does not suddenly
+   use a smaller maximum after the 70%, 50% or 30% transition.
+2. **ToB Nylocas:** test melee, ranged and magic forms. Wrong styles should show
+   immune; the correct style should recover immediately when the NPC changes
+   colour. Check a wave NPC and the boss, including whichever raid mode you play.
+3. **ToB HMT Xarpus:** three-player HP maximum should be 4,500. It must not use
+   Entry Mode scaling. Also check Bloat, Sotetseg, and Verzik P2/P3 for retained
+   target data. Dead team members must remain counted in your configured party.
+4. **CoX normal/CM:** solo Tekton base Defence should be 205 normal and 246 CM;
+   a successful local DWH in CM should reduce 246 to 173. Change the party size
+   to three in normal mode: Tekton should use 209 Defence and 600 maximum HP.
+5. **Olm:** in a three-player normal raid the head maximum is 1,600 and each
+   hand 1,200. Melee-hand melee and mage-hand Magic should calculate normally.
+   Check the CM switch for NPCs whose IDs are shared across normal/CM.
+6. **Manual inputs:** change raid size/CM while a target is retained. Stats and
+   HP should refresh, and previously tracked local drains should reset. Re-enter
+   correct values before judging the calculations. Team levels affect CoX too.
+7. **Unavailable transforms:** Verzik P1, Guardians, Tekton Magic, crystal Magic,
+   affected Olm off-styles and non-fire Ice demon attacks should show a clear
+   damage status, without an ordinary numeric DPS estimate. Fire spells at Ice
+   demon remain available. Demonbane is conservatively withheld in this version.
+8. **Outside raids:** smoke-test PNM and Nex if available, then one ordinary
+   Slayer target. Check your usual weapon, prayers, one supported spec, and
+   switching back to normal attacks. Use the Wave 2A/2B sections below for
+   Crimson kisten and the other added special weapons.
+
+Passing these checks is not proof that every raid phase or special mechanic is
+supported. Report target name, phase/mode, team inputs, weapon/style, screenshot,
+and whether a local stat-draining special was used. Do not publish this local
+candidate before in-game testing.
+
+### Automated checks for this review
+
+The review uses actual JUnit assertions, a Java 11 target, RuneLite 1.12.39 API
+and client jars, and a 160-ID raid roster. Python generator checks run with
+`python -m unittest discover -s scripts -p 'test_*.py'`.
+The review environment could not download Gradle's distribution, so the standard
+Gradle task and in-game client launch still need to be verified on your PC.
 
 ## Start the clean build
 
@@ -26,6 +108,24 @@ that, the older CombatInsight project folders can be deleted.
    retained target and continue updating the HUD.
 6. Interact with an unrelated NPC after the kill. It must not replace the last
    combat target or restart the configured HUD timer.
+
+## NPC data and Phosani's Nightmare
+
+1. Enter Phosani's Nightmare and select the boss during every reachable phase.
+   `Hit chance` and `DPS` must remain numeric rather than changing to `Target
+   data unavailable` as its NPC ID changes.
+2. Confirm the retained target remains `Phosani's Nightmare` through phase
+   changes and that the displayed calculation uses 150 Defence, 150 Magic,
+   3,200 Hitpoints, and +40 Crush defence before tracked reductions.
+3. Attack a Phosani totem. The totem IDs are intentionally marked ambiguous
+   because the same IDs are documented with different Hitpoints for the normal
+   Nightmare and Phosani encounters. Combat Insight must say `Target variant
+   needed` rather than guessing.
+4. If available, select an alternate Akkha phase and Vampyre Snail. Both must
+   produce supported target data. Vampyre Snail should use 300 Defence and 500
+   Hitpoints.
+5. Recheck an ordinary target such as Scurrius after the new snapshot loads.
+   Existing calculations and attributes must remain unchanged.
 
 ## HUD modes and settings
 
@@ -227,6 +327,90 @@ available and keep the ordinary basic-attack rows visible for comparison.
    eight-tick timer finishes. `On hit` should also mention the 25 Hitpoint heal.
 5. Confirm none of these four specials changes the Defence infobox, Target
    Magic, or Magic Defence rows.
+
+## Special attacks: Wave 2A
+
+Use Advanced mode with all four special rows enabled. Keep the ordinary max
+hit visible so each special can be compared with its base attack.
+
+1. Equip a Crimson kisten. `Spec chance` must be the chance that at least one
+   of four independent accuracy rolls succeeds against Crush defence. `Spec
+   max` should be 170% of the ordinary maximum without subtracting one, which
+   matches current live behaviour. On a guaranteed-hit target, the calculation
+   must use the four-success range of 130% through 170%.
+2. Select a Stab style on the Crimson kisten, if available. Its player attack
+   roll should use the selected Stab attack bonus, while the target roll still
+   uses Crush defence. Switch to a Crush style and confirm the player roll
+   changes appropriately.
+3. Equip a Dragon longsword and compare Stab with Slash. Its accuracy has no
+   special multiplier, its maximum is 25% higher, and both styles roll against
+   target Slash defence while retaining the selected offensive attack bonus.
+4. Equip a Dragon mace. Its special uses 25% increased accuracy, 50% increased
+   damage, and target Crush defence. Equip a Dragon sword and confirm 25%
+   increased accuracy and damage against target Stab defence.
+5. Equip an Abyssal dagger variant. `Spec max` should show two equal hits at
+   85% of the ordinary maximum. `Spec chance` is one shared accuracy roll, so
+   either both hits are accurate or both miss; it must not be displayed as the
+   chance that either of two independent rolls succeeds.
+6. Equip a charged Toxic blowpipe or Blazing blowpipe with the configured dart.
+   The special should double accuracy, increase maximum damage by 50%, and say
+   it heals half the damage dealt.
+7. Equip a charged Webweaver bow. It should show four equal hits, each rounded
+   up to 40% of the ordinary maximum, with doubled independent accuracy rolls.
+   `Spec chance` means at least one of the four arrows succeeds. `On hit` must
+   state that conditional poison damage is not included in the average.
+8. Equip a Magic shortbow and Magic shortbow (i) with at least two arrows. Both
+   fire two independent arrows with a 10/7 accuracy multiplier. Their custom
+   maximum must use visible Ranged level plus 10 and the arrows' Ranged Strength
+   only, ignoring prayer, Void, Slayer, Salve, and other gear damage bonuses.
+   Removing the second arrow must show `Equip 2 arrows`.
+9. Against a target with flat armour, verify Abyssal dagger, Webweaver, and
+   Magic shortbow transform each hitsplat separately. Crimson kisten has one
+   final hitsplat, so flat armour applies once after its success-count range is
+   selected.
+10. Confirm ordinary max hit, hit chance, and DPS remain ordinary-attack values
+    for every weapon in this section.
+
+## Special attacks: Wave 2B ranged follow-up
+
+Keep Advanced mode and all four special rows enabled. These weapons do not
+alter tracked NPC Defence, Magic, or Magic Defence.
+
+1. Equip a charged Rosewood blowpipe and select its stored dart in Calculation
+   inputs. Its current Rapid Burst special should show two equal hits using
+   ordinary per-dart accuracy and damage. `Spec chance` is the chance that at
+   least one of the two independent darts succeeds. It must not retain the
+   removed 20% accuracy penalty or 10% damage bonus.
+2. Equip Dragon knives or a poisoned variant. The special should show two
+   equal, independent hits with ordinary accuracy and maximum damage for each
+   knife.
+3. Equip a Magic longbow and then a Magic comp bow with arrows. Both should
+   show a guaranteed single hit. Their custom maximum uses visible Ranged
+   level plus 10 and the arrow's Ranged Strength only, ignoring prayer, Void,
+   Slayer, Salve, and other equipment damage bonuses.
+4. Remove the arrows while either Magic longbow variant is equipped. The
+   special maximum must change to `Equip arrows` rather than guessing.
+5. Against a target with flat armour, confirm Rosewood blowpipe and Dragon
+   knife transform each hitsplat separately.
+6. Confirm the ordinary max hit, hit chance, and DPS rows remain basic-attack
+   values for all three new weapon families.
+
+## Major-boss coverage audit
+
+The automated roster checks 226 current IDs spanning Nex, God Wars, all three
+released raids, DT2 bosses, Wilderness and Slayer bosses, the Moons, Sol
+Heredit, Hueycoatl, the Royal Titans, Yama, Doom of Mokhaiotl, Maggot King,
+Lowerniel Drakan, and other major encounters.
+
+1. If available, select Nex during each phase. All five Nex IDs should remain
+   supported and must not show `Target data unavailable` or `Target variant
+   needed`.
+2. Do not treat `Target variant needed` as a missing-ID failure. Yama, Doom of
+   Mokhaiotl, Maggot King, some awakened DT2 forms, Eclipse Moon's clone, and
+   two Warden phases reuse an NPC ID while changing combat stats. Wave 2A
+   deliberately refuses to guess for those cases.
+3. Report `Target data unavailable` as an actual coverage failure and include
+   the target name, encounter phase, and a screenshot.
 
 ## Player-Owned House combat dummies
 

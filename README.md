@@ -37,6 +37,20 @@ Combat Insight retains your last confirmed combat target between repeated kills.
 
 The configuration sections match the HUD modes, making it clear which rows are available in Minimal, Standard, and Advanced mode. Separate target-display settings control Defence and Magic-related effects. The Magic infobox and Magic HUD rows appear only while the current combat style is Magic.
 
+The HUD section also contains three appearance controls:
+
+- **Compact HUD** uses narrower default widths and smaller outer padding while
+  preserving row order and right-aligned values. Turn it off for classic spacing.
+- **Quiet HUD colors** makes routine values neutral. Warnings and max-hit change
+  flashes retain their colors; separate Defence/Magic infobox colors are unchanged.
+- **Background style** offers Custom color, Subtle, and Text only. Custom color
+  remains the default and restores your saved background, including its opacity.
+
+No row selections are reset. If you manually resized the overlay, that width
+takes precedence over automatic mode widths; use RuneLite's overlay reset option
+to return to automatic sizing. Long unavailable-status messages can wrap, keeping
+the reason visible. The proposed hold-to-show-details shortcut is not included.
+
 ## Understanding the overlay
 
 ### Max hit and Max split
@@ -79,7 +93,7 @@ The ordinary `Max hit`, `Hit chance`, and `DPS` rows still describe basic attack
 
 ## Supported special attacks
 
-Version 0.4.0 supports:
+Version 0.5.0 supports:
 
 - Dragon warhammer
 - Elder maul
@@ -89,8 +103,6 @@ Version 0.4.0 supports:
 - Voidwaker
 - Dragon dagger and its poisoned variants
 - Dark bow, including dragon-arrow and other-arrow special behavior
-
-
 - Tonalztics of ralos, including its two hits and the first hit's effect on the second accuracy roll
 - Eye of ayak
 - Accursed sceptre and Accursed sceptre (a)
@@ -98,14 +110,26 @@ Version 0.4.0 supports:
 - Arclight
 - Emberlight
 - Seercull
-
-
 - Armadyl godsword
 - Saradomin godsword
 - Zamorak godsword
 - Ancient godsword, including its conditional delayed damage
+- Crimson kisten, including all four independent Crush rolls and its success-count damage ranges
+- Dragon longsword
+- Dragon mace
+- Dragon sword
+- Abyssal dagger, including its shared accuracy roll and two hits
+- Toxic blowpipe and its Blazing ornament variant
+- Webweaver bow, including four independent doubled-accuracy hits
+- Magic shortbow and Magic shortbow (i), including their custom maximum-hit formula
+- Rosewood blowpipe, including its current two-dart special with ordinary accuracy and damage
+- Dragon knives and poisoned variants, including two independent hits
+- Magic longbow and Magic comp bow, including their guaranteed custom-formula hit
 
 Advanced mode can show average special damage and a short on-hit summary. `Spec chance` says `Guaranteed` only when the special cannot miss; non-guaranteed multi-roll chances never round up to `100.0%`.
+
+Webweaver bow average special damage includes its four direct hits but not its
+conditional poison damage; the on-hit row makes that exclusion explicit.
 
 Burning claws average damage includes expected burn damage from that special when the target has room below the five-burn cap. Existing burns can lower the damage that is actually added.
 
@@ -120,6 +144,56 @@ Natural NPC Defence and Magic recovery is estimated at one level per 100 game ti
 Ancient godsword `Spec max` and `Avg spec dmg` include its delayed 25 damage. Those values assume the target remains within five tiles until the eight-tick timer finishes. The on-hit row identifies the delay and matching 25 Hitpoint heal.
 
 Dizana's quiver ammunition is read from RuneLite's live second-slot item and quantity values. Combat Insight selects ammo compatible with the current weapon, prioritises compatible ammo in the normal slot, and applies the charged or blessed quiver's hidden accuracy and Ranged Strength bonuses only to eligible arrows and bolts.
+
+## NPC combat data
+
+Version 0.5.0 contains 3,976 combat NPC IDs generated from
+the OSRS Wiki's complete `id` lists, rather than keeping only the first ID from
+each monster record. This includes all 11 attackable Phosani's Nightmare IDs
+and all five Nex IDs, plus alternate IDs used for boss phases,
+transformations, quest instances, and duplicate spawns.
+
+An automated major-boss roster covers 226 standard-game IDs across legacy
+bosses, God Wars, Slayer bosses, Wilderness bosses, modern solo encounters,
+and all three released raids. The roster checks that every audited ID remains
+present whenever the generated snapshot is updated.
+
+The audit found 1,140 IDs absent from version 0.4.0. Of those, 1,135 were
+alternate live IDs belonging to an otherwise-present monster record, while 5
+belonged to entirely absent records. Those IDs cover 302 named monsters or
+bosses and 486 distinct stat variants.
+
+Thirty IDs are reused by the game or Wiki data for statistically
+different variants that cannot be distinguished safely by NPC ID alone. They
+remain explicitly marked as ambiguous so Combat Insight shows `Target variant
+needed` instead of silently choosing incorrect stats.
+
+The September 25 raid review refreshes 160 ToB and CoX combat IDs and adds 20
+IDs beyond Wave 2B: nine unique CoX Challenge Mode IDs and eleven ToB phase/add
+IDs. Normal, Entry and Hard Mode ToB records are included. Presence of a record
+does not mean every encounter mechanic is modelled.
+
+### Raid inputs and limitations
+
+Before raiding, expand **Raid inputs** in Combat Insight's configuration. Set
+CoX party size, Challenge Mode, highest party Combat and Hitpoints levels, and
+average Mining level. Set ToB starting party size, including dead players.
+These values are manual inputs; they are not detected from your team.
+
+CoX Defence, Magic and HP are scaled before locally tracked stat reductions.
+ToB scales HP only. Maiden's phase thresholds no longer replace her full HP-bar
+maximum. Changing raid inputs clears tracked reductions so old and new scaling
+cannot be mixed. Reductions caused by teammates remain untracked.
+
+Nylocas colour/style restrictions are enforced for normal, Entry and Hard Mode
+waves and bosses. Damage and DPS are explicitly unavailable for Verzik P1,
+Guardians, Tekton with Magic, Vasa's crystal with Magic, Olm parts with affected
+off-styles, and Ice demon with non-fire attacks. Their special damage transforms
+are not implemented in this update; Demonbane at Ice demon is also conservatively
+withheld. Basic hit chance remains available where the accuracy model applies.
+Invulnerability windows, movement downtime, boss healing, and all other scripted
+phase effects are not a complete fight simulation. Entry Verzik's red Nylocas
+has unknown bundled HP and should not display a fabricated maximum.
 
 ## Player-Owned House combat dummies
 
@@ -145,7 +219,7 @@ Combat Insight shows a notice when a mechanic cannot yet be calculated reliably.
 - Chinchompa multi-target attacks
 - Venator bow bounces
 - Tonalztics of ralos ordinary multi-hit attacks; its special attack is supported
-- Some location, phase, charge, stack, raid, or NPC-variant effects
+- Some location, charge, stack, raid, or same-ID NPC-variant effects
 
 ## Troubleshooting
 

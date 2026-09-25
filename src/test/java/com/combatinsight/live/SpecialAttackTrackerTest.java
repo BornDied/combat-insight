@@ -12,6 +12,22 @@ import static org.junit.Assert.assertTrue;
 public class SpecialAttackTrackerTest
 {
 	@Test
+	public void raidInputChangesRebaseStatsAndClearOldDrains()
+	{
+		SpecialAttackTracker tracker = new SpecialAttackTracker();
+		NPC target = npc(7540, "Tekton");
+		tracker.setRaidScaling(new RaidScaling(1, true, 126, 99, 99, 3));
+		tracker.resetEnergy(1000);
+		assertTrue(tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 1));
+		assertTrue(tracker.onHitsplat(target, 20, 2));
+		assertEquals(173, tracker.getTargetEffects(target, 2).getCurrentDefence());
+		tracker.setRaidScaling(new RaidScaling(1, true, 126, 99, 99, 3));
+		assertEquals(173, tracker.getTargetEffects(target, 2).getCurrentDefence());
+		tracker.setRaidScaling(new RaidScaling(1, false, 126, 99, 99, 3));
+		assertEquals(205, tracker.getTargetEffects(target, 2).getCurrentDefence());
+	}
+
+	@Test
 	public void energyDropAndNextMatchingHitsplatApplyTheEffect()
 	{
 		SpecialAttackTracker tracker = new SpecialAttackTracker();

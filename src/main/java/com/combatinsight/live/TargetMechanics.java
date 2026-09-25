@@ -82,6 +82,12 @@ final class TargetMechanics
 
 	static boolean isImmune(int npcId, AttackType attackType)
 	{
+		int nyloStyle = nylocasStyle(npcId);
+		if (nyloStyle != 0)
+		{
+			return nyloStyle == 1 ? !attackType.isMelee()
+				: nyloStyle == 2 ? !attackType.isRanged() : attackType != AttackType.MAGIC;
+		}
 		if (attackType.isMelee())
 		{
 			return MELEE_IMMUNE.contains(npcId);
@@ -91,6 +97,24 @@ final class TargetMechanics
 			return RANGED_IMMUNE.contains(npcId);
 		}
 		return attackType == AttackType.MAGIC && MAGIC_IMMUNE.contains(npcId);
+	}
+
+	/** 1 = melee, 2 = ranged, 3 = magic; IDs track each live colour change. */
+	private static int nylocasStyle(int id)
+	{
+		if (id >= 8342 && id <= 8353) return (id - 8342) % 3 + 1;
+		if (id >= 10774 && id <= 10785) return (id - 10774) % 3 + 1;
+		if (id >= 10791 && id <= 10802) return (id - 10791) % 3 + 1;
+		if (id >= 8381 && id <= 8383) return id - 8380;
+		if (id >= 10841 && id <= 10843) return id - 10840;
+		if (id >= 10858 && id <= 10860) return id - 10857;
+		switch (id)
+		{
+			case 8355: case 10787: case 10804: case 10808: return 1;
+			case 8357: case 10789: case 10806: case 10810: return 2;
+			case 8356: case 10788: case 10805: case 10809: return 3;
+			default: return 0;
+		}
 	}
 
 	static boolean isNonSalamanderMeleeImmune(int npcId)
