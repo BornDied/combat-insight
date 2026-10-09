@@ -1,5 +1,6 @@
 package com.combatinsight.live;
 
+import com.combatinsight.BuildInfo;
 import com.combatinsight.calculation.*;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -32,9 +33,9 @@ public class CalculationInputNotesTest
         assertTrue(CalculationInputNotes.forSelection(CombatStyleOverride.AUTO,
             MagicSpell.NOT_SET, CombatStyle.MELEE, true, true, BlowpipeDart.ADAMANT).isEmpty());
     }
-    @Test public void emptyDiagnosticIdentifiesCandidateAndDoesNotShowHudMarker()
+    @Test public void emptyDiagnosticIdentifiesBuildAndDoesNotShowHudMarker()
     {
-        assertTrue(LiveCombatSnapshot.empty().diagnosticReport().contains("0.7.0-local.1"));
+        assertTrue(LiveCombatSnapshot.empty().diagnosticReport().startsWith("Combat Insight " + BuildInfo.VERSION + " diagnostic\n"));
         assertFalse(LiveCombatSnapshot.empty().hasInputNotices());
     }
 

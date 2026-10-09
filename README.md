@@ -1,6 +1,6 @@
 # Combat Insight
 
-Local 0.7.0 test candidate: see [setup and testing](TESTING-0.7.0.md) and [coverage audit](docs/research/070-coverage.md). Includes the earlier 0.6 calculation fixes; not published.
+Version 0.7.0 includes the earlier 0.6 calculation fixes. See the [testing checklist](TESTING-0.7.0.md) and [coverage audit](docs/research/070-coverage.md). Release builds identify themselves as `0.7.0` in copied diagnostics. Availability in RuneLite depends on the Plugin Hub update being reviewed and merged.
 
 Combat Insight is a RuneLite plugin for viewing live combat calculations while playing Old School RuneScape.
 
