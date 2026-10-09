@@ -76,6 +76,12 @@ public final class LiveTargetTracker
 		retainedTargetName = "";
 	}
 
+    /** Follow transformations of the already confirmed actor, without selecting a new NPC. */
+    public void refreshActiveIdentity()
+    {
+        if (activeTarget != null && !activeTarget.isDead()) confirmCombatTarget(activeTarget);
+    }
+
 	public int getRetainedTargetId()
 	{
 		return retainedTargetId;

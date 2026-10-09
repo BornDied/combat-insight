@@ -10,7 +10,37 @@ public final class SpecialAttackTracker
 
 	private final TargetEffectTracker targetEffects = new TargetEffectTracker();
 	private int previousEnergy = -1;
+    private DefenceTrackingMode trackingMode = DefenceTrackingMode.LOCAL;
+
+    public void setTrackingMode(DefenceTrackingMode next)
+    {
+        if (next == null) next = DefenceTrackingMode.LOCAL;
+        if (trackingMode != next)
+        {
+            clearTrackedEffects();
+            trackingMode = next;
+        }
+    }
+
+    /** Reset estimates without losing the current special-energy baseline. */
+    public void clearTrackedEffects()
+    {
+        pendingSpecial = null;
+        targetEffects.clearReductions();
+    }
 	private PendingSpecial pendingSpecial;
+	private EncounterMode encounterMode = EncounterMode.AUTO;
+
+    public void setEncounterMode(EncounterMode next)
+    {
+        if (encounterMode != next)
+        {
+            pendingSpecial = null;
+            encounterMode = next;
+            targetEffects.setEncounterMode(next);
+        }
+    }
+
 	private RaidScaling raidScaling = RaidScaling.DEFAULT;
 
 	public void setRaidScaling(RaidScaling next)
@@ -42,7 +72,9 @@ public final class SpecialAttackTracker
 		}
 
 		previousEnergy = specialEnergy;
-		pendingSpecial = weapon != null && weapon.hasTrackedTargetEffect()
+        // Attempt history controls conditional spec accuracy, not target reductions.
+        targetEffects.recordSpecialAttempt(weapon, target);
+		pendingSpecial = trackingMode == DefenceTrackingMode.LOCAL && weapon != null && weapon.hasTrackedTargetEffect()
 			? new PendingSpecial(weapon, target, gameTick + PENDING_TIMEOUT_TICKS)
 			: null;
 		return pendingSpecial != null;
@@ -93,7 +125,10 @@ public final class SpecialAttackTracker
 
 	public TargetEffectSnapshot getTargetEffects(NPC target, int gameTick)
 	{
-		return targetEffects.snapshot(target, gameTick);
+        TargetEffectSnapshot result = targetEffects.snapshot(target, gameTick);
+        return trackingMode == DefenceTrackingMode.OFF
+            ? result.withTektonHistory(result.isTektonDefenceSpecialAttempted(), result.isTektonDefenceSpecialAttempted())
+            : result;
 	}
 
 	public void remove(NPC target)

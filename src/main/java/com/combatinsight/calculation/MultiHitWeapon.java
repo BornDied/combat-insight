@@ -52,6 +52,14 @@ public enum MultiHitWeapon
 		boolean guaranteedMaximum,
 		boolean fullBloodMoonSet)
 	{
+        return calculate(minimumHit, maximumHit, flatArmour, hitChance, targetSize,
+            attackSpeedTicks, guaranteedMaximum, fullBloodMoonSet, HitTransform.IDENTITY);
+    }
+
+    public MultiHitResult calculate(int minimumHit, int maximumHit, int flatArmour,
+        double hitChance, int targetSize, int attackSpeedTicks, boolean guaranteedMaximum,
+        boolean fullBloodMoonSet, HitTransform transform)
+    {
 		int maximum = Math.max(0, maximumHit);
 		int minimum = Math.max(0, Math.min(minimumHit, maximum));
 		double chance = Math.max(0.0, Math.min(1.0, hitChance));
@@ -67,8 +75,8 @@ public enum MultiHitWeapon
 		for (int i = 0; i < rollMaximums.length; i++)
 		{
 			int rollMaximum = Math.max(minimum, rollMaximums[i]);
-			transformedMaximums[i] = DamageRoll.maximumSuccessfulHit(rollMaximum, flatArmour);
-			averageHits[i] = DamageRoll.averageSuccessfulHit(minimum, rollMaximum, flatArmour);
+			transformedMaximums[i] = transform.maximum(rollMaximum, flatArmour);
+			averageHits[i] = transform.average(minimum, rollMaximum, flatArmour);
 		}
 
 		double expectedDamage;

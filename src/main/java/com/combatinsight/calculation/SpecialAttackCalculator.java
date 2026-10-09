@@ -27,10 +27,34 @@ public final class SpecialAttackCalculator
 		int specialMaximumHitOverride,
 		boolean boneDaggerGuaranteed)
 	{
+        return calculate(weapon, baseMaximumHit, baseMaximumAvailable, baseAttackRoll, targetDefenceRoll, targetAvailable, flatArmour, targetImmune, guaranteedAccuracy, guaranteedMaximum, twoArrowsAvailable, dragonArrows, arrowAvailable, targetDefenceLevel, targetMagicLevel, targetDefenceFloor, specialMaximumHitOverride, boneDaggerGuaranteed, false);
+    }
+
+	public static SpecialAttackResult calculate(
+		SpecialAttackWeapon weapon,
+		int baseMaximumHit,
+		boolean baseMaximumAvailable,
+		int baseAttackRoll,
+		int targetDefenceRoll,
+		boolean targetAvailable,
+		int flatArmour,
+		boolean targetImmune,
+		boolean guaranteedAccuracy,
+		boolean guaranteedMaximum,
+		boolean twoArrowsAvailable,
+		boolean dragonArrows,
+		boolean arrowAvailable,
+		int targetDefenceLevel,
+		int targetMagicLevel,
+		int targetDefenceFloor,
+		int specialMaximumHitOverride,
+		boolean boneDaggerGuaranteed, boolean seekingArrows)
+	{
 		if (weapon == null)
 		{
 			return SpecialAttackResult.noWeapon();
 		}
+		if (weapon == SpecialAttackWeapon.ZARYTE_CROSSBOW || ContextSpecialAttack.supports(weapon)) return SpecialAttackResult.unavailable(weapon, "Encounter context required");
 		if (!baseMaximumAvailable)
 		{
 			return SpecialAttackResult.unavailable(weapon, "Max hit unavailable");
@@ -77,7 +101,7 @@ public final class SpecialAttackCalculator
 			targetDefenceLevel,
 			targetMagicLevel,
 			targetDefenceFloor,
-			specialMaximumHitOverride);
+			specialMaximumHitOverride, seekingArrows ? 3 : 1);
 
 		double successfulAttackChance = successfulAttackChance(weapon, perRollChance);
 		String targetStatus = targetAvailable ? "" : "Select target";
@@ -205,7 +229,7 @@ public final class SpecialAttackCalculator
 		int targetDefenceLevel,
 		int targetMagicLevel,
 		int targetDefenceFloor,
-		int specialMaximumHitOverride)
+		int specialMaximumHitOverride, int accurateFloor)
 	{
 		switch (weapon)
 		{
@@ -283,7 +307,7 @@ public final class SpecialAttackCalculator
 					Math.max(0, specialMaximumHitOverride),
 					0,
 					flatArmour,
-					1.0);
+					1.0, accurateFloor);
 			case CRIMSON_KISTEN:
 				return crimsonKisten(baseMaximumHit, flatArmour, perRollChance);
 			case DRAGON_LONGSWORD:
@@ -321,7 +345,7 @@ public final class SpecialAttackCalculator
 					Math.max(0, specialMaximumHitOverride),
 					0,
 					flatArmour,
-					perRollChance);
+					perRollChance, accurateFloor);
 			case ROSEWOOD_BLOWPIPE:
 			case DRAGON_KNIFE:
 				return independentHits(
@@ -335,7 +359,7 @@ public final class SpecialAttackCalculator
 					Math.max(0, specialMaximumHitOverride),
 					0,
 					flatArmour,
-					1.0);
+					1.0, accurateFloor);
 			case BONE_DAGGER:
 			case ARCLIGHT:
 			case EMBERLIGHT:
@@ -472,6 +496,22 @@ public final class SpecialAttackCalculator
 		}
 		return new DamageSummary(maximumHits, oneHit.expectedDamage * hitCount);
 	}
+
+    private static DamageSummary singleHit(int maximum, int minimum, int armour, double chance, int floor)
+    {
+        if (floor <= 1) return singleHit(maximum,minimum,armour,chance);
+        HitTransform transform = HitTransform.IDENTITY.withAccurateFloor(floor);
+        return new DamageSummary(new int[]{transform.maximum(maximum,armour)},
+            transform.average(minimum,maximum,armour)*chance);
+    }
+
+    private static DamageSummary independentHits(int count, int maximum, int minimum, int armour, double chance, int floor)
+    {
+        DamageSummary one = singleHit(maximum,minimum,armour,chance,floor);
+        int[] hits = new int[count];
+        java.util.Arrays.fill(hits,one.maximumHits[0]);
+        return new DamageSummary(hits,one.expectedDamage*count);
+    }
 
 	private static DamageSummary dragonClaws(
 		int maximumHit,

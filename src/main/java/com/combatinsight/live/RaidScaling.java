@@ -13,10 +13,20 @@ public final class RaidScaling
 	private final int highestHitpoints;
 	private final int averageMining;
 	private final int tobSize;
+    private final String provenance;
+    private final String theatreProvenance;
 
 	public RaidScaling(int coxSize, boolean challengeMode, int highestCombat,
 		int highestHitpoints, int averageMining, int tobSize)
 	{
+        this(coxSize,challengeMode,highestCombat,highestHitpoints,averageMining,tobSize,"manual","manual");
+    }
+
+    private RaidScaling(int coxSize, boolean challengeMode, int highestCombat,
+        int highestHitpoints, int averageMining, int tobSize, String provenance, String theatreProvenance)
+    {
+        this.provenance=provenance;
+        this.theatreProvenance=theatreProvenance;
 		this.coxSize = clamp(coxSize, 1, 100);
 		this.challengeMode = challengeMode;
 		this.highestCombat = clamp(highestCombat, 60, 126);
@@ -24,6 +34,22 @@ public final class RaidScaling
 		this.averageMining = clamp(averageMining, 1, 99);
 		this.tobSize = clamp(tobSize, 1, 5);
 	}
+
+    RaidScaling withObservedChambers(int size, boolean cm, int combat)
+    { return new RaidScaling(size,cm,combat>=60 && combat<=126 ? combat : highestCombat,highestHitpoints,averageMining,tobSize, "observed party/mode; highest CB " + (combat>=60 && combat<=126 ? "observed" : "manual fallback"), theatreProvenance); }
+
+    public RaidScaling withObservedTheatre(int size)
+    {
+        if (size < 1 || size > 5) return this;
+        return new RaidScaling(coxSize, challengeMode, highestCombat, highestHitpoints,
+            averageMining, size, provenance, "observed roster (verify starting size)");
+    }
+
+    public String inputSummary()
+    {
+        return "CoX " + provenance + ": size="+coxSize+", CM="+challengeMode+", CB="+highestCombat
+            +"; manual team HP="+highestHitpoints+", Mining="+averageMining+"; ToB " + theatreProvenance + " size="+tobSize;
+    }
 
 	public TargetProfile apply(TargetProfile base)
 	{
@@ -113,10 +139,10 @@ public final class RaidScaling
 	{
 		if (target == null) return "";
 		if (target.hasAttribute("xerician"))
-			return "CoX input: " + coxSize + " players, "
+			return "CoX " + provenance + ": " + coxSize + " players, "
 				+ (challengeMode || target.hasAttribute("cox_cm") ? "CM" : "Normal")
 				+ "; team stats " + highestCombat + " CB / " + highestHitpoints + " HP";
-		if (target.hasAttribute("theatre_of_blood")) return "ToB input: " + tobSize + " players; local drains only";
+		if (target.hasAttribute("theatre_of_blood")) return "ToB " + theatreProvenance + ": " + tobSize + " players";
 		return "";
 	}
 

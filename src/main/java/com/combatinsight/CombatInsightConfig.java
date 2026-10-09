@@ -9,16 +9,57 @@ import com.combatinsight.calculation.MagicSpell;
 import com.combatinsight.calculation.TargetDefenceDisplay;
 import com.combatinsight.calculation.TargetMagicDisplay;
 import java.awt.Color;
+import com.combatinsight.live.EncounterMode;
+import com.combatinsight.live.DefenceTrackingMode;
 import net.runelite.client.config.Alpha;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
 import net.runelite.client.config.ConfigSection;
 import net.runelite.client.config.Range;
+import net.runelite.client.config.Keybind;
 
 @ConfigGroup("combatinsight")
 public interface CombatInsightConfig extends Config
 {
+    @ConfigSection(name = "Target reductions", description = "Calculation tracking; separate from target row and infobox visibility", position = 8, closedByDefault = true)
+    String trackingSection = "trackingSection";
+
+    @ConfigItem(keyName = "defenceTrackingMode", name = "Defence tracking mode",
+        description = "Track my reductions estimates only your supported specials. Off uses base target stats. This does not import Party Hub reductions. Changing mode clears old estimates. Alt-right-click the HUD to clear tracked reductions.",
+        position = 0, section = trackingSection)
+    default DefenceTrackingMode defenceTrackingMode() { return DefenceTrackingMode.LOCAL; }
+
+    @ConfigItem(keyName = "dt2EncounterMode", name = "DT2 encounter mode",
+        description = "Auto detects normal or Awakened from the active boss combat level. Quest NPCs remain separate. Vardorvis requires visible health.",
+        position = 30, section = calculationSection)
+    default EncounterMode dt2EncounterMode() { return EncounterMode.AUTO; }
+
+    @ConfigItem(keyName = "showInputMarker", name = "Show input notice marker",
+        description = "Add * to the Max hit label when calculation notices or unavailable results need attention. Read notices in Advanced mode (or hold the details key), or copy diagnostics from the HUD menu. Adds no row; no marker is not a guarantee of full mechanic support.",
+        position = 31, section = hudSection)
+    default boolean showInputMarker() { return false; }
+
+    @ConfigItem(keyName = "holdDetailsKey", name = "Hold for Advanced details",
+        description = "While held, show your enabled Advanced rows. Release restores your selected mode. Unbound by default.",
+        position = 30, section = hudSection)
+    default Keybind holdDetailsKey() { return Keybind.NOT_SET; }
+
+    @ConfigItem(keyName = "kandarinHardDiary", name = "Kandarin hard diary",
+        description = "Enable the 10% relative enchanted-bolt proc bonus after completing the hard diary.",
+        position = 31, section = calculationSection)
+    default boolean kandarinHardDiary() { return false; }
+
+    @ConfigItem(keyName = "automaticTobInputs", name = "Observe ToB party (experimental)",
+        description = "Opt-in: use the largest visible in-raid roster, including dead players. Enable before entering and verify starting size in diagnostics. Reconnecting or enabling mid-raid can miss departed players; leave off and set starting size manually in that case. No Party Hub data is read.",
+        position = 7, section = raidSection)
+    default boolean automaticTobInputs() { return false; }
+
+    @ConfigItem(keyName = "automaticCoxInputs", name = "Observe CoX party and mode",
+        description = "Use valid in-raid scaled party size, Challenge Mode and highest combat level. Disable to use manual inputs. HP and Mining remain manual.",
+        position = 6, section = raidSection)
+    default boolean automaticCoxInputs() { return true; }
+
 	@ConfigSection(
 		name = "HUD",
 		description = "Basic overlay visibility, layout, and timing",
@@ -78,14 +119,14 @@ public interface CombatInsightConfig extends Config
 	String raidSection = "raidSection";
 
 	@Range(min = 1, max = 100)
-	@ConfigItem(keyName = "coxPartySize", name = "CoX scaled party size", description = "Include extra scaling players. Applies only to Chambers targets.", position = 0, section = raidSection)
+	@ConfigItem(keyName = "coxPartySize", name = "CoX party size (fallback)", description = "Manual fallback when automatic CoX observation is off or unavailable. Include extra scaling players.", position = 0, section = raidSection)
 	default int coxPartySize() { return 1; }
 
-	@ConfigItem(keyName = "coxChallengeMode", name = "CoX Challenge Mode", description = "Enable for CM, including rooms whose NPC IDs are shared with normal mode", position = 1, section = raidSection)
+	@ConfigItem(keyName = "coxChallengeMode", name = "CoX CM (fallback)", description = "Manual fallback when automatic CoX observation is off or unavailable; enable for CM.", position = 1, section = raidSection)
 	default boolean coxChallengeMode() { return false; }
 
 	@Range(min = 60, max = 126)
-	@ConfigItem(keyName = "coxHighestCombat", name = "CoX highest combat level", description = "Highest combat level in the party at raid start; 126 assumes a max-combat teammate", position = 2, section = raidSection)
+	@ConfigItem(keyName = "coxHighestCombat", name = "CoX highest combat (fallback)", description = "Manual fallback when highest combat is not observed. Highest combat level at raid start; 126 assumes a max-combat teammate.", position = 2, section = raidSection)
 	default int coxHighestCombat() { return 126; }
 
 	@Range(min = 1, max = 99)
@@ -472,7 +513,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "magicSpell",
 		name = "Manual magic spell",
-		description = "Spell used for max hit when casting from a spellbook; powered staves are detected automatically",
+		description = "Spell damage when casting or Combat type is forced to Magic. A saved spell never overrides a detected melee style; powered staves use their own spell.",
 		position = 2,
 		section = calculationSection
 	)

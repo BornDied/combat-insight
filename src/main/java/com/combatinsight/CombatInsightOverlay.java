@@ -13,6 +13,8 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayMenuEntry;
+import net.runelite.api.MenuAction;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
@@ -39,6 +41,8 @@ public class CombatInsightOverlay extends OverlayPanel
 		setPriority(OverlayPriority.HIGH);
 		setMovable(true);
 		setResettable(true);
+        getMenuEntries().add(new OverlayMenuEntry(MenuAction.RUNELITE_OVERLAY, "Copy diagnostic snapshot", "Combat Insight"));
+        getMenuEntries().add(new OverlayMenuEntry(MenuAction.RUNELITE_OVERLAY, "Clear tracked reductions", "Combat Insight"));
 	}
 
 	@Override
@@ -51,7 +55,7 @@ public class CombatInsightOverlay extends OverlayPanel
 		}
 
 		LiveCombatSnapshot snapshot = plugin.getSnapshot();
-		HudDisplayMode mode = config.displayMode();
+		HudDisplayMode mode = plugin.effectiveHudMode(config.displayMode());
 		boolean compact = config.compactHud();
 		panelComponent.setBackgroundColor(config.hudBackgroundMode().resolve(config.backgroundColor()));
 		int width = mode == HudDisplayMode.MINIMAL ? (compact ? 145 : 155)
@@ -68,7 +72,7 @@ public class CombatInsightOverlay extends OverlayPanel
 		if (config.showMaxHit())
 		{
 			addLine(
-				"Max hit",
+				config.showInputMarker() && snapshot.hasInputNotices() ? "Max hit *" : "Max hit",
 				snapshot.getMaxHitText(),
 				Color.WHITE,
 				snapshot.isTargetImmune() ? WARNING

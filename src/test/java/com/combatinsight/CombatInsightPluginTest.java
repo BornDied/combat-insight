@@ -73,6 +73,47 @@ public class CombatInsightPluginTest
 		assertTrue(CombatInsightOverlay.shouldShowDefenceBasedRow(true, false));
 	}
 
+    @Test public void sceneLoadingKeepsObservedTheatreRosterButLogoutClearsIt() throws Exception
+    {
+        CombatInsightPlugin plugin = new CombatInsightPlugin();
+        java.lang.reflect.Field field = CombatInsightPlugin.class.getDeclaredField("theatrePartyTracker");
+        field.setAccessible(true);
+        com.combatinsight.live.TheatrePartyTracker tracker = (com.combatinsight.live.TheatrePartyTracker) field.get(plugin);
+        tracker.observe(true,2,new int[]{27,27,27,27,27});
+        net.runelite.api.events.GameStateChanged event = new net.runelite.api.events.GameStateChanged();
+        event.setGameState(net.runelite.api.GameState.LOADING);
+        plugin.onGameStateChanged(event);
+        assertEquals(5,tracker.observe(true,2,new int[]{27,27,27,0,0}));
+        event.setGameState(net.runelite.api.GameState.LOGIN_SCREEN);
+        plugin.onGameStateChanged(event);
+        assertEquals(0,tracker.observe(true,2,new int[5]));
+    }
+
+    @Test public void refreshDuringLoadingDoesNotConsumeUnavailableRaidVarbits() throws Exception
+    {
+        CombatInsightPlugin plugin = new CombatInsightPlugin();
+        java.lang.reflect.Field trackerField = CombatInsightPlugin.class.getDeclaredField("theatrePartyTracker");
+        trackerField.setAccessible(true);
+        com.combatinsight.live.TheatrePartyTracker tracker = (com.combatinsight.live.TheatrePartyTracker) trackerField.get(plugin);
+        tracker.observe(true,2,new int[]{27,27,27,27,27});
+        net.runelite.api.Client client = (net.runelite.api.Client)java.lang.reflect.Proxy.newProxyInstance(
+            net.runelite.api.Client.class.getClassLoader(),new Class<?>[]{net.runelite.api.Client.class},(p,m,a) -> {
+                if(m.getName().equals("getGameState")) return net.runelite.api.GameState.LOADING;
+                if(m.getReturnType()==int.class) return 0;
+                if(m.getReturnType()==boolean.class) return false;
+                return null;
+            });
+        java.lang.reflect.Field clientField = CombatInsightPlugin.class.getDeclaredField("client");
+        clientField.setAccessible(true); clientField.set(plugin,client);
+        java.lang.reflect.Field configField = CombatInsightPlugin.class.getDeclaredField("config");
+        configField.setAccessible(true);configField.set(plugin,new CombatInsightConfig(){
+            @Override public boolean automaticTobInputs(){return true;}
+        });
+        java.lang.reflect.Method refresh = CombatInsightPlugin.class.getDeclaredMethod("refreshSnapshot");
+        refresh.setAccessible(true);refresh.invoke(plugin);
+        assertEquals(5,tracker.observe(true,2,new int[5]));
+    }
+
 	public static void main(String[] args) throws Exception
 	{
 		ExternalPluginManager.loadBuiltin(CombatInsightPlugin.class);

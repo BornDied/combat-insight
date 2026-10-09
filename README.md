@@ -1,5 +1,7 @@
 # Combat Insight
 
+Local 0.7.0 test candidate: see [setup and testing](TESTING-0.7.0.md) and [coverage audit](docs/research/070-coverage.md). Includes the earlier 0.6 calculation fixes; not published.
+
 Combat Insight is a RuneLite plugin for viewing live combat calculations while playing Old School RuneScape.
 
 ## Features
@@ -178,7 +180,7 @@ does not mean every encounter mechanic is modelled.
 Before raiding, expand **Raid inputs** in Combat Insight's configuration. Set
 CoX party size, Challenge Mode, highest party Combat and Hitpoints levels, and
 average Mining level. Set ToB starting party size, including dead players.
-These values are manual inputs; they are not detected from your team.
+CoX party/mode/highest combat can be observed automatically; HP and Mining stay manual. ToB starting size is manual by default, with an experimental opt-in observed-roster setting. Check the input source in diagnostics.
 
 CoX Defence, Magic and HP are scaled before locally tracked stat reductions.
 ToB scales HP only. Maiden's phase thresholds no longer replace her full HP-bar
@@ -206,10 +208,12 @@ Normal dummies do not receive target-specific modifiers. Supported undead, Wilde
 Most information is read automatically. Use the **Calculation inputs** section when RuneLite cannot determine a required value, including:
 
 - The dart stored in a toxic blowpipe
-- A manually cast spell
+- A manually cast spell (select the spell and force Combat type to Magic if the combat tab still has a melee stance)
 - Slayer-task status
 - Tombs of Amascut invocation level
 - A combat-type override for unusual hybrid weapons
+
+A saved manual spell does not switch a detected melee attack to Magic. For manual spellbook casting with a melee stance selected, explicitly set Combat type to Magic, then return it to Automatic when switching back. Powered staves ignore saved spell elemental bonuses.
 
 ## Current limitations
 
@@ -247,3 +251,13 @@ For a special-attack report, also include the special weapon, ammunition, displa
 ## Support
 
 Report bugs and request features in [Combat Insight GitHub Issues](https://github.com/BornDied/combat-insight/issues).
+
+Local 0.6 candidate: Seeking-arrow damage floors and DPS, plus Necklace of rupture equipment support, are included. See `TESTING-0.6.0.md` and `docs/research/seeking-arrows.md` for scope and checks.
+
+## 0.7 input controls
+
+Target reductions → Defence tracking mode selects **Track my reductions** or **Off (base stats)**. This is independent of the Special attack rows / infobox display settings. Off stops applying locally estimated reductions; it does not import another plugin's tracked values. The HUD menu includes **Clear tracked reductions**. Clearing keeps already observed Tekton special-attempt history so the first-special guarantee cannot reappear. With tracking off and no observed attempt, that conditional guarantee is reported as unknown.
+
+HUD → Show input notice marker is off by default. Enabling it adds an asterisk to the existing Max hit label when notices or unavailable results need attention; it adds no row. Read notices in Advanced mode or copy a diagnostic snapshot for full detail. A missing marker does not certify every mechanic.
+
+ToB observation is experimental and off by default. It keeps the largest locally observed valid roster through room loading, includes dead members, and resets when leaving/logout. It cannot reconstruct players who departed before observation began. Use manual starting size after reconnecting or enabling mid-raid.

@@ -1,0 +1,63 @@
+package com.combatinsight.live;
+import com.combatinsight.calculation.*;
+import java.lang.reflect.*;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
+public class SpecialInputRegressionTest
+{
+    @Test public void magicPillarSpecialUsesMeleeDerivedVoidwakerRollThenDoublesIt() throws Exception
+    {
+        SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,9435,43);
+        assertEquals(128,result.getTotalMaximumHit());
+        assertEquals(85.0,result.getExpectedDamage(),1e-12);
+        assertEquals(1.0,result.getHitChance(),1e-12);
+        assertEquals(64,calculate("voidwaker",CombatStyle.MELEE,9425,43).getTotalMaximumHit());
+    }
+    @Test public void forcedWrongStyleDoesNotFeedSpellDamageToMeleeSpecial() throws Exception
+    {
+        SpecialAttackResult result=calculate("dragon dagger",CombatStyle.MAGIC,9425,25);
+        assertFalse(result.isMaximumAvailable());
+    }
+    @Test public void staffMeleeDoesNotFeedMeleeDamageToMagicSpecial() throws Exception
+    {
+        assertFalse(calculate("accursed sceptre",CombatStyle.MELEE,9425,25).isMaximumAvailable());
+    }
+
+    @Test public void unknownTektonHistoryCannotPromiseGuaranteedSpecial() throws Exception
+    {
+        SpecialAttackResult unknown = calculate("dragon warhammer",CombatStyle.MELEE,7540,43);
+        assertFalse(unknown.isAccuracyAvailable());
+        assertTrue(unknown.getHitChanceText().contains("history unknown"));
+    }
+    @Test public void knownTektonAttemptUsesOrdinaryAccuracyAndFreshHistoryKeepsFirstGuarantee() throws Exception
+    {
+        TargetEffectSnapshot base = TargetEffectSnapshot.unmodified(TargetDatabase.find(7540));
+        assertEquals(1.0,calculate("dragon warhammer",CombatStyle.MELEE,7540,43,base).getHitChance(),0.0);
+        SpecialAttackResult later = calculate("dragon warhammer",CombatStyle.MELEE,7540,43,base.withTektonHistory(true,true));
+        assertTrue(later.isAccuracyAvailable());
+        assertTrue(later.getHitChance()<1.0);
+    }
+
+    private SpecialAttackResult calculate(String weapon,CombatStyle combat,int id,int maximum)throws Exception
+    {
+        return calculate(weapon,combat,id,maximum,TargetEffectSnapshot.empty());
+    }
+    private SpecialAttackResult calculate(String weapon,CombatStyle combat,int id,int maximum,TargetEffectSnapshot effects)throws Exception
+    {
+        Object eq=construct("EquipmentState"),pr=construct("PrayerState");set(eq,"weaponNameLower",weapon);
+        Class<?> st=Class.forName(LiveCombatSnapshot.class.getName()+"$StyleState");
+        Constructor<?> c=st.getDeclaredConstructors()[0];c.setAccessible(true);
+        Object style=c.newInstance(combat,combat==CombatStyle.MAGIC?AttackType.MAGIC:AttackType.SLASH,"Aggressive",0,3);
+        for(Method m:LiveCombatSnapshot.class.getDeclaredMethods())if(m.getName().equals("calculateSpecialAttackResult")) {
+            m.setAccessible(true);
+            return (SpecialAttackResult)m.invoke(null,style,eq,pr,id,"Target",EncounterResolver.resolve(id,EncounterContext.UNKNOWN),
+                true,effects,99,99,99,MagicSpell.BLOOD_BLITZ,false,0,maximum,true,-1,false,false,200,false,99);
+        }
+        throw new AssertionError();
+    }
+    private static Object construct(String name)throws Exception
+    {Constructor<?> c=Class.forName(LiveCombatSnapshot.class.getName()+"$"+name).getDeclaredConstructor();c.setAccessible(true);return c.newInstance();}
+    private static void set(Object o,String name,Object v)throws Exception
+    {Field f=o.getClass().getDeclaredField(name);f.setAccessible(true);f.set(o,v);}
+}

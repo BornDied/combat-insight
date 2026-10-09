@@ -186,4 +186,12 @@ public final class TargetProfile
 			lightRangedDefence, standardRangedDefence, heavyRangedDefence,
 			weaknessElement, weaknessSeverity, slayerMonster, attributes, ambiguous);
 	}
+    /** Explicitly resolved DT2 variant; does not mutate the shared database entry. */
+    public TargetProfile withEncounterStats(int defence, int magic, int maximumHitpoints, int slash, boolean unresolved)
+    {
+        return new TargetProfile(id, defence, magic, maximumHitpoints, offensiveMagic,
+            size, flatArmour, stabDefence, slash, crushDefence, magicDefence,
+            lightRangedDefence, standardRangedDefence, heavyRangedDefence,
+            weaknessElement, weaknessSeverity, slayerMonster, attributes, unresolved);
+    }
 }

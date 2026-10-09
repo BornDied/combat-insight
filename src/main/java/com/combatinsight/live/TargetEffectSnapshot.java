@@ -7,7 +7,7 @@ import java.util.Locale;
 public final class TargetEffectSnapshot
 {
 	private static final TargetEffectSnapshot EMPTY = new TargetEffectSnapshot(
-		-1, 0, 0, 0, 0, 0, 0, false, false, false, false);
+		-1, 0, 0, 0, 0, 0, 0, false, false, false, false, false);
 
 	private final int targetId;
 	private final int baseDefence;
@@ -20,6 +20,7 @@ public final class TargetEffectSnapshot
 	private final boolean estimatedDefenceRecovery;
 	private final boolean estimatedMagicRecovery;
 	private final boolean tektonDefenceSpecialAttempted;
+    private final boolean tektonSpecialHistoryKnown;
 
 	TargetEffectSnapshot(
 		int targetId,
@@ -33,7 +34,18 @@ public final class TargetEffectSnapshot
 		boolean estimatedDefenceRecovery,
 		boolean estimatedMagicRecovery,
 		boolean tektonDefenceSpecialAttempted)
+    {
+        this(targetId, baseDefence, currentDefence, baseMagic, currentMagic,
+            baseMagicDefence, currentMagicDefence, trackedEffect, estimatedDefenceRecovery,
+            estimatedMagicRecovery, tektonDefenceSpecialAttempted, true);
+    }
+
+    private TargetEffectSnapshot(int targetId, int baseDefence, int currentDefence,
+        int baseMagic, int currentMagic, int baseMagicDefence, int currentMagicDefence,
+        boolean trackedEffect, boolean estimatedDefenceRecovery, boolean estimatedMagicRecovery,
+        boolean tektonDefenceSpecialAttempted, boolean tektonSpecialHistoryKnown)
 	{
+        this.tektonSpecialHistoryKnown = tektonSpecialHistoryKnown;
 		this.targetId = targetId;
 		this.baseDefence = Math.max(0, baseDefence);
 		this.currentDefence = Math.max(0, currentDefence);
@@ -156,6 +168,15 @@ public final class TargetEffectSnapshot
 	{
 		return estimatedDefenceRecovery || estimatedMagicRecovery;
 	}
+
+    TargetEffectSnapshot withTektonHistory(boolean attempted, boolean known)
+    {
+        return new TargetEffectSnapshot(targetId, baseDefence, currentDefence, baseMagic,
+            currentMagic, baseMagicDefence, currentMagicDefence, trackedEffect,
+            estimatedDefenceRecovery, estimatedMagicRecovery, attempted, known);
+    }
+
+    public boolean isTektonSpecialHistoryKnown() { return tektonSpecialHistoryKnown; }
 
 	public boolean isTektonDefenceSpecialAttempted()
 	{

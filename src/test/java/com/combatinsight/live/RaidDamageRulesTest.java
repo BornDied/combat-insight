@@ -24,4 +24,9 @@ public class RaidDamageRulesTest
 		assertEquals("", RaidDamageRules.unavailableReason(7550, AttackType.MAGIC, false));
 		assertEquals("", RaidDamageRules.unavailableReason(7584, AttackType.MAGIC, true));
 	}
+ @Test public void allDemonbaneStylesBypassIceDemonReduction() {
+  assertTrue(RaidDamageRules.bypassesIceDemon(com.combatinsight.calculation.CombatStyle.MELEE,"emberlight",false,false));
+  assertTrue(RaidDamageRules.bypassesIceDemon(com.combatinsight.calculation.CombatStyle.RANGED,"scorching bow",false,false));
+  assertFalse(RaidDamageRules.bypassesIceDemon(com.combatinsight.calculation.CombatStyle.MELEE,"dragon scimitar",false,false));
+ }
 }

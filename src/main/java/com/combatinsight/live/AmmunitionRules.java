@@ -54,6 +54,12 @@ final class AmmunitionRules
 			&& !weapon.contains("venator bow");
 	}
 
+    static int accurateDamageFloor(String weaponName, String activeAmmoName)
+    {
+        return isCompatible(weaponName, activeAmmoName) && normalize(activeAmmoName).startsWith("seeking ")
+            && isArrow(normalize(activeAmmoName)) ? 3 : 1;
+    }
+
 	private static boolean isCompatible(String weaponName, String ammoName)
 	{
 		String weapon = normalize(weaponName);

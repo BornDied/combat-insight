@@ -105,6 +105,80 @@ public class SpecialAttackTrackerTest
 		assertFalse(tracker.onHitsplat(target, 10, 11));
 	}
 
+    @Test public void dt2ModeChangeClearsDrainsAndPendingSpecial()
+    {
+        SpecialAttackTracker tracker=new SpecialAttackTracker();
+        NPC duke=npc(12191,"Duke Sucellus");
+        tracker.setEncounterMode(EncounterMode.NORMAL);
+        tracker.resetEnergy(1000);
+        tracker.onEnergyChanged(500,SpecialAttackWeapon.DRAGON_WARHAMMER,duke,1);
+        assertTrue(tracker.onHitsplat(duke,20,2));
+        assertEquals(193,tracker.getTargetEffects(duke,2).getCurrentDefence());
+        tracker.resetEnergy(1000);
+        tracker.onEnergyChanged(500,SpecialAttackWeapon.DRAGON_WARHAMMER,duke,3);
+        tracker.setEncounterMode(EncounterMode.AWAKENED);
+        assertFalse(tracker.onHitsplat(duke,20,4));
+        assertEquals(316,tracker.getTargetEffects(duke,4).getCurrentDefence());
+        tracker.setEncounterMode(EncounterMode.AUTO);
+        assertFalse(tracker.getTargetEffects(duke,5).hasTargetStats());
+    }
+
+    @Test public void offCancelsPendingAndExistingReductionsWithoutResurrectingThem()
+    {
+        SpecialAttackTracker tracker = new SpecialAttackTracker();
+        NPC target = npc(1, "Man");
+        tracker.resetEnergy(1000);
+        tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 1);
+        tracker.onHitsplat(target, 20, 2);
+        assertEquals(35, tracker.getTargetEffects(target, 2).getCurrentDefence());
+        tracker.onEnergyChanged(0, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 3);
+        tracker.setTrackingMode(DefenceTrackingMode.OFF);
+        assertFalse(tracker.onHitsplat(target, 20, 4));
+        assertEquals(50, tracker.getTargetEffects(target, 4).getCurrentDefence());
+        tracker.onEnergyChanged(1000, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 5);
+        assertFalse(tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 6));
+        tracker.setTrackingMode(DefenceTrackingMode.LOCAL);
+        assertFalse(tracker.onHitsplat(target, 20, 7));
+        assertEquals(50, tracker.getTargetEffects(target, 7).getCurrentDefence());
+        assertTrue(tracker.onEnergyChanged(0, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 8));
+        assertTrue(tracker.onHitsplat(target, 20, 9));
+        assertEquals(35, tracker.getTargetEffects(target, 9).getCurrentDefence());
+    }
+
+    @Test public void resetClearsPendingButPreservesNextEnergyTransition()
+    {
+        SpecialAttackTracker tracker = new SpecialAttackTracker();
+        NPC target = npc(1, "Man");
+        tracker.resetEnergy(1000);
+        tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 1);
+        tracker.clearTrackedEffects();
+        assertFalse(tracker.onHitsplat(target, 20, 2));
+        assertTrue(tracker.onEnergyChanged(0, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 3));
+        tracker.onHitsplat(target, 20, 4);
+        assertEquals(35, tracker.getTargetEffects(target, 4).getCurrentDefence());
+        tracker.clearTrackedEffects();
+        assertEquals(50, tracker.getTargetEffects(target, 4).getCurrentDefence());
+    }
+
+    @Test public void resetAndOffPreserveTektonAttemptHistoryWithoutPreservingDrains()
+    {
+        SpecialAttackTracker tracker = new SpecialAttackTracker();
+        NPC tekton = npc(7540,"Tekton");
+        tracker.resetEnergy(1000);
+        tracker.onEnergyChanged(500,SpecialAttackWeapon.DRAGON_WARHAMMER,tekton,1);
+        tracker.onHitsplat(tekton,20,2);
+        tracker.clearTrackedEffects();
+        assertTrue(tracker.getTargetEffects(tekton,2).isTektonDefenceSpecialAttempted());
+        assertEquals(205,tracker.getTargetEffects(tekton,2).getCurrentDefence());
+        tracker.setTrackingMode(DefenceTrackingMode.OFF);
+        assertTrue(tracker.getTargetEffects(tekton,3).isTektonDefenceSpecialAttempted());
+        tracker.clear();
+        tracker.resetEnergy(1000);
+        assertFalse(tracker.onEnergyChanged(500,SpecialAttackWeapon.ELDER_MAUL,tekton,4));
+        assertTrue(tracker.getTargetEffects(tekton,4).isTektonDefenceSpecialAttempted());
+        assertEquals(205,tracker.getTargetEffects(tekton,4).getCurrentDefence());
+    }
+
 	private static NPC npc(int id, String name)
 	{
 		return (NPC) Proxy.newProxyInstance(

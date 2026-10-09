@@ -5,6 +5,11 @@ import java.util.Locale;
 /** Weapons supported by Combat Insight's local special-attack waves. */
 public enum SpecialAttackWeapon
 {
+    ZARYTE_CROSSBOW("Zaryte crossbow", CombatStyle.RANGED, AttackType.RANGED_STANDARD, "Enchanted bolt proc on accurate special", false),
+    CRYSTAL_HALBERD("Crystal halberd", CombatStyle.MELEE, AttackType.SLASH, "Large target: 2 hits; second accuracy -25%", false),
+    DRAGON_HALBERD("Dragon halberd", CombatStyle.MELEE, AttackType.SLASH, "Large target: 2 hits; second accuracy -25%", false),
+    OSMUMTENS_FANG("Osmumten's fang", CombatStyle.MELEE, AttackType.STAB, "True max; 15% minimum", false),
+    SCORCHING_BOW("Scorching bow", CombatStyle.RANGED, AttackType.RANGED_STANDARD, "Demon bind 12s; burn excluded from average", false),
 	DRAGON_WARHAMMER(
 		"Dragon warhammer",
 		CombatStyle.MELEE,
@@ -228,6 +233,11 @@ public enum SpecialAttackWeapon
 		}
 
 		String weapon = weaponName.toLowerCase(Locale.ROOT);
+        if (weapon.contains("zaryte crossbow")) return ZARYTE_CROSSBOW;
+        if (weapon.contains("crystal halberd")) return CRYSTAL_HALBERD;
+        if (weapon.contains("dragon halberd")) return DRAGON_HALBERD;
+        if (weapon.contains("osmumten") && weapon.contains("fang")) return OSMUMTENS_FANG;
+        if (weapon.contains("scorching bow")) return SCORCHING_BOW;
 		if (weapon.contains("dragon warhammer"))
 		{
 			return DRAGON_WARHAMMER;

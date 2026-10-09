@@ -1,3 +1,5 @@
+For the current local candidate, start with [0.7 setup and test checklist](TESTING-0.7.0.md).
+
 # Combat Insight 0.5.0 local test checklist
 
 ## Start here: September 25 raid review
@@ -525,8 +527,11 @@ select it immediately even though it has no normal NPC Defence model.
 
 ## Magic accuracy and powered weapons
 
-1. Select Iban Blast or an elemental spell under `Manual magic spell`, then
-   retain a target. Confirm Magic defence, hit chance, and DPS appear.
+1. Select Iban Blast or an elemental spell under `Manual magic spell`. If manually
+   casting while a melee stance is selected, set `Combat type` to Magic; otherwise
+   use the actual casting stance. Retain a target and confirm Magic calculations.
+   Return Combat type to Automatic when switching back to melee. A saved spell
+   must not override a detected melee attack.
 2. Test an elemental spell that matches a target weakness and one that does
    not. The matching element should improve both max hit and attack roll.
 3. Test trident of the seas/swamp, Sanguinesti, warped sceptre, Bone staff, or

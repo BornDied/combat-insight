@@ -87,6 +87,17 @@ public final class SpecialAttackResult
 		this.onHitText = safe(onHitText);
 	}
 
+    /** Exact integer encounter multiplier; status and accuracy remain unchanged. */
+    public SpecialAttackResult multiplyDamage(int multiplier)
+    {
+        int factor=Math.max(0,multiplier);
+        int[] hits=Arrays.copyOf(maximumHits,maximumHits.length);
+        for(int i=0;i<hits.length;i++) hits[i]*=factor;
+        return new SpecialAttackResult(weapon,maximumAvailable,accuracyAvailable,expectedDamageAvailable,
+            targetImmune,guaranteedAccuracy,hits,hitChance,expectedDamage*factor,
+            maximumStatus,accuracyStatus,expectedDamageStatus,onHitText);
+    }
+
 	public static SpecialAttackResult noWeapon()
 	{
 		return new SpecialAttackResult(

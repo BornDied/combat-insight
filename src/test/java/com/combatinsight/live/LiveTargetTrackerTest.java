@@ -12,6 +12,22 @@ import static org.junit.Assert.assertTrue;
 
 public class LiveTargetTrackerTest
 {
+    @Test public void followsConfirmedActorPhaseChangesWithoutAnotherAttack()
+    {
+        java.util.concurrent.atomic.AtomicInteger id=new java.util.concurrent.atomic.AtomicInteger(8355);
+        NPC target=(NPC)Proxy.newProxyInstance(NPC.class.getClassLoader(),new Class<?>[]{NPC.class},(p,m,a)-> {
+            if(m.getName().equals("getId"))return id.get();
+            if(m.getName().equals("getName"))return "Nylocas Vasilias";
+            if(m.getName().equals("isDead"))return false;
+            return null;
+        });
+        LiveTargetTracker tracker=new LiveTargetTracker();tracker.confirmCombatTarget(target);
+        id.set(8357);tracker.refreshActiveIdentity();
+        assertEquals(8357,tracker.getRetainedTargetId());
+        tracker.endActiveIfSame(target);id.set(8356);tracker.refreshActiveIdentity();
+        assertEquals(8357,tracker.getRetainedTargetId());
+    }
+
 	@Test
 	public void retainsConfirmedTargetIdentityAfterCombatEnds()
 	{

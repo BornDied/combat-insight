@@ -12,8 +12,22 @@ import com.combatinsight.live.CombatDummy;
 import com.combatinsight.live.SpecialAttackTracker;
 import com.combatinsight.live.TargetEffectSnapshot;
 import com.combatinsight.live.RaidScaling;
+import com.combatinsight.live.EncounterContext;
+import com.combatinsight.live.RaidInputResolver;
+import com.combatinsight.live.TheatrePartyTracker;
+import net.runelite.api.gameval.VarbitID;
 import com.google.inject.Provides;
 import java.awt.Color;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
+import javax.swing.SwingUtilities;
+import net.runelite.client.util.HotkeyListener;
+import net.runelite.client.input.KeyManager;
+import net.runelite.api.events.FocusChanged;
+import net.runelite.api.ChatMessageType;
+import net.runelite.client.callback.ClientThread;
+import net.runelite.client.events.OverlayMenuClicked;
+import com.combatinsight.calculation.HudDisplayMode;
 import java.util.Locale;
 import javax.inject.Inject;
 import net.runelite.api.Actor;
@@ -74,6 +88,57 @@ public class CombatInsightPlugin extends Plugin
 	@Inject
 	private SkillIconManager skillIconManager;
 
+    @Inject private KeyManager keyManager;
+    @Inject private ClientThread clientThread;
+    private final HeldDetails heldDetails = new HeldDetails();
+    private final HotkeyListener detailsListener = new HotkeyListener(() -> config.holdDetailsKey())
+    {
+        @Override public void hotkeyPressed() { heldDetails.press(); }
+        @Override public void hotkeyReleased() { heldDetails.clear(); }
+        @Override public void focusLost() { super.focusLost(); heldDetails.clear(); }
+    };
+
+    HudDisplayMode effectiveHudMode(HudDisplayMode configured) { return heldDetails.resolve(configured); }
+
+    @Subscribe public void onFocusChanged(FocusChanged event)
+    {
+        if (!event.isFocused()) heldDetails.clear();
+    }
+
+    @Subscribe public void onOverlayMenuClicked(OverlayMenuClicked event)
+    {
+        if (event.getOverlay() != overlay) return;
+        if ("Clear tracked reductions".equals(event.getEntry().getOption()))
+        {
+            clientThread.invokeLater(() -> {
+                specialAttackTracker.clearTrackedEffects();
+                refreshSnapshot();
+                diagnosticFeedback("Tracked reductions cleared; target stats reset to base.");
+            });
+            return;
+        }
+        if (!"Copy diagnostic snapshot".equals(event.getEntry().getOption())) return;
+        // Read exactly one immutable snapshot; do not query the client on the AWT thread.
+        String report = snapshot.diagnosticReport();
+        SwingUtilities.invokeLater(() -> {
+            try
+            {
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(report), null);
+                diagnosticFeedback("Diagnostic snapshot copied.");
+            }
+            catch (IllegalStateException | java.awt.HeadlessException | SecurityException ex)
+            { log.warn("Combat Insight could not copy the diagnostic snapshot", ex); diagnosticFeedback("Clipboard unavailable; try again."); }
+        });
+    }
+
+    private void diagnosticFeedback(String message)
+    {
+        clientThread.invokeLater(() -> {
+            if (client.getGameState()==GameState.LOGGED_IN)
+                client.addChatMessage(ChatMessageType.GAMEMESSAGE,"","Combat Insight: " + message,"");
+        });
+    }
+
 	private volatile LiveCombatSnapshot snapshot = LiveCombatSnapshot.empty();
 	private volatile long lastCombatAt;
 	private volatile long maxHitChangedAt;
@@ -86,11 +151,13 @@ public class CombatInsightPlugin extends Plugin
 	private final LiveTargetTracker targetTracker = new LiveTargetTracker();
 	private final ObservedHitTracker observedHitTracker = new ObservedHitTracker();
 	private final SpecialAttackTracker specialAttackTracker = new SpecialAttackTracker();
+    private final TheatrePartyTracker theatrePartyTracker = new TheatrePartyTracker();
 
 	@Override
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
+        keyManager.registerKeyListener(detailsListener);
 		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
 		refreshSnapshot();
 		log.debug("Combat Insight started");
@@ -100,12 +167,15 @@ public class CombatInsightPlugin extends Plugin
 	protected void shutDown()
 	{
 		removeTargetInfoBoxes();
+        keyManager.unregisterKeyListener(detailsListener);
+        heldDetails.clear();
 		overlayManager.remove(overlay);
 		snapshot = LiveCombatSnapshot.empty();
 		targetTracker.clear();
 		clearCombatDummyTarget();
 		observedHitTracker.clear();
 		specialAttackTracker.clear();
+            theatrePartyTracker.clear();
 		lastCombatAt = 0L;
 		maxHitChangedAt = 0L;
 		log.debug("Combat Insight stopped");
@@ -149,12 +219,14 @@ public class CombatInsightPlugin extends Plugin
 	{
 		if (event.getGameState() != GameState.LOGGED_IN)
 		{
+            heldDetails.clear();
 			removeTargetInfoBoxes();
 			snapshot = LiveCombatSnapshot.empty();
 			targetTracker.clear();
 			clearCombatDummyTarget();
 			observedHitTracker.clear();
 			specialAttackTracker.clear();
+            if (event.getGameState() != GameState.LOADING) theatrePartyTracker.clear();
 			lastCombatAt = 0L;
 			return;
 		}
@@ -170,6 +242,9 @@ public class CombatInsightPlugin extends Plugin
 		{
 			return;
 		}
+		heldDetails.clear();
+        if ("dt2EncounterMode".equals(event.getKey()) || "defenceTrackingMode".equals(event.getKey()))
+            clientThread.invokeLater(this::refreshSnapshot);
 		if ("targetDefenceDisplay".equals(event.getKey())
 			|| "targetMagicDisplay".equals(event.getKey())
 			|| "animateChanges".equals(event.getKey())
@@ -190,6 +265,7 @@ public class CombatInsightPlugin extends Plugin
 			return;
 		}
 
+		specialAttackTracker.setTrackingMode(config.defenceTrackingMode());
 		NPC target = targetTracker.getActiveTarget();
 		Player player = client.getLocalPlayer();
 		if (target == null && player != null && player.getInteracting() instanceof NPC)
@@ -373,11 +449,30 @@ public class CombatInsightPlugin extends Plugin
 
 	private void refreshSnapshot()
 	{
+        if (client.getGameState() != GameState.LOGGED_IN)
+        {
+            snapshot = LiveCombatSnapshot.empty();
+            return;
+        }
 		try
 		{
 			RaidScaling raidScaling = new RaidScaling(config.coxPartySize(), config.coxChallengeMode(),
 				config.coxHighestCombat(), config.coxHighestHitpoints(), config.coxAverageMining(), config.tobPartySize());
+            raidScaling = RaidInputResolver.resolve(raidScaling, config.automaticCoxInputs(),
+                client.getVarbitValue(VarbitID.RAIDS_CLIENT_INDUNGEON)==1,
+                client.getVarbitValue(VarbitID.RAIDS_CLIENT_PARTYSIZE_SCALED),
+                client.getVarbitValue(VarbitID.RAIDS_CHALLENGE_MODE),
+                client.getVarbitValue(VarbitID.RAIDS_CLIENT_HIGHESTCOMBAT));
+			int observedTheatreSize = theatrePartyTracker.observe(config.automaticTobInputs(),
+                client.getGameState() == GameState.LOGGED_IN ? client.getVarbitValue(VarbitID.TOB_CLIENT_PARTYSTATUS) : 0,
+                new int[]{client.getVarbitValue(VarbitID.TOB_CLIENT_P0), client.getVarbitValue(VarbitID.TOB_CLIENT_P1),
+                    client.getVarbitValue(VarbitID.TOB_CLIENT_P2), client.getVarbitValue(VarbitID.TOB_CLIENT_P3),
+                    client.getVarbitValue(VarbitID.TOB_CLIENT_P4)});
+            raidScaling = raidScaling.withObservedTheatre(observedTheatreSize);
+            specialAttackTracker.setTrackingMode(config.defenceTrackingMode());
 			specialAttackTracker.setRaidScaling(raidScaling);
+            specialAttackTracker.setEncounterMode(config.dt2EncounterMode());
+            targetTracker.refreshActiveIdentity();
 			NPC activeTarget = targetTracker.getActiveTarget();
 			TargetEffectSnapshot targetEffects = specialAttackTracker.getTargetEffects(
 				activeTarget,
@@ -397,7 +492,7 @@ public class CombatInsightPlugin extends Plugin
 				targetEffects,
 				observedHitTracker.hasSamples(),
 				selectedCombatDummy,
-				raidScaling);
+				raidScaling, EncounterContext.from(client, activeTarget, config.dt2EncounterMode()), config.kandarinHardDiary(), config.defenceTrackingMode());
 			snapshot = captured;
 			updateTargetDefenceInfoBox(activeTarget, targetEffects);
 			updateTargetMagicInfoBox(activeTarget, targetEffects, captured);
@@ -560,6 +655,7 @@ public class CombatInsightPlugin extends Plugin
 		targetTracker.clear();
 		observedHitTracker.clear();
 		specialAttackTracker.clear();
+            theatrePartyTracker.clear();
 		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
 		removeTargetInfoBoxes();
 		markCombatActivity();
