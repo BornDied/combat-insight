@@ -7,7 +7,8 @@ public enum HudBackgroundMode
 {
 	CUSTOM("Custom color"),
 	SUBTLE("Subtle"),
-	TEXT_ONLY("Text only");
+	TEXT_ONLY("Text only"),
+	HIGH_CONTRAST("High contrast");
 
 	private final String label;
 
@@ -20,6 +21,7 @@ public enum HudBackgroundMode
 	{
 		switch (this)
 		{
+			case HIGH_CONTRAST: return new Color(10, 10, 12, 245);
 			case SUBTLE: return new Color(20, 20, 20, 120);
 			case TEXT_ONLY: return new Color(0, 0, 0, 0);
 			default: return customColor;

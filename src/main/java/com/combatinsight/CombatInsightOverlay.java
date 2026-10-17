@@ -1,6 +1,7 @@
 package com.combatinsight;
 
 import com.combatinsight.calculation.HudDisplayMode;
+import com.combatinsight.calculation.SpecialAttackWeapon;
 import com.combatinsight.calculation.CombatStyle;
 import com.combatinsight.calculation.TargetDefenceDisplay;
 import com.combatinsight.calculation.TargetMagicDisplay;
@@ -49,7 +50,11 @@ public class CombatInsightOverlay extends OverlayPanel
 	public Dimension render(Graphics2D graphics)
 	{
 		panelComponent.getChildren().clear();
-		if (!config.showHud() || !plugin.isHudVisible())
+        getMenuEntries().removeIf(entry -> "Inspect calculation".equals(entry.getOption()));
+        if (config.enableInspector())
+            getMenuEntries().add(new OverlayMenuEntry(MenuAction.RUNELITE_OVERLAY, "Inspect calculation", "Combat Insight"));
+        boolean preview = plugin.isPreviewVisible();
+		if (!config.showHud() || (!preview && !plugin.isHudVisible()))
 		{
 			return null;
 		}
@@ -63,6 +68,15 @@ public class CombatInsightOverlay extends OverlayPanel
 		// OverlayPanel applies the user's resize, when present, on top of this default.
 		panelComponent.setPreferredSize(new Dimension(width, 0));
 		panelComponent.setBorder(compact ? new Rectangle(4, 3, 4, 3) : new Rectangle(6, 6, 6, 6));
+
+        if (preview)
+        {
+            renderPreview(mode);
+            return super.render(graphics);
+        }
+
+        if (config.showManualIndicator() && snapshot.hasActiveManualOverride())
+            addLine("Manual", "", MUTED, MUTED);
 
 		if (config.showTitle())
 		{
@@ -111,13 +125,19 @@ public class CombatInsightOverlay extends OverlayPanel
 
 		if (snapshot.hasSupportedSpecialAttack())
 		{
+            if (config.specDivider() && (config.showSpecMax()
+                || shouldShowDefenceBasedRow(config.showSpecChance(), snapshot.isCombatDummy())))
+                panelComponent.getChildren().add(new HudDivider());
 			if (config.showSpecMax())
 			{
 				addLine(
 					"Spec max",
 					snapshot.getSpecialMaximumText(mode == HudDisplayMode.ADVANCED),
-					Color.WHITE,
-					snapshot.isSpecialMaximumAvailable() ? routineColor(ACCENT) : WARNING);
+                    HudPresentation.specialColor(snapshot.getSpecialAttackWeapon(), snapshot.isSpecialMaximumAvailable(),
+                        config.highlightSpecialAttack(), config.specialHighlightColor(), Color.WHITE),
+                    HudPresentation.specialColor(snapshot.getSpecialAttackWeapon(), snapshot.isSpecialMaximumAvailable(),
+                        config.highlightSpecialAttack(), config.specialHighlightColor(),
+                        snapshot.isSpecialMaximumAvailable() ? routineColor(ACCENT) : WARNING));
 			}
 			if (shouldShowDefenceBasedRow(config.showSpecChance(), snapshot.isCombatDummy()))
 			{
@@ -281,11 +301,46 @@ public class CombatInsightOverlay extends OverlayPanel
 		return super.render(graphics);
 	}
 
+
+    private void renderPreview(HudDisplayMode mode)
+    {
+        addLine("PREVIEW", "Illustrative", ACCENT, MUTED);
+        if (config.showTitle()) addLine("Combat Insight", "Melee", ACCENT, routineColor(SUCCESS));
+        if (config.showMaxHit()) addLine("Max hit", "48", Color.WHITE, Color.WHITE);
+        if (mode == HudDisplayMode.MINIMAL) return;
+        if (config.showAccuracy()) addLine("Hit chance", "82.5%", Color.WHITE, routineColor(SUCCESS));
+        if (config.showDps()) addLine("DPS", "6.42", Color.WHITE, routineColor(SUCCESS));
+        if (config.specDivider() && (config.showSpecMax() || config.showSpecChance()))
+            panelComponent.getChildren().add(new HudDivider());
+        if (config.showSpecMax())
+        {
+            Color color = HudPresentation.specialColor(SpecialAttackWeapon.DRAGON_DAGGER, true,
+                config.highlightSpecialAttack(), config.specialHighlightColor(), Color.WHITE);
+            addLine("Spec max", mode == HudDisplayMode.ADVANCED ? "110 (55 + 55)" : "110", color, color);
+        }
+        if (config.showSpecChance()) addLine("Spec chance", "96.9%", Color.WHITE, routineColor(SUCCESS));
+        if (config.showStyle()) addLine("Combat style", "Melee | Aggressive", Color.WHITE, Color.WHITE);
+        if (config.showWeapon()) addLine("Weapon / spell", "Dragon dagger", Color.WHITE, Color.WHITE);
+        if (config.showLevels()) addLine("Strength", "118", Color.WHITE, Color.WHITE);
+        if (config.showGearBonuses()) addLine("Strength bonus", "+120", Color.WHITE, Color.WHITE);
+        if (config.showPrayer()) addLine("Prayer", "Piety", Color.WHITE, Color.WHITE);
+        if (mode != HudDisplayMode.ADVANCED) return;
+        if (config.showExpectedSpec()) addLine("Avg spec dmg", "46.9", Color.WHITE, routineColor(SUCCESS));
+        if (config.showSpecOnHit()) addLine("On hit", "Two independent hits", Color.WHITE, routineColor(ACCENT));
+        if (config.showLevels()) addLine("Effective strength", "156", Color.WHITE, Color.WHITE);
+        if (config.showPrayer()) addLine("Prayer damage", "1.23x", Color.WHITE, Color.WHITE);
+        if (config.showAttackSpeed()) addLine("Attack interval", "4 ticks", Color.WHITE, Color.WHITE);
+        if (config.showTarget()) addLine("Target", "Example target", Color.WHITE, Color.WHITE);
+        if (config.showAccuracyRolls()) addLine("Your / target roll", "24000 / 8400", Color.WHITE, Color.WHITE);
+        if (config.showDefenceType()) addLine("Target defence", "Stab", Color.WHITE, Color.WHITE);
+        if (config.showObservedAverage()) addLine("Avg hit", "—", Color.WHITE, MUTED);
+    }
+
 	private void addLine(String left, String right, Color leftColor, Color rightColor)
 	{
 		panelComponent.getChildren().add(LineComponent.builder()
 			.left(left)
-			.right(right)
+			.right(right.isEmpty() ? "" : HudPresentation.value(right))
 			.leftColor(leftColor)
 			.rightColor(rightColor)
 			.build());

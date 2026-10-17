@@ -20,6 +20,12 @@ public final class ContextSpecialAttack
         int defenceRoll, int targetSize, int armour, boolean stab, boolean toa, boolean demon, boolean guaranteed,
         boolean seekingArrows)
     {
+        return calculate(weapon,trueMax,attackRoll,defenceRoll,targetSize,armour,stab,toa,demon,guaranteed,seekingArrows,HitTransform.IDENTITY);
+    }
+    public static SpecialAttackResult calculate(SpecialAttackWeapon weapon, int trueMax, int attackRoll,
+        int defenceRoll, int targetSize, int armour, boolean stab, boolean toa, boolean demon, boolean guaranteed,
+        boolean seekingArrows, HitTransform encounterTransform)
+    {
         if (!supports(weapon)) return SpecialAttackResult.noWeapon();
         if (weapon == SpecialAttackWeapon.SCORCHING_BOW && !demon)
             return SpecialAttackResult.unavailable(weapon, "Demonic target required");
@@ -33,7 +39,7 @@ public final class ContextSpecialAttack
             first = toa ? 1-(1-first)*(1-first) : CombatPrediction.fangHitChance(attackRoll, defenceRoll);
         double second = halberd && targetSize > 1
             ? guaranteed ? 1 : CombatPrediction.hitChance((int) ((long) attackRoll*3/4), defenceRoll) : 0;
-        HitTransform transform = HitTransform.IDENTITY.withAccurateFloor(
+        HitTransform transform = encounterTransform.withAccurateFloor(
             seekingArrows && weapon == SpecialAttackWeapon.SCORCHING_BOW ? 3 : 1);
         int hit = transform.maximum(maximum, armour);
         int[] hits = halberd && targetSize > 1 ? new int[]{hit, hit} : new int[]{hit};

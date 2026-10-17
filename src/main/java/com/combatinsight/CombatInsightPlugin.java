@@ -19,6 +19,9 @@ import net.runelite.api.gameval.VarbitID;
 import com.google.inject.Provides;
 import java.awt.Color;
 import java.awt.Toolkit;
+import java.awt.image.BufferedImage;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
 import java.awt.datatransfer.StringSelection;
 import javax.swing.SwingUtilities;
 import net.runelite.client.util.HotkeyListener;
@@ -98,6 +101,59 @@ public class CombatInsightPlugin extends Plugin
         @Override public void focusLost() { super.focusLost(); heldDetails.clear(); }
     };
 
+    @Inject private ClientToolbar clientToolbar;
+    private CalculationInspectorPanel inspector;
+    private NavigationButton inspectorNavigation;
+    private javax.swing.Timer inspectorTimer;
+    private volatile boolean pluginRunning;
+    private volatile boolean inspectorEnabled;
+
+    private void syncInspector()
+    {
+        inspectorEnabled = config.enableInspector();
+        SwingUtilities.invokeLater(() -> {
+            if (!pluginRunning || !inspectorEnabled)
+            {
+                if (inspectorTimer != null) inspectorTimer.stop();
+                if (inspectorNavigation != null) clientToolbar.removeNavigation(inspectorNavigation);
+                if (inspector != null) inspector.clear();
+                inspector=null; inspectorNavigation=null; inspectorTimer=null;
+                return;
+            }
+            if (inspector != null) return;
+            inspector=new CalculationInspectorPanel(this::copyDiagnostic);
+            BufferedImage icon=new BufferedImage(16,16,BufferedImage.TYPE_INT_ARGB);
+            java.awt.Graphics2D g=icon.createGraphics();
+            g.setColor(new Color(66,217,255)); g.drawOval(1,1,9,9); g.drawLine(10,10,15,15); g.dispose();
+            inspectorNavigation=NavigationButton.builder().tooltip("Combat Insight inspector")
+                .icon(icon).priority(7).panel(inspector).build();
+            clientToolbar.addNavigation(inspectorNavigation);
+            inspectorTimer=new javax.swing.Timer(600, e -> {
+                if (inspector != null && inspector.isActive())
+                    inspector.update(InspectorDocument.capture(snapshot));
+            });
+            inspectorTimer.start();
+        });
+    }
+
+    private void openInspector()
+    {
+        if (!config.enableInspector()) return;
+        SwingUtilities.invokeLater(() -> {
+            if (inspector != null && pluginRunning && inspectorEnabled)
+            {
+                inspector.update(InspectorDocument.capture(snapshot));
+                clientToolbar.openPanel(inspectorNavigation);
+            }
+        });
+    }
+
+    boolean isPreviewVisible()
+    {
+        return config.previewHud() && snapshot.isLoggedIn()
+            && (lastCombatAt == 0L || System.currentTimeMillis()-lastCombatAt > 10_000L);
+    }
+
     HudDisplayMode effectiveHudMode(HudDisplayMode configured) { return heldDetails.resolve(configured); }
 
     @Subscribe public void onFocusChanged(FocusChanged event)
@@ -108,6 +164,10 @@ public class CombatInsightPlugin extends Plugin
     @Subscribe public void onOverlayMenuClicked(OverlayMenuClicked event)
     {
         if (event.getOverlay() != overlay) return;
+        if ("Inspect calculation".equals(event.getEntry().getOption()))
+        {
+            openInspector(); return;
+        }
         if ("Clear tracked reductions".equals(event.getEntry().getOption()))
         {
             clientThread.invokeLater(() -> {
@@ -119,7 +179,11 @@ public class CombatInsightPlugin extends Plugin
         }
         if (!"Copy diagnostic snapshot".equals(event.getEntry().getOption())) return;
         // Read exactly one immutable snapshot; do not query the client on the AWT thread.
-        String report = snapshot.diagnosticReport();
+        copyDiagnostic(snapshot.diagnosticReport());
+    }
+
+    private void copyDiagnostic(String report)
+    {
         SwingUtilities.invokeLater(() -> {
             try
             {
@@ -157,6 +221,8 @@ public class CombatInsightPlugin extends Plugin
 	protected void startUp()
 	{
 		overlayManager.add(overlay);
+        pluginRunning=true;
+        syncInspector();
         keyManager.registerKeyListener(detailsListener);
 		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
 		refreshSnapshot();
@@ -166,6 +232,8 @@ public class CombatInsightPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+        pluginRunning=false;
+        syncInspector();
 		removeTargetInfoBoxes();
         keyManager.unregisterKeyListener(detailsListener);
         heldDetails.clear();
@@ -243,6 +311,7 @@ public class CombatInsightPlugin extends Plugin
 			return;
 		}
 		heldDetails.clear();
+        if ("enableInspector".equals(event.getKey())) syncInspector();
         if ("dt2EncounterMode".equals(event.getKey()) || "defenceTrackingMode".equals(event.getKey()))
             clientThread.invokeLater(this::refreshSnapshot);
 		if ("targetDefenceDisplay".equals(event.getKey())

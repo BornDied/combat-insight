@@ -12,6 +12,7 @@ import com.combatinsight.calculation.MagicSpell;
 import com.combatinsight.calculation.MultiHitResult;
 import com.combatinsight.calculation.MultiHitWeapon;
 import com.combatinsight.calculation.SpecialAttackCalculator;
+import com.combatinsight.calculation.SoulreaperSpecial;
 import com.combatinsight.calculation.ContextSpecialAttack;
 import com.combatinsight.calculation.HitTransform;
 import com.combatinsight.calculation.BoltEffect;
@@ -94,6 +95,8 @@ public final class LiveCombatSnapshot
 	private final boolean targetImmune;
 	private final List<String> warnings;
     private final String diagnosticInputs;
+    private final boolean activeManualOverride;
+    private final List<String> appliedEffects;
 
 	private LiveCombatSnapshot(
 		boolean loggedIn,
@@ -134,9 +137,11 @@ public final class LiveCombatSnapshot
 		int baseTargetMagicDefenceRoll,
 		int currentTargetMagicDefenceRoll,
 		boolean targetImmune,
-		List<String> warnings, String diagnosticInputs)
+		List<String> warnings, String diagnosticInputs, boolean activeManualOverride, List<String> appliedEffects)
 	{
 		this.diagnosticInputs = diagnosticInputs;
+        this.activeManualOverride = activeManualOverride;
+        this.appliedEffects = Collections.unmodifiableList(new ArrayList<>(appliedEffects));
 		this.loggedIn = loggedIn;
 		this.combatStyle = combatStyle;
 		this.attackType = attackType;
@@ -209,7 +214,7 @@ public final class LiveCombatSnapshot
 			-1,
 			-1,
 			false,
-			Collections.emptyList(), "No active inputs");
+			Collections.emptyList(), "No active inputs", false, Collections.emptyList());
 	}
 
 	public static LiveCombatSnapshot capture(
@@ -307,12 +312,17 @@ public final class LiveCombatSnapshot
 		}
 
 		EquipmentState equipment = readEquipment(client, itemManager);
+        equipment.soulreaperStacks = client.getVarpValue(VarPlayerID.SOULREAPER_STACKS);
 		StyleState style = getStyleState(client, equipment, manualSpell);
 		if (combatStyleOverride != CombatStyleOverride.AUTO)
 		{
 			style = getForcedStyle(client, combatStyleOverride, equipment);
 		}
 		PrayerState prayer = getPrayerState(client);
+		List<String> appliedEffects = new ArrayList<>();
+        int soulStrengthBonus = SoulreaperRules.strengthBonus(client,equipment.weaponNameLower,client.getBoostedSkillLevel(Skill.STRENGTH));
+        if(style.combatStyle == CombatStyle.MELEE && soulStrengthBonus > 0)
+            appliedEffects.add("Soulreaper: " + equipment.soulreaperStacks + " Soul Stacks; +" + soulStrengthBonus + " effective Strength (basic attacks)");
 		List<String> warnings = new ArrayList<>(CalculationInputNotes.forSelection(
             combatStyleOverride, manualSpell, style.combatStyle, equipment.usesSpellbookMagic(),
             equipment.isBlowpipe(), blowpipeDart));
@@ -346,7 +356,8 @@ public final class LiveCombatSnapshot
             liveTargetEffects = TargetEffectSnapshot.unmodified(target).withTektonHistory(
                 liveTargetEffects.isTektonDefenceSpecialAttempted(),
                 liveTargetEffects.isTektonDefenceSpecialAttempted());
-		int targetMaximumHitpoints = targetDataAvailable ? Math.max(0, target.getHitpoints()) : 0;
+		int targetMaximumHitpoints = targetDataAvailable && !TargetMechanics.isInTombsOfAmascut(targetId)
+            ? Math.max(0, target.getHitpoints()) : 0;
 		int baseTargetMagicDefenceRoll = targetDataAvailable
 			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
 			: -1;
@@ -364,6 +375,7 @@ public final class LiveCombatSnapshot
 		if (TargetMechanics.isInTombsOfAmascut(targetId))
 		{
 			warnings.add("ToA invocation input: " + Math.max(0, toaInvocationLevel));
+            warnings.add("ToA HP scaling unavailable: party size/path levels not resolved; ruby damage withheld");
 		}
 		if (targetId >= 0 && target == null)
 		{
@@ -430,10 +442,12 @@ public final class LiveCombatSnapshot
 					boostedStrength,
 					prayer.meleeStrengthMultiplier,
 					prayer.meleeStrengthMinimumOne)
+					+ SoulreaperRules.strengthBonus(client, equipment.weaponNameLower, boostedStrength)
 					+ style.damageStyleBonus + 8;
 				if (equipment.hasMeleeVoid())
 				{
 					effectiveDamageLevel = (int) Math.floor(effectiveDamageLevel * 1.10);
+                    appliedEffects.add("Melee Void: effective Strength x1.10");
 				}
 
 				maxHit = baseMaxHit(effectiveDamageLevel, equipment.meleeStrength);
@@ -499,6 +513,7 @@ public final class LiveCombatSnapshot
 				if (rangedVoidModifier > 1.0)
 				{
 					effectiveDamageLevel = (int) Math.floor(effectiveDamageLevel * rangedVoidModifier);
+                    appliedEffects.add("Ranged Void: effective Ranged x" + rangedVoidModifier);
 				}
 
 				if (maxHitAvailable)
@@ -574,12 +589,14 @@ public final class LiveCombatSnapshot
 				{
 					int shadowFactor = TargetMechanics.isInTombsOfAmascut(targetId) ? 4 : 3;
 					targetAdjustedMagicDamage = Math.min(100.0f, targetAdjustedMagicDamage * shadowFactor);
+                    appliedEffects.add("Shadow: equipment magic damage x" + shadowFactor + " (100% cap)");
 				}
 				double additiveMagicDamage = targetAdjustedMagicDamage / 100.0
 					+ prayer.magicDamagePercent / 100.0;
 				if (equipment.hasEliteMageVoid())
 				{
 					additiveMagicDamage += 0.05;
+                    appliedEffects.add("Elite magic Void: +5% magic damage");
 				}
 				if (!magicBase.poweredWeapon && manualSpell.getSpellbook() == MagicSpell.Spellbook.STANDARD
 					&& equipment.smokeStaff)
@@ -688,6 +705,12 @@ public final class LiveCombatSnapshot
                 equipment.usesSpellbookMagic() && manualSpell.getSpellType() == MagicSpell.SpellType.TARGET_DEPENDENT),
             equipment.weaponNameLower, client.getRealSkillLevel(Skill.MINING));
 
+        if (!combatDummy && targetDataAvailable && !isTargetImmune(targetId,style,equipment,target))
+        {
+            if (TargetMechanics.isZulrah(targetId)) appliedEffects.add("Zulrah: each hitsplat above 50 rerolls 45–50");
+            if (EncounterResolver.isNightmarePillar(targetId) && style.attackType == AttackType.MAGIC)
+                appliedEffects.add("Nightmare pillar: magic damage x2 per hitsplat");
+        }
 		maxHit = Math.min(GLOBAL_DAMAGE_CAP, Math.max(0, maxHit));
 		minimumHit = Math.min(maxHit, Math.max(0, minimumHit));
 		int displayedAttackBonus = equipment.attackBonus(style.attackType);
@@ -718,14 +741,17 @@ public final class LiveCombatSnapshot
 			combatDummy, encounterDamage, targetCurrentHitpoints, kandarinDiary, client.getBoostedSkillLevel(Skill.HITPOINTS));
 		boolean targetImmune = targetDataAvailable && isTargetImmune(targetId, style, equipment, target);
         boolean voidwaker = equipment.weaponNameLower.contains("voidwaker");
+        boolean soulreaper = equipment.weaponNameLower.equals("soulreaper axe") || equipment.weaponNameLower.equals("soulreaper axe (o)");
         int specialBaseMaximum = fangTrueMaximum >= 0 ? fangTrueMaximum : maxHit;
-        if (voidwaker)
+        if (voidwaker || soulreaper)
         {
             StyleState meleeStyle = getStyleState(client,equipment,MagicSpell.NOT_SET);
             specialBaseMaximum = voidwakerBaseMaximum(equipment,prayer,boostedStrength,
                 meleeStyle.combatStyle == CombatStyle.MELEE ? meleeStyle.damageStyleBonus : 0,
                 targetDataAvailable ? target : null,
                 slayerInputApplies && equipment.hasSlayerDamageBonus(CombatStyle.MELEE,false));
+            if (soulreaper && style.attackType == AttackType.CRUSH && equipment.inquisitorPoints > 0)
+                specialBaseMaximum = scale(specialBaseMaximum,200+equipment.inquisitorPoints,200);
         }
 		SpecialAttackResult specialAttackResult = calculateSpecialAttackResult(
 			style,
@@ -793,7 +819,14 @@ public final class LiveCombatSnapshot
                 + "; style override=" + combatStyleOverride + "; manual spell=" + manualSpell
                 + "; blowpipe dart=" + blowpipeDart + "; Kandarin diary=" + kandarinDiary
                 + "; defence tracking=" + trackingMode + "; Party Hub import=none"
-                + "; DT2 mode=" + encounterContext.mode + "; observed target combat=" + encounterContext.combatLevel);
+                + "; DT2 mode=" + encounterContext.mode + "; observed target combat=" + encounterContext.combatLevel,
+                combatStyleOverride != CombatStyleOverride.AUTO || combatDummy
+                    || (style.combatStyle == CombatStyle.MAGIC && equipment.usesSpellbookMagic() && manualSpell.isSet())
+                    || (style.combatStyle == CombatStyle.RANGED && equipment.isBlowpipe() && blowpipeDart.isSet())
+                    || (slayerInputApplies && (useSlayerBonus || useAccuracySlayerBonus))
+                    || (encounterContext.mode != EncounterMode.AUTO && targetId >= 12191 && targetId <= 12228)
+                    || (targetDataAvailable && (target.hasAttribute("xerician") || (target.hasAttribute("theatre_of_blood") && raidScaling.hasManualTheatreSize())
+                        || TargetMechanics.isInTombsOfAmascut(targetId))), appliedEffects);
 	}
 
 	private static SpecialAttackResult calculateSpecialAttackResult(
@@ -828,6 +861,8 @@ public final class LiveCombatSnapshot
 			targetId, weapon.getAttackType(), false);
 		if (!raidDamageStatus.isEmpty()) return SpecialAttackResult.unavailable(weapon, raidDamageStatus);
 
+        HitTransform specialTransform = combatDummy ? HitTransform.IDENTITY
+            : RaidDamageRules.transform(targetId,weapon.getAttackType(),false,equipment.weaponNameLower,1);
 		int attackRoll = 0;
 		int defenceRoll = 0;
 		boolean specialImmune = false;
@@ -900,15 +935,22 @@ public final class LiveCombatSnapshot
 		}
         if (weapon == SpecialAttackWeapon.ZARYTE_CROSSBOW)
         {
+            if (!combatDummy && TargetMechanics.isInTombsOfAmascut(targetId) && equipment.ammoNameLower.contains("ruby"))
+                return SpecialAttackResult.unavailable(weapon,"ToA HP scaling unavailable");
             if (!targetDataAvailable || !baseMaximumAvailable) return SpecialAttackResult.unavailable(weapon, "Select resolved target");
             if (specialImmune) return SpecialAttackResult.unavailable(weapon, "Immune");
             if (equipment.ammoNameLower.contains("ruby") && playerHp<=10) return SpecialAttackResult.unavailable(weapon, "Ruby: player HP too low");
             double accuracy=combatDummy || guaranteedMaximum ? 1 : CombatPrediction.hitChance(attackRoll*2,defenceRoll);
             BoltEffect.Result bolt=BoltEffect.calculate(equipment.ammoNameLower,baseMaximumHit,boostedRanged,accuracy,
                 currentHp,target.getFlatArmour(),true,true,diary,target.hasAttribute("undead"),
-                target.hasAttribute("dragon") || target.hasAttribute("fiery"));
+                target.hasAttribute("dragon") || target.hasAttribute("fiery"), specialTransform);
             return bolt==null ? SpecialAttackResult.unavailable(weapon, "Bolt effect or HP unavailable") : bolt.special();
         }
+
+        if (weapon == SpecialAttackWeapon.SOULREAPER_AXE)
+            return SoulreaperSpecial.calculate(baseMaximumHit,baseMaximumAvailable,attackRoll,defenceRoll,
+                targetDataAvailable,targetDataAvailable ? target.getFlatArmour() : 0,specialImmune,
+                combatDummy || guaranteedMaximum,guaranteedMaximum,equipment.soulreaperStacks,specialTransform);
 
         if (ContextSpecialAttack.supports(weapon))
         {
@@ -919,7 +961,7 @@ public final class LiveCombatSnapshot
                 target.getSize(), target.getFlatArmour(), currentStyle.attackType == AttackType.STAB,
                 TargetMechanics.isInTombsOfAmascut(targetId), target.hasAttribute("demon"),
                 combatDummy || guaranteedMaximum,
-                AmmunitionRules.accurateDamageFloor(equipment.weaponNameLower, equipment.ammoNameLower) == 3);
+                AmmunitionRules.accurateDamageFloor(equipment.weaponNameLower, equipment.ammoNameLower) == 3, specialTransform);
         }
 
 		SpecialAttackResult result = SpecialAttackCalculator.calculate(
@@ -941,9 +983,8 @@ public final class LiveCombatSnapshot
 			targetDataAvailable ? TargetEffectRules.defenceFloor(target) : 0,
 			specialMaximumHitOverride,
 			!targetHasLocalHits,
-            AmmunitionRules.accurateDamageFloor(equipment.weaponNameLower, equipment.ammoNameLower) == 3);
-        return EncounterResolver.isNightmarePillar(targetId) && weapon.getAttackType() == AttackType.MAGIC
-            ? result.multiplyDamage(2) : result;
+            AmmunitionRules.accurateDamageFloor(equipment.weaponNameLower, equipment.ammoNameLower) == 3, specialTransform);
+        return result;
 	}
 
     /** Voidwaker damage is melee-derived even when the basic HUD is forced to Magic. */
@@ -979,9 +1020,11 @@ public final class LiveCombatSnapshot
 		SpecialAttackWeapon weapon,
 		AttackType currentAttackType)
 	{
-		if ((weapon == SpecialAttackWeapon.BURNING_CLAWS || weapon == SpecialAttackWeapon.OSMUMTENS_FANG)
+		if ((weapon == SpecialAttackWeapon.BURNING_CLAWS || weapon == SpecialAttackWeapon.OSMUMTENS_FANG
+            || weapon == SpecialAttackWeapon.SOULREAPER_AXE)
 			&& (currentAttackType == AttackType.STAB
-				|| currentAttackType == AttackType.SLASH))
+				|| currentAttackType == AttackType.SLASH
+                || weapon == SpecialAttackWeapon.SOULREAPER_AXE && currentAttackType == AttackType.CRUSH))
 		{
 			return currentAttackType;
 		}
@@ -1107,11 +1150,12 @@ public final class LiveCombatSnapshot
         if (style.combatStyle == CombatStyle.RANGED && equipment.weaponNameLower.contains("crossbow")
             && BoltEffect.enchanted(equipment.ammoNameLower))
         {
-            BoltEffect.Result bolt = encounterDamage != HitTransform.IDENTITY
-                || (equipment.ammoNameLower.contains("ruby") && playerHp <= 10) ? null
+            if (TargetMechanics.isInTombsOfAmascut(targetId) && equipment.ammoNameLower.contains("ruby"))
+                return TargetResult.accuracyOnly(attackRoll,defenceRoll,effectiveAccuracy,chance,"ToA HP scaling unavailable");
+            BoltEffect.Result bolt = (equipment.ammoNameLower.contains("ruby") && playerHp <= 10) ? null
                 : BoltEffect.calculate(equipment.ammoNameLower,maximumHit,boostedRanged,chance,currentHp,
                     target.getFlatArmour(),equipment.weaponNameLower.contains("zaryte"),false,diary,
-                    target.hasAttribute("undead"),target.hasAttribute("dragon") || target.hasAttribute("fiery"));
+                    target.hasAttribute("undead"),target.hasAttribute("dragon") || target.hasAttribute("fiery"), encounterDamage);
             if(bolt==null) return TargetResult.accuracyOnly(attackRoll,defenceRoll,effectiveAccuracy,chance,
                 "Bolt effect or HP unavailable");
             return TargetResult.complete(attackRoll,defenceRoll,effectiveAccuracy,bolt.chance,bolt.maximum,"",
@@ -2411,6 +2455,12 @@ public final class LiveCombatSnapshot
             || (hasSupportedSpecialAttack() && !isSpecialMaximumAvailable()));
     }
 
+    public String getDiagnosticInputs() { return diagnosticInputs; }
+    public boolean hasActiveManualOverride() { return loggedIn && activeManualOverride; }
+    public SpecialAttackWeapon getSpecialAttackWeapon() { return specialAttackResult.getWeapon(); }
+    /** Partial trace: these entries are recorded where the corresponding rule runs. */
+    public List<String> getAppliedEffects() { return appliedEffects; }
+
     /** No account names, chat, world, location or other players are collected. */
     public String diagnosticReport()
     {
@@ -3272,9 +3322,21 @@ public final class LiveCombatSnapshot
 		private boolean tierThreeVampyrebane;
 		private boolean leafBladedEquipment;
 		private int inquisitorPoints;
+        private int soulreaperStacks = -1;
 
 		private void inspectItemName(String name)
 		{
+			// Cosmetic kits do not change set effects. Preserve functional suffixes
+			// such as (i), (e), (inactive), and (broken).
+			if (name.endsWith("(or)"))
+			{
+				name = name.substring(0, name.length() - 4).trim();
+			}
+			if ((name.startsWith("void ") || name.startsWith("elite void "))
+				&& name.endsWith(" (l)"))
+			{
+				name = name.substring(0, name.length() - 4);
+			}
 			if (name.contains("dizana")
 				&& (name.contains("quiver") || name.contains("max cape")))
 			{

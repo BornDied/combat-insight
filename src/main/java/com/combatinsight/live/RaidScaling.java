@@ -45,6 +45,8 @@ public final class RaidScaling
             averageMining, size, provenance, "observed roster (verify starting size)");
     }
 
+    boolean hasManualTheatreSize() { return "manual".equals(theatreProvenance); }
+
     public String inputSummary()
     {
         return "CoX " + provenance + ": size="+coxSize+", CM="+challengeMode+", CB="+highestCombat

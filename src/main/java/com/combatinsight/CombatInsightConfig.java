@@ -22,7 +22,7 @@ import net.runelite.client.config.Keybind;
 @ConfigGroup("combatinsight")
 public interface CombatInsightConfig extends Config
 {
-    @ConfigSection(name = "Target reductions", description = "Calculation tracking; separate from target row and infobox visibility", position = 8, closedByDefault = true)
+    @ConfigSection(name = "Defence tracking", description = "Calculation tracking; separate from target row and infobox visibility", position = 8, closedByDefault = true)
     String trackingSection = "trackingSection";
 
     @ConfigItem(keyName = "defenceTrackingMode", name = "Defence tracking mode",
@@ -37,7 +37,7 @@ public interface CombatInsightConfig extends Config
 
     @ConfigItem(keyName = "showInputMarker", name = "Show input notice marker",
         description = "Add * to the Max hit label when calculation notices or unavailable results need attention. Read notices in Advanced mode (or hold the details key), or copy diagnostics from the HUD menu. Adds no row; no marker is not a guarantee of full mechanic support.",
-        position = 31, section = hudSection)
+        position = 31, section = effectsSection)
     default boolean showInputMarker() { return false; }
 
     @ConfigItem(keyName = "holdDetailsKey", name = "Hold for Advanced details",
@@ -61,7 +61,7 @@ public interface CombatInsightConfig extends Config
     default boolean automaticCoxInputs() { return true; }
 
 	@ConfigSection(
-		name = "HUD",
+		name = "HUD basics",
 		description = "Basic overlay visibility, layout, and timing",
 		position = 0
 	)
@@ -70,7 +70,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Minimal HUD rows",
 		description = "Rows available in every HUD mode",
-		position = 1,
+		position = 2,
 		closedByDefault = true
 	)
 	String minimalRowsSection = "minimalRowsSection";
@@ -78,7 +78,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Standard HUD rows",
 		description = "Extra rows available in Standard and Advanced modes",
-		position = 2,
+		position = 3,
 		closedByDefault = true
 	)
 	String standardRowsSection = "standardRowsSection";
@@ -86,7 +86,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Advanced HUD rows",
 		description = "Extra rows available only in Advanced mode",
-		position = 3,
+		position = 4,
 		closedByDefault = true
 	)
 	String advancedRowsSection = "advancedRowsSection";
@@ -94,7 +94,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Special attack rows",
 		description = "Rows for supported special attacks and locally tracked target effects",
-		position = 4,
+		position = 5,
 		closedByDefault = true
 	)
 	String specialRowsSection = "specialRowsSection";
@@ -102,18 +102,21 @@ public interface CombatInsightConfig extends Config
 	@ConfigSection(
 		name = "Calculation inputs",
 		description = "Extra inputs for mechanics the client cannot expose safely",
-		position = 5,
+		position = 6,
 		closedByDefault = true
 	)
 	String calculationSection = "calculationSection";
 
 	@ConfigSection(
-		name = "Effects and advanced details",
-		description = "Animation, calculation details, and conditional-mechanic notices",
-		position = 6,
+		name = "Appearance",
+		description = "Layout, colors, animation, and preview",
+		position = 1,
 		closedByDefault = true
 	)
 	String effectsSection = "effectsSection";
+
+	@ConfigSection(name = "Calculation inspector", description = "Detailed calculation breakdown outside the combat HUD", position = 10, closedByDefault = true)
+	String inspectorSection = "inspectorSection";
 
 	@ConfigSection(name = "Raid inputs", description = "Party scaling inputs; set before entering the raid", position = 7, closedByDefault = true)
 	String raidSection = "raidSection";
@@ -182,7 +185,7 @@ public interface CombatInsightConfig extends Config
 		name = "Show HUD title",
 		description = "Display the Combat Insight title row inside the overlay",
 		position = 3,
-		section = hudSection
+		section = effectsSection
 	)
 	default boolean showTitle()
 	{
@@ -192,21 +195,21 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "compactHud", name = "Compact HUD",
 		description = "Use narrower default widths and less outer padding. A manually resized overlay keeps its chosen width.",
-		position = 5, section = hudSection
+		position = 5, section = effectsSection
 	)
 	default boolean compactHud() { return true; }
 
 	@ConfigItem(
 		keyName = "quietHudColors", name = "Quiet HUD colors",
 		description = "Use neutral colors for routine values; keep warnings and max-hit change flashes visible",
-		position = 6, section = hudSection
+		position = 6, section = effectsSection
 	)
 	default boolean quietHudColors() { return true; }
 
 	@ConfigItem(
 		keyName = "hudBackgroundMode", name = "Background style",
-		description = "Choose a subtle background or text only; Custom color restores your saved background color",
-		position = 7, section = hudSection
+		description = "Choose subtle, high contrast, or text only; Custom color restores your saved background color",
+		position = 7, section = effectsSection
 	)
 	default HudBackgroundMode hudBackgroundMode() { return HudBackgroundMode.CUSTOM; }
 
@@ -419,7 +422,7 @@ public interface CombatInsightConfig extends Config
 		name = "Target Defence display",
 		description = "Choose where locally tracked target Defence is displayed",
 		position = 4,
-		section = specialRowsSection
+		section = trackingSection
 	)
 	default TargetDefenceDisplay targetDefenceDisplay()
 	{
@@ -431,7 +434,7 @@ public interface CombatInsightConfig extends Config
 		name = "Target Magic display",
 		description = "Show tracked Magic stats only while your current combat style is Magic",
 		position = 5,
-		section = specialRowsSection
+		section = trackingSection
 	)
 	default TargetMagicDisplay targetMagicDisplay()
 	{
@@ -443,7 +446,7 @@ public interface CombatInsightConfig extends Config
 		name = "Defence number color",
 		description = "Color of the target Defence number in the movable infobox",
 		position = 6,
-		section = specialRowsSection
+		section = trackingSection
 	)
 	default Color targetDefenceTextColor()
 	{
@@ -455,7 +458,7 @@ public interface CombatInsightConfig extends Config
 		name = "Defence flash color",
 		description = "Color briefly shown when a confirmed target Defence reduction lands",
 		position = 7,
-		section = specialRowsSection
+		section = trackingSection
 	)
 	default Color targetDefenceFlashColor()
 	{
@@ -467,7 +470,7 @@ public interface CombatInsightConfig extends Config
 		name = "Magic number color",
 		description = "Color of the tracked target Magic stat in the movable Magic infobox",
 		position = 8,
-		section = specialRowsSection
+		section = trackingSection
 	)
 	default Color targetMagicTextColor()
 	{
@@ -479,7 +482,7 @@ public interface CombatInsightConfig extends Config
 		name = "Magic flash color",
 		description = "Color briefly shown when a confirmed Magic-related reduction lowers the displayed stat",
 		position = 9,
-		section = specialRowsSection
+		section = trackingSection
 	)
 	default Color targetMagicFlashColor()
 	{
@@ -538,8 +541,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "toaInvocationLevel",
 		name = "ToA invocation",
 		description = "Tombs of Amascut raid invocation used for target defence scaling; leave at 0 outside ToA",
-		position = 4,
-		section = calculationSection
+		position = 8,
+		section = raidSection
 	)
 	default int toaInvocationLevel()
 	{
@@ -562,8 +565,8 @@ public interface CombatInsightConfig extends Config
 		keyName = "showWarnings",
 		name = "Show calculation notices",
 		description = "Explain missing inputs and mechanics that are not safe to calculate yet",
-		position = 0,
-		section = effectsSection
+		position = 6,
+		section = advancedRowsSection
 	)
 	default boolean showWarnings()
 	{
@@ -588,10 +591,34 @@ public interface CombatInsightConfig extends Config
 		name = "Background color",
 		description = "Saved HUD background color, used when Background style is Custom color",
 		position = 4,
-		section = hudSection
+		section = effectsSection
 	)
 	default Color backgroundColor()
 	{
 		return new Color(20, 20, 20, 205);
 	}
+
+    @ConfigItem(keyName = "enableInspector", name = "Enable calculation inspector",
+        description = "Show the Inspect calculation action in the HUD menu", position = 0, section = inspectorSection)
+    default boolean enableInspector() { return true; }
+
+    @ConfigItem(keyName = "showManualIndicator", name = "Show manual input indicator",
+        description = "Show Manual only when a manual override is active in the current calculation", position = 8, section = effectsSection)
+    default boolean showManualIndicator() { return false; }
+
+    @ConfigItem(keyName = "previewHud", name = "Preview HUD outside combat",
+        description = "Show explicitly labelled illustrative values while outside combat; real combat always takes priority", position = 9, section = effectsSection)
+    default boolean previewHud() { return false; }
+
+    @ConfigItem(keyName = "highlightSpecialAttack", name = "Highlight spec max",
+        description = "Accent the Spec max label and value for designated special weapons; this is not a recommendation to use a special", position = 10, section = specialRowsSection)
+    default boolean highlightSpecialAttack() { return true; }
+
+    @ConfigItem(keyName = "specialHighlightColor", name = "Spec highlight color",
+        description = "Color for available Spec max values on designated special weapons", position = 11, section = specialRowsSection)
+    default Color specialHighlightColor() { return new Color(0x42D9FF); }
+
+    @ConfigItem(keyName = "specDivider", name = "Divider before special rows",
+        description = "Draw a subtle divider before the special attack rows", position = 12, section = specialRowsSection)
+    default boolean specDivider() { return false; }
 }

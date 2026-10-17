@@ -3,9 +3,9 @@ package com.combatinsight.calculation;
 /** Pure formulas for supported special-attack weapon waves. */
 public final class SpecialAttackCalculator
 {
-	private SpecialAttackCalculator()
-	{
-	}
+	private final HitTransform transform;
+    private SpecialAttackCalculator(HitTransform transform)
+    { this.transform = transform; }
 
 	public static SpecialAttackResult calculate(
 		SpecialAttackWeapon weapon,
@@ -49,12 +49,54 @@ public final class SpecialAttackCalculator
 		int targetDefenceFloor,
 		int specialMaximumHitOverride,
 		boolean boneDaggerGuaranteed, boolean seekingArrows)
+    { return calculate(weapon, baseMaximumHit, baseMaximumAvailable, baseAttackRoll, targetDefenceRoll, targetAvailable, flatArmour, targetImmune, guaranteedAccuracy, guaranteedMaximum, twoArrowsAvailable, dragonArrows, arrowAvailable, targetDefenceLevel, targetMagicLevel, targetDefenceFloor, specialMaximumHitOverride, boneDaggerGuaranteed, seekingArrows, HitTransform.IDENTITY); }
+
+	public static SpecialAttackResult calculate(
+		SpecialAttackWeapon weapon,
+		int baseMaximumHit,
+		boolean baseMaximumAvailable,
+		int baseAttackRoll,
+		int targetDefenceRoll,
+		boolean targetAvailable,
+		int flatArmour,
+		boolean targetImmune,
+		boolean guaranteedAccuracy,
+		boolean guaranteedMaximum,
+		boolean twoArrowsAvailable,
+		boolean dragonArrows,
+		boolean arrowAvailable,
+		int targetDefenceLevel,
+		int targetMagicLevel,
+		int targetDefenceFloor,
+		int specialMaximumHitOverride,
+		boolean boneDaggerGuaranteed, boolean seekingArrows, HitTransform transform)
+    { return new SpecialAttackCalculator(transform).calculateInternal(weapon, baseMaximumHit, baseMaximumAvailable, baseAttackRoll, targetDefenceRoll, targetAvailable, flatArmour, targetImmune, guaranteedAccuracy, guaranteedMaximum, twoArrowsAvailable, dragonArrows, arrowAvailable, targetDefenceLevel, targetMagicLevel, targetDefenceFloor, specialMaximumHitOverride, boneDaggerGuaranteed, seekingArrows); }
+
+	private SpecialAttackResult calculateInternal(
+		SpecialAttackWeapon weapon,
+		int baseMaximumHit,
+		boolean baseMaximumAvailable,
+		int baseAttackRoll,
+		int targetDefenceRoll,
+		boolean targetAvailable,
+		int flatArmour,
+		boolean targetImmune,
+		boolean guaranteedAccuracy,
+		boolean guaranteedMaximum,
+		boolean twoArrowsAvailable,
+		boolean dragonArrows,
+		boolean arrowAvailable,
+		int targetDefenceLevel,
+		int targetMagicLevel,
+		int targetDefenceFloor,
+		int specialMaximumHitOverride,
+		boolean boneDaggerGuaranteed, boolean seekingArrows)
 	{
 		if (weapon == null)
 		{
 			return SpecialAttackResult.noWeapon();
 		}
-		if (weapon == SpecialAttackWeapon.ZARYTE_CROSSBOW || ContextSpecialAttack.supports(weapon)) return SpecialAttackResult.unavailable(weapon, "Encounter context required");
+		if (weapon == SpecialAttackWeapon.SOULREAPER_AXE || weapon == SpecialAttackWeapon.ZARYTE_CROSSBOW || ContextSpecialAttack.supports(weapon)) return SpecialAttackResult.unavailable(weapon, "Encounter context required");
 		if (!baseMaximumAvailable)
 		{
 			return SpecialAttackResult.unavailable(weapon, "Max hit unavailable");
@@ -218,7 +260,7 @@ public final class SpecialAttackCalculator
 		}
 	}
 
-	private static DamageSummary damageSummary(
+	private DamageSummary damageSummary(
 		SpecialAttackWeapon weapon,
 		int baseMaximumHit,
 		int flatArmour,
@@ -368,7 +410,7 @@ public final class SpecialAttackCalculator
 		}
 	}
 
-	private static DamageSummary crimsonKisten(
+	private DamageSummary crimsonKisten(
 		int baseMaximumHit,
 		int flatArmour,
 		double accuracy)
@@ -388,7 +430,7 @@ public final class SpecialAttackCalculator
 			int maximumHit = scale(baseMaximumHit, maximumPercent, 100);
 			if (maximumHit > 0)
 			{
-				expectedDamage += branchChance * DamageRoll.averageSuccessfulHit(
+				expectedDamage += branchChance * transform.average(
 					minimumHit,
 					maximumHit,
 					flatArmour);
@@ -399,7 +441,7 @@ public final class SpecialAttackCalculator
 		// but the live game does not currently apply that proposed cap.
 		int transformedMaximum = maximum <= 0
 			? 0
-			: DamageRoll.maximumSuccessfulHit(maximum, flatArmour);
+			: transform.maximum(maximum, flatArmour);
 		return new DamageSummary(
 			new int[]{transformedMaximum},
 			expectedDamage,
@@ -421,7 +463,7 @@ public final class SpecialAttackCalculator
 		return result;
 	}
 
-	private static DamageSummary tonalztics(
+	private DamageSummary tonalztics(
 		int baseMaximumHit,
 		int flatArmour,
 		double firstHitChance,
@@ -449,7 +491,7 @@ public final class SpecialAttackCalculator
 			firstHit.expectedDamage + secondHit.expectedDamage);
 	}
 
-	private static DamageSummary ancientGodsword(
+	private DamageSummary ancientGodsword(
 		int baseMaximumHit,
 		int flatArmour,
 		double hitChance)
@@ -464,7 +506,7 @@ public final class SpecialAttackCalculator
 			direct.expectedDamage + 25.0 * hitChance);
 	}
 
-	private static DamageSummary singleHit(
+	private DamageSummary singleHit(
 		int maximumHit,
 		int minimumHit,
 		int flatArmour,
@@ -474,14 +516,14 @@ public final class SpecialAttackCalculator
 		int minimum = Math.max(0, Math.min(minimumHit, maximum));
 		int transformedMaximum = maximum <= 0
 			? 0
-			: DamageRoll.maximumSuccessfulHit(maximum, flatArmour);
+			: transform.maximum(maximum, flatArmour);
 		double average = maximum <= 0
 			? 0.0
-			: DamageRoll.averageSuccessfulHit(minimum, maximum, flatArmour);
+			: transform.average(minimum, maximum, flatArmour);
 		return new DamageSummary(new int[]{transformedMaximum}, average * hitChance);
 	}
 
-	private static DamageSummary independentHits(
+	private DamageSummary independentHits(
 		int hitCount,
 		int maximumHit,
 		int minimumHit,
@@ -497,15 +539,15 @@ public final class SpecialAttackCalculator
 		return new DamageSummary(maximumHits, oneHit.expectedDamage * hitCount);
 	}
 
-    private static DamageSummary singleHit(int maximum, int minimum, int armour, double chance, int floor)
+    private DamageSummary singleHit(int maximum, int minimum, int armour, double chance, int floor)
     {
         if (floor <= 1) return singleHit(maximum,minimum,armour,chance);
-        HitTransform transform = HitTransform.IDENTITY.withAccurateFloor(floor);
-        return new DamageSummary(new int[]{transform.maximum(maximum,armour)},
-            transform.average(minimum,maximum,armour)*chance);
+        HitTransform floored = transform.withAccurateFloor(floor);
+        return new DamageSummary(new int[]{floored.maximum(maximum,armour)},
+            floored.average(minimum,maximum,armour)*chance);
     }
 
-    private static DamageSummary independentHits(int count, int maximum, int minimum, int armour, double chance, int floor)
+    private DamageSummary independentHits(int count, int maximum, int minimum, int armour, double chance, int floor)
     {
         DamageSummary one = singleHit(maximum,minimum,armour,chance,floor);
         int[] hits = new int[count];
@@ -513,7 +555,7 @@ public final class SpecialAttackCalculator
         return new DamageSummary(hits,one.expectedDamage*count);
     }
 
-	private static DamageSummary dragonClaws(
+	private DamageSummary dragonClaws(
 		int maximumHit,
 		int flatArmour,
 		double accuracy)
@@ -539,12 +581,15 @@ public final class SpecialAttackCalculator
 				int[] split = clawSplit(accuracyRoll, damage);
 				int accurateHits = 4 - accuracyRoll;
 				int total = 0;
+                double meanTotal = 0;
 				for (int i = 0; i < accurateHits; i++)
 				{
-					split[i] = transformClawHit(split[i], flatArmour);
+					int rawHit = transformClawHit(split[i], flatArmour);
+                    meanTotal += transform.meanForHit(rawHit);
+                    split[i] = transform.maxForHit(rawHit);
 					total += split[i];
 				}
-				expectedDamage += chancePerDamage * total;
+				expectedDamage += chancePerDamage * meanTotal;
 				if (total > maximumTotal)
 				{
 					maximumTotal = total;
@@ -561,7 +606,7 @@ public final class SpecialAttackCalculator
 		return new DamageSummary(maximumSplit, expectedDamage);
 	}
 
-	private static DamageSummary burningClaws(
+	private DamageSummary burningClaws(
 		int maximumHit,
 		int flatArmour,
 		double accuracy)
@@ -583,12 +628,15 @@ public final class SpecialAttackCalculator
 			{
 				int[] split = burningClawSplit(accuracyRoll, damage);
 				int total = 0;
+                double meanTotal = 0;
 				for (int i = 0; i < split.length; i++)
 				{
-					split[i] = transformClawHit(split[i], flatArmour);
+					int rawHit = transformClawHit(split[i], flatArmour);
+                    meanTotal += transform.meanForHit(rawHit);
+                    split[i] = transform.maxForHit(rawHit);
 					total += split[i];
 				}
-				expectedDamage += chancePerDamage * total;
+				expectedDamage += chancePerDamage * meanTotal;
 				if (total > maximumTotal)
 				{
 					maximumTotal = total;

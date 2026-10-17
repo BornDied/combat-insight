@@ -14,6 +14,28 @@ public class SpecialInputRegressionTest
         assertEquals(1.0,result.getHitChance(),1e-12);
         assertEquals(64,calculate("voidwaker",CombatStyle.MELEE,9425,43).getTotalMaximumHit());
     }
+    @Test public void zulrahSpecialUsesPerRollReroll() throws Exception
+    {
+        SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,2042,80);
+        assertEquals(50,result.getTotalMaximumHit());
+        assertEquals((495+70*47.5)/81,result.getExpectedDamage(),1e-12);
+    }
+    @Test public void soulreaperFiveStacksUseUnstackedMaximum() throws Exception
+    {
+        SpecialAttackResult result=calculate("soulreaper axe",CombatStyle.MELEE,9425,80);
+        assertEquals(104,result.getTotalMaximumHit());
+        assertTrue(result.isExpectedDamageAvailable());
+    }
+    @Test public void toaRubySpecialWithholdsDamageUntilHpScalingIsKnown() throws Exception
+    {
+        SpecialAttackResult result=calculate("zaryte crossbow",CombatStyle.RANGED,11789,80);
+        assertFalse(result.isMaximumAvailable());
+        assertTrue(result.getMaximumHitText(true).contains("ToA HP scaling unavailable"));
+    }
+    @Test public void soulreaperCrushUsesSelectedDefence()
+    {
+        assertEquals(AttackType.CRUSH,LiveCombatSnapshot.specialDefenceAttackType(SpecialAttackWeapon.SOULREAPER_AXE,AttackType.CRUSH));
+    }
     @Test public void forcedWrongStyleDoesNotFeedSpellDamageToMeleeSpecial() throws Exception
     {
         SpecialAttackResult result=calculate("dragon dagger",CombatStyle.MAGIC,9425,25);
@@ -46,6 +68,11 @@ public class SpecialInputRegressionTest
     private SpecialAttackResult calculate(String weapon,CombatStyle combat,int id,int maximum,TargetEffectSnapshot effects)throws Exception
     {
         Object eq=construct("EquipmentState"),pr=construct("PrayerState");set(eq,"weaponNameLower",weapon);
+        if(weapon.equals("zaryte crossbow")) set(eq,"ammoNameLower","ruby dragon bolts (e)");
+        if(weapon.equals("soulreaper axe")) {
+            try { set(eq,"soulreaperStacks",5); }
+            catch(NoSuchFieldException e) { throw new AssertionError("Live Soulreaper stacks input missing",e); }
+        }
         Class<?> st=Class.forName(LiveCombatSnapshot.class.getName()+"$StyleState");
         Constructor<?> c=st.getDeclaredConstructors()[0];c.setAccessible(true);
         Object style=c.newInstance(combat,combat==CombatStyle.MAGIC?AttackType.MAGIC:AttackType.SLASH,"Aggressive",0,3);

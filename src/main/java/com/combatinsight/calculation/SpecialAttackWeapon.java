@@ -5,6 +5,7 @@ import java.util.Locale;
 /** Weapons supported by Combat Insight's local special-attack waves. */
 public enum SpecialAttackWeapon
 {
+    SOULREAPER_AXE("Soulreaper axe", CombatStyle.MELEE, AttackType.SLASH, "Consumes current Soul Stacks", false),
     ZARYTE_CROSSBOW("Zaryte crossbow", CombatStyle.RANGED, AttackType.RANGED_STANDARD, "Enchanted bolt proc on accurate special", false),
     CRYSTAL_HALBERD("Crystal halberd", CombatStyle.MELEE, AttackType.SLASH, "Large target: 2 hits; second accuracy -25%", false),
     DRAGON_HALBERD("Dragon halberd", CombatStyle.MELEE, AttackType.SLASH, "Large target: 2 hits; second accuracy -25%", false),
@@ -233,6 +234,7 @@ public enum SpecialAttackWeapon
 		}
 
 		String weapon = weaponName.toLowerCase(Locale.ROOT);
+        if (weapon.equals("soulreaper axe") || weapon.equals("soulreaper axe (o)")) return SOULREAPER_AXE;
         if (weapon.contains("zaryte crossbow")) return ZARYTE_CROSSBOW;
         if (weapon.contains("crystal halberd")) return CRYSTAL_HALBERD;
         if (weapon.contains("dragon halberd")) return DRAGON_HALBERD;

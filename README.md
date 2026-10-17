@@ -261,3 +261,15 @@ Target reductions → Defence tracking mode selects **Track my reductions** or *
 HUD → Show input notice marker is off by default. Enabling it adds an asterisk to the existing Max hit label when notices or unavailable results need attention; it adds no row. Read notices in Advanced mode or copy a diagnostic snapshot for full detail. A missing marker does not certify every mechanic.
 
 ToB observation is experimental and off by default. It keeps the largest locally observed valid roster through room loading, includes dead members, and resets when leaving/logout. It cannot reconstruct players who departed before observation began. Use manual starting size after reconnecting or enabling mid-raid.
+
+## Local equipment-variant candidate
+
+See [TESTING-0.7.1.md](TESTING-0.7.1.md) for ornamented Void/Berserker fixes, cosmetic weapon-category coverage, and Soulreaper basic stack support. Soulreaper special attacks remain unsupported.
+
+## 0.8.0 local test candidate
+
+Optional calculation inspector, compact HUD polish, Zulrah per-hitsplat transforms, Soulreaper special support, and ornament fixes. See [TESTING-0.8.0.md](TESTING-0.8.0.md) for setup, verification and unresolved limitations. This local candidate is not a published release.
+
+## Version 0.8.0
+
+Adds the optional calculation inspector, configurable special-attack highlighting and compact HUD preview, Zulrah per-hitsplat damage transforms, Soulreaper special support, and ornament fixes. Existing mode-specific row settings are preserved. See TESTING-0.8.0.md and AUDIT-080-COMBAT.md for verification and known limits. The latest reported PNM pillar mismatch remains unreproduced; ToA HP-dependent calculations remain unavailable.

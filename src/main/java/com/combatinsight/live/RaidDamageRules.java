@@ -18,6 +18,7 @@ final class RaidDamageRules
 
     static HitTransform transform(int id, AttackType type, boolean fireOrDemonbane, String weapon, int mining)
     {
+        if (TargetMechanics.isZulrah(id)) return HitTransform.zulrah();
         if (EncounterResolver.isNightmarePillar(id) && type == AttackType.MAGIC)
             return HitTransform.multiplier(2,1);
         if ((id >= 8369 && id <= 8371 || id >= 10830 && id <= 10832 || id >= 10847 && id <= 10849)

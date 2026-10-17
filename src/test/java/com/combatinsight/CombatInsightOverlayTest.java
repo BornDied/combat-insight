@@ -114,6 +114,7 @@ public class CombatInsightOverlayTest
 		CombatInsightPlugin plugin = new CombatInsightPlugin()
 		{
 			@Override boolean isHudVisible() { return true; }
+            @Override boolean isPreviewVisible() { return false; }
 			@Override LiveCombatSnapshot getSnapshot() { return settings.snapshot; }
 			@Override Color getMaxHitChangeColor() { return Color.MAGENTA; }
 		};
