@@ -1,6 +1,6 @@
 # Combat Insight
 
-Version 0.7.0 includes the earlier 0.6 calculation fixes. See the [testing checklist](TESTING-0.7.0.md) and [coverage audit](docs/research/070-coverage.md). Release builds identify themselves as `0.7.0` in copied diagnostics. Availability in RuneLite depends on the Plugin Hub update being reviewed and merged.
+This branch is the **0.9.0-alpha2 local research/test build**, recovered from the unpublished source ZIP and extended with an encounter audit. It is not release-ready or submitted to Plugin Hub. Start with [local testing](TESTING-0.9.0.md), the [current encounter audit](docs/research/2026-10-24-encounter-audit.md), and [verification](docs/research/2026-10-24-verification.md).
 
 Combat Insight is a RuneLite plugin for viewing live combat calculations while playing Old School RuneScape.
 
@@ -273,3 +273,7 @@ Optional calculation inspector, compact HUD polish, Zulrah per-hitsplat transfor
 ## Version 0.8.0
 
 Adds the optional calculation inspector, configurable special-attack highlighting and compact HUD preview, Zulrah per-hitsplat damage transforms, Soulreaper special support, and ornament fixes. Existing mode-specific row settings are preserved. See TESTING-0.8.0.md and AUDIT-080-COMBAT.md for verification and known limits. The latest reported PNM pillar mismatch remains unreproduced; ToA HP-dependent calculations remain unavailable.
+
+## 0.9.0-alpha2 local research/test build
+
+Adds automatic Zeal detection, elemental-fragment unlocks, Fractured Archive launch NPC records and defence floors, Nex's updated crush defence, Ascension ammunition compatibility, and new-item fallback bonuses. This is **partial raid and weapon support**, not a release candidate. Unknown phase/weapon mechanics are explicitly withheld. See [TESTING-0.9.0.md](TESTING-0.9.0.md) and [coverage and sources](docs/FRACTURED_ARCHIVE.md).

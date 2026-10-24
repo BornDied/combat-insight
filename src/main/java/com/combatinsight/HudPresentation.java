@@ -24,6 +24,7 @@ final class HudPresentation
             case "DRAGON_DAGGER":
             case "BURNING_CLAWS":
             case "SOULREAPER_AXE":
+            case "ZORYAS_TOME":
                 return accent;
             default: return fallback;
         }

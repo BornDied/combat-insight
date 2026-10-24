@@ -130,7 +130,7 @@ public final class SpecialAttackCalculator
 				? 1.0
 				: CombatPrediction.hitChance(specialAttackRoll, targetDefenceRoll)
 			: 0.0;
-		int applicableFlatArmour = targetAvailable && weapon != SpecialAttackWeapon.VOIDWAKER
+		int applicableFlatArmour = targetAvailable && weapon.getCombatStyle() != CombatStyle.MAGIC
 			? flatArmour : 0;
 		DamageSummary damage = damageSummary(
 			weapon,
@@ -175,6 +175,8 @@ public final class SpecialAttackCalculator
 		{
 			case ELDER_MAUL:
 				return scale(attackRoll, 5, 4);
+            case ZORYAS_TOME:
+                return ZoryaTome.empoweredAccuracy(attackRoll);
 			case DRAGON_MACE:
 			case DRAGON_SWORD:
 			case ABYSSAL_DAGGER:
@@ -338,6 +340,9 @@ public final class SpecialAttackCalculator
 					0,
 					flatArmour,
 					perRollChance);
+            case ZORYAS_TOME:
+                return singleHit(overrideOrScale(specialMaximumHitOverride, baseMaximumHit, 8, 5),
+                    0, flatArmour, perRollChance);
 			case ACCURSED_SCEPTRE:
 				return singleHit(
 					overrideOrScale(specialMaximumHitOverride, baseMaximumHit, 3, 2),

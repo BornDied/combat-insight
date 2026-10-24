@@ -5,6 +5,8 @@ import java.util.Locale;
 /** Weapons supported by Combat Insight's local special-attack waves. */
 public enum SpecialAttackWeapon
 {
+    ZORYAS_TOME("Zorya's tome", CombatStyle.MAGIC, AttackType.MAGIC,
+        "On hit: next 3 Tome attacks empowered, 2 ticks", false),
     SOULREAPER_AXE("Soulreaper axe", CombatStyle.MELEE, AttackType.SLASH, "Consumes current Soul Stacks", false),
     ZARYTE_CROSSBOW("Zaryte crossbow", CombatStyle.RANGED, AttackType.RANGED_STANDARD, "Enchanted bolt proc on accurate special", false),
     CRYSTAL_HALBERD("Crystal halberd", CombatStyle.MELEE, AttackType.SLASH, "Large target: 2 hits; second accuracy -25%", false),
@@ -234,6 +236,7 @@ public enum SpecialAttackWeapon
 		}
 
 		String weapon = weaponName.toLowerCase(Locale.ROOT);
+        if (weapon.contains("zorya's tome")) return weapon.contains("uncharged") ? null : ZORYAS_TOME;
         if (weapon.equals("soulreaper axe") || weapon.equals("soulreaper axe (o)")) return SOULREAPER_AXE;
         if (weapon.contains("zaryte crossbow")) return ZARYTE_CROSSBOW;
         if (weapon.contains("crystal halberd")) return CRYSTAL_HALBERD;

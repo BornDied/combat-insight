@@ -6,6 +6,24 @@ import static org.junit.Assert.*;
 
 public class SpecialInputRegressionTest
 {
+    @Test public void unresolvedRaidPhasesCannotShowAnOrdinaryVoidwakerSpecial() throws Exception
+    {
+        for (int id : new int[]{11753,11754,11755,11756,11757,11758,16678,16679,16680,16681})
+        {
+            SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,id,80);
+            assertFalse("Unresolved phase "+id,result.isMaximumAvailable());
+            assertFalse(result.isAccuracyAvailable());
+        }
+    }
+    @Test public void chargingWardenBlocksEvenGuaranteedAccuracySpecials() throws Exception
+    {
+        for (int id : new int[]{11763,11764})
+        {
+            SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,id,80);
+            assertEquals(0,result.getTotalMaximumHit());
+            assertEquals(0.0,result.getExpectedDamage(),0.0);
+        }
+    }
     @Test public void magicPillarSpecialUsesMeleeDerivedVoidwakerRollThenDoublesIt() throws Exception
     {
         SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,9435,43);

@@ -11,6 +11,9 @@ import com.combatinsight.calculation.DamageRoll;
 import com.combatinsight.calculation.MagicSpell;
 import com.combatinsight.calculation.MultiHitResult;
 import com.combatinsight.calculation.MultiHitWeapon;
+import com.combatinsight.calculation.Obligator;
+import com.combatinsight.calculation.ZoryaTome;
+import com.combatinsight.calculation.Rondache;
 import com.combatinsight.calculation.SpecialAttackCalculator;
 import com.combatinsight.calculation.SoulreaperSpecial;
 import com.combatinsight.calculation.ContextSpecialAttack;
@@ -313,6 +316,8 @@ public final class LiveCombatSnapshot
 
 		EquipmentState equipment = readEquipment(client, itemManager);
         equipment.soulreaperStacks = client.getVarpValue(VarPlayerID.SOULREAPER_STACKS);
+        int tomeStacks = client.getVarpValue(5926); // ZORYAS_TOME_STACKS, RuneLite gameval
+        equipment.tomeEmpowered = equipment.weaponNameLower.contains("zorya's tome") && tomeStacks > 0;
 		StyleState style = getStyleState(client, equipment, manualSpell);
 		if (combatStyleOverride != CombatStyleOverride.AUTO)
 		{
@@ -343,6 +348,8 @@ public final class LiveCombatSnapshot
 		if (!raidNotice.isEmpty()) warnings.add(raidNotice);
         String encounterNotice = EncounterResolver.notice(targetId, encounterContext);
         if (!combatDummy && !encounterNotice.isEmpty()) warnings.add(encounterNotice);
+        if (!combatDummy && ArchiveEncounterRules.isArchive(targetId))
+            warnings.add("Archive HP scaling unavailable; HP-dependent damage withheld. Published launch stats; live validation pending.");
         if (BoltEffect.enchanted(equipment.ammoNameLower))
             warnings.add("Bolt effects: " + equipment.ammoNameLower + "; Kandarin hard diary " + (kandarinDiary ? "on" : "off")
                 + (equipment.ammoNameLower.contains("ruby") ? "; current target HP is estimated" : ""));
@@ -356,7 +363,17 @@ public final class LiveCombatSnapshot
             liveTargetEffects = TargetEffectSnapshot.unmodified(target).withTektonHistory(
                 liveTargetEffects.isTektonDefenceSpecialAttempted(),
                 liveTargetEffects.isTektonDefenceSpecialAttempted());
+        boolean guardianMagicUnknown = (targetId == 16659 || targetId == 16660)
+            && liveTargetEffects.hasTargetStats()
+            && (liveTargetEffects.getCurrentMagic() != liveTargetEffects.getBaseMagic()
+                || liveTargetEffects.getCurrentMagicDefence() != liveTargetEffects.getBaseMagicDefence());
+        if (guardianMagicUnknown)
+        {
+            targetDataAvailable = false;
+            liveTargetEffects = TargetEffectSnapshot.empty();
+        }
 		int targetMaximumHitpoints = targetDataAvailable && !TargetMechanics.isInTombsOfAmascut(targetId)
+            && !ArchiveEncounterRules.isArchive(targetId)
             ? Math.max(0, target.getHitpoints()) : 0;
 		int baseTargetMagicDefenceRoll = targetDataAvailable
 			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
@@ -484,6 +501,13 @@ public final class LiveCombatSnapshot
 					minimumHit = shrink;
 					maxHit -= shrink;
 				}
+				if (equipment.weaponNameLower.contains("obligator") && targetDataAvailable)
+				{
+					maxHit = Obligator.maximum(maxHit, target.getSize(), equipment.isObligatorThrust());
+					appliedEffects.add(equipment.isObligatorThrust()
+						? "Obligator Thrust: size bonus, highest of 2–4 damage rolls"
+						: "Obligator Smash: one damage roll, 3 ticks");
+				}
 				break;
 
 			case RANGED:
@@ -584,6 +608,13 @@ public final class LiveCombatSnapshot
 					magicBaseMaxHit += 3;
 				}
 
+                int elementalUpgrade = magicBase.poweredWeapon ? 0 : ElementalUpgrade.bonus(client, manualSpell);
+                if (elementalUpgrade > 0)
+                {
+                    magicBaseMaxHit += elementalUpgrade;
+                    appliedEffects.add("Elemental fragment: +2 base Magic max hit (" + manualSpell.getElementName() + ")");
+                }
+
 				float targetAdjustedMagicDamage = equipment.magicDamage;
 				if (magicBase.shadow)
 				{
@@ -656,6 +687,15 @@ public final class LiveCombatSnapshot
 				{
 					maxHit = Math.max(2, maxHit / 2);
 				}
+                if (equipment.weaponNameLower.contains("zorya's tome"))
+                {
+                    specialMagicMaximumHit = ZoryaTome.empoweredMaximum(maxHit);
+                    if (equipment.tomeEmpowered)
+                    {
+                        maxHit = specialMagicMaximumHit;
+                        appliedEffects.add("Zorya's tome: " + tomeStacks + " empowered attacks remaining; damage x1.6, accuracy x2.5, 2 ticks");
+                    }
+                }
 				effectiveDamageLevel = boostedMagic;
 
 				if (magicBase.sanguinesti)
@@ -689,6 +729,38 @@ public final class LiveCombatSnapshot
 				break;
 		}
 
+        String equipmentStatus = ArchiveEquipmentRules.unresolved(equipment.weaponNameLower, equipment.ammoNameLower, tomeStacks);
+        if (equipment.weaponNameLower.contains("obligator")
+            && (equipment.obligatorStyleIndex < 0 || equipment.obligatorStyleIndex > 2))
+            equipmentStatus = "Obligator style unavailable";
+        if (!equipmentStatus.isEmpty())
+        {
+            maxHitAvailable = false;
+            maxHitStatusText = equipmentStatus;
+            warnings.add(equipmentStatus);
+        }
+        if (equipment.rondacheEquipped)
+        {
+            int charges = client.getVarbitValue(16438);
+            int shieldMaximum = Rondache.baseMaximum(charges);
+            if (shieldMaximum >= 0)
+                appliedEffects.add("Rondache: " + charges + " charges; base shield-bash max " + shieldMaximum
+                    + " before target mitigation. Separate from mainhand special.");
+            warnings.add(shieldMaximum < 0 ? "Rondache charges unavailable"
+                : "Rondache shield-bash accuracy/DPS pending; charge maximum is in Inspector");
+        }
+        String archiveStatus = guardianMagicUnknown ? "Guardian Magic drain pending"
+            : combatDummy ? "" : ArchiveEncounterRules.unresolved(targetId, style.attackType);
+        if (archiveStatus.isEmpty() && !combatDummy)
+            archiveStatus = RaidDamageRules.unresolvedEncounter(targetId);
+        if (!archiveStatus.isEmpty())
+        {
+            maxHitAvailable = false;
+            maxHitStatusText = archiveStatus;
+            warnings.add(archiveStatus);
+        }
+        boolean archiveAncientImmune = !combatDummy && style.combatStyle == CombatStyle.MAGIC
+            && ArchiveEncounterRules.ancientImmune(targetId, equipment.usesSpellbookMagic(), manualSpell);
 		addConditionalWeaponWarnings(equipment, style.attackType, target, targetDataAvailable, warnings);
 		if (targetDataAvailable && isTargetImmune(targetId, style, equipment, target))
 		{
@@ -702,7 +774,7 @@ public final class LiveCombatSnapshot
         HitTransform encounterDamage = combatDummy ? HitTransform.IDENTITY : RaidDamageRules.transform(
             targetId, style.attackType, RaidDamageRules.bypassesIceDemon(style.combatStyle, equipment.weaponNameLower,
                 equipment.usesSpellbookMagic() && "fire".equals(manualSpell.getElementName()),
-                equipment.usesSpellbookMagic() && manualSpell.getSpellType() == MagicSpell.SpellType.TARGET_DEPENDENT),
+                equipment.usesSpellbookMagic() && manualSpell.isDemonbane()),
             equipment.weaponNameLower, client.getRealSkillLevel(Skill.MINING));
 
         if (!combatDummy && targetDataAvailable && !isTargetImmune(targetId,style,equipment,target))
@@ -739,7 +811,9 @@ public final class LiveCombatSnapshot
 			maxHitStatusText,
 			attackSpeedTicks,
 			combatDummy, encounterDamage, targetCurrentHitpoints, kandarinDiary, client.getBoostedSkillLevel(Skill.HITPOINTS));
-		boolean targetImmune = targetDataAvailable && isTargetImmune(targetId, style, equipment, target);
+		boolean targetImmune = archiveAncientImmune || targetDataAvailable && isTargetImmune(targetId, style, equipment, target);
+        if (archiveAncientImmune) targetResult = TargetResult.immune(0, 0, 0);
+        if (!archiveStatus.isEmpty()) targetResult = TargetResult.unavailable(archiveStatus);
         boolean voidwaker = equipment.weaponNameLower.contains("voidwaker");
         boolean soulreaper = equipment.weaponNameLower.equals("soulreaper axe") || equipment.weaponNameLower.equals("soulreaper axe (o)");
         int specialBaseMaximum = fangTrueMaximum >= 0 ? fangTrueMaximum : maxHit;
@@ -773,6 +847,12 @@ public final class LiveCombatSnapshot
 			specialMagicMaximumHit,
 			targetHasLocalHits,
 			combatDummy, targetCurrentHitpoints, kandarinDiary, client.getBoostedSkillLevel(Skill.HITPOINTS));
+
+        if (guardianMagicUnknown)
+        {
+            SpecialAttackWeapon special = SpecialAttackWeapon.forWeapon(equipment.weaponNameLower);
+            if (special != null) specialAttackResult = SpecialAttackResult.unavailable(special, archiveStatus);
+        }
 
 		return new LiveCombatSnapshot(
 			true,
@@ -857,7 +937,11 @@ public final class LiveCombatSnapshot
 		}
         if (weapon != SpecialAttackWeapon.VOIDWAKER && currentStyle.combatStyle != weapon.getCombatStyle())
             return SpecialAttackResult.unavailable(weapon,"Special requires " + weapon.getCombatStyle().toString().toLowerCase(Locale.ROOT) + " inputs");
-		String raidDamageStatus = combatDummy ? "" : RaidDamageRules.unavailableReason(
+		String archiveStatus = combatDummy ? "" : ArchiveEncounterRules.unresolved(targetId, weapon.getAttackType());
+        if (archiveStatus.isEmpty() && !combatDummy)
+            archiveStatus = RaidDamageRules.unresolvedEncounter(targetId);
+        if (!archiveStatus.isEmpty()) return SpecialAttackResult.unavailable(weapon, archiveStatus);
+        String raidDamageStatus = combatDummy ? "" : RaidDamageRules.unavailableReason(
 			targetId, weapon.getAttackType(), false);
 		if (!raidDamageStatus.isEmpty()) return SpecialAttackResult.unavailable(weapon, raidDamageStatus);
 
@@ -921,7 +1005,7 @@ public final class LiveCombatSnapshot
 			&& TargetMechanics.isGuaranteedMaxHitTarget(targetId);
 		int specialMaximumHitOverride = -1;
 		if (weapon == SpecialAttackWeapon.EYE_OF_AYAK
-			|| weapon == SpecialAttackWeapon.ACCURSED_SCEPTRE)
+			|| weapon == SpecialAttackWeapon.ACCURSED_SCEPTRE || weapon == SpecialAttackWeapon.ZORYAS_TOME)
 		{
 			specialMaximumHitOverride = specialMagicMaximumHit;
 		}
@@ -1099,6 +1183,8 @@ public final class LiveCombatSnapshot
 			useAccuracySlayerBonus,
 			toaInvocationLevel);
 		int attackRoll = accuracyRolls.attackRoll;
+        if (style.combatStyle == CombatStyle.MAGIC && equipment.tomeEmpowered)
+            attackRoll = ZoryaTome.empoweredAccuracy(attackRoll);
 		int defenceRoll = accuracyRolls.defenceRoll;
 		int effectiveAccuracy = accuracyRolls.effectiveAccuracy;
 
@@ -1172,7 +1258,17 @@ public final class LiveCombatSnapshot
 		double averageSuccessfulHit;
 		double damagePerAttack;
 		double expectedAttackSpeedTicks = Math.max(1, attackSpeedTicks);
-		if (multiHitWeapon != null)
+		if (style.combatStyle == CombatStyle.MELEE && equipment.weaponNameLower.contains("obligator"))
+		{
+			MultiHitResult result = Obligator.calculate(maximumHit, target.getFlatArmour(), chance,
+				target.defenceBonus(AttackType.STAB), target.defenceBonus(AttackType.SLASH),
+				target.defenceBonus(AttackType.CRUSH), equipment.isObligatorThrust(), guaranteedMaxHit, encounterDamage);
+			targetMaximumHit = result.getTotalMaximumHit();
+			averageSuccessfulHit = result.getAverageDamageOnSuccessfulAttack();
+			damagePerAttack = result.getExpectedDamagePerAttack();
+			expectedAttackSpeedTicks = result.getExpectedAttackSpeedTicks();
+		}
+		else if (multiHitWeapon != null)
 		{
 			MultiHitResult multiHit = multiHitWeapon.calculate(
 				minimumHit,
@@ -1453,7 +1549,7 @@ public final class LiveCombatSnapshot
 					attackRoll = scale(attackRoll, 23, 20);
 				}
 				if (equipment.usesSpellbookMagic()
-                    && manualSpell.getSpellType() == MagicSpell.SpellType.TARGET_DEPENDENT
+                    && manualSpell.isDemonbane()
 					&& target.hasAttribute("demon"))
 				{
 					attackRoll += scale(attackRoll, DemonbaneRules.bonusPercent(target.getId(), 20), 100);
@@ -1593,7 +1689,15 @@ public final class LiveCombatSnapshot
 		int targetId)
 	{
 		int ticks;
-		if (style.combatStyle == CombatStyle.MAGIC && equipment.usesSpellbookMagic())
+		if (style.combatStyle == CombatStyle.MAGIC && equipment.tomeEmpowered)
+        {
+            ticks = 2;
+        }
+        else if (style.combatStyle == CombatStyle.MELEE && equipment.weaponNameLower.contains("obligator"))
+		{
+			ticks = equipment.isObligatorThrust() ? 5 : 3;
+		}
+		else if (style.combatStyle == CombatStyle.MAGIC && equipment.usesSpellbookMagic())
 		{
 			ticks = equipment.weaponNameLower.contains("harmonised nightmare staff")
 				&& manualSpell.getSpellbook() == MagicSpell.Spellbook.STANDARD
@@ -1740,7 +1844,7 @@ public final class LiveCombatSnapshot
 					? ""
 					: composition.getName();
 				ItemStats stats = itemManager.getItemStats(weapon.getId());
-				ItemEquipmentStats equipment = stats == null ? null : stats.getEquipment();
+				ItemEquipmentStats equipment = EquipmentStatsFallback.resolve(weapon.getId(), stats == null ? null : stats.getEquipment());
 				result.weaponId = weapon.getId();
 				result.weaponName = itemName.isEmpty() ? "Unknown weapon" : itemName;
 				result.weaponNameLower = itemName.toLowerCase(Locale.ROOT);
@@ -1886,6 +1990,8 @@ public final class LiveCombatSnapshot
 		MagicSpell manualSpell)
 	{
 		int styleIndex = client.getVarpValue(VarPlayerID.COM_MODE);
+		if (equipment.weaponNameLower.contains("obligator"))
+			return getObligatorStyle(equipment, styleIndex, false);
 		String runeLiteStyle = getRuneLiteAttackStyle(client, styleIndex);
 
 		if (equipment.weaponCategory == WeaponCategory.SALAMANDER && styleIndex >= 0 && styleIndex <= 2)
@@ -1989,6 +2095,8 @@ public final class LiveCombatSnapshot
 		EquipmentState equipment)
 	{
 		int styleIndex = client.getVarpValue(VarPlayerID.COM_MODE);
+		if (override == CombatStyleOverride.MELEE && equipment.weaponNameLower.contains("obligator"))
+			return getObligatorStyle(equipment, styleIndex, true);
 		switch (override)
 		{
 			case RANGED:
@@ -2023,6 +2131,16 @@ public final class LiveCombatSnapshot
 					meleeAccuracyBonus,
 					meleeBonus);
 		}
+	}
+
+	private static StyleState getObligatorStyle(EquipmentState equipment, int styleIndex, boolean forced)
+	{
+		equipment.obligatorStyleIndex = styleIndex;
+		boolean accurate = styleIndex == 0;
+		String name = styleIndex == 0 ? "Thrust (Accurate)" : styleIndex == 1 ? "Thrust (Aggressive)"
+			: styleIndex == 2 ? "Smash (Aggressive)" : "Unknown Obligator style";
+		return new StyleState(CombatStyle.MELEE, AttackType.CRUSH, name + (forced ? " (forced)" : ""),
+			accurate ? 3 : 0, styleIndex == 1 || styleIndex == 2 ? 3 : 0);
 	}
 
 	private static AttackType resolveAttackType(
@@ -2121,7 +2239,13 @@ public final class LiveCombatSnapshot
 	{
 		PrayerState state = new PrayerState();
 
-		if (client.isPrayerActive(Prayer.PIETY))
+		// RuneLite gameval PRAYER_ZEAL, distinct from PRAYER_ZEAL_UNLOCKED (16578).
+		// Read the active varbit directly until ZEAL is present in the stable Prayer API.
+		if (client.getVarbitValue(16577) == 1)
+		{
+			state.melee("Zeal", 1.25, 1.28, false);
+		}
+		else if (client.isPrayerActive(Prayer.PIETY))
 		{
 			state.melee("Piety", 1.20, 1.23, false);
 		}
@@ -2247,6 +2371,12 @@ public final class LiveCombatSnapshot
 		boolean targetDataAvailable,
 		boolean useSlayerBonus)
 	{
+        if (weaponName.contains("zorya's tome"))
+        {
+            return weaponName.contains("uncharged")
+                ? MagicBase.unsupported("Uncharged", "Zorya's tome must be charged")
+                : MagicBase.powered(ZoryaTome.baseMaximum(boostedMagic), false);
+        }
 		if (weaponName.contains("tumeken's shadow"))
 		{
 			return targetDataAvailable
@@ -3323,9 +3453,18 @@ public final class LiveCombatSnapshot
 		private boolean leafBladedEquipment;
 		private int inquisitorPoints;
         private int soulreaperStacks = -1;
+        private boolean rondacheEquipped;
+        private boolean tomeEmpowered;
+        private int obligatorStyleIndex = -1;
+
+        private boolean isObligatorThrust()
+        {
+            return obligatorStyleIndex == 0 || obligatorStyleIndex == 1;
+        }
 
 		private void inspectItemName(String name)
 		{
+            if (name.equals("rondache")) rondacheEquipped = true;
 			// Cosmetic kits do not change set effects. Preserve functional suffixes
 			// such as (i), (e), (inactive), and (broken).
 			if (name.endsWith("(or)"))

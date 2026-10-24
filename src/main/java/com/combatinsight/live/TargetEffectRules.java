@@ -27,6 +27,7 @@ final class TargetEffectRules
 	private static final Set<Integer> ARAXXOR = ids(13668);
 	private static final Set<Integer> HUEYCOATL = ids(14009, 14010, 14013, 14017, 14014);
 	private static final Set<Integer> YAMA = ids(14176);
+	private static final Set<Integer> ARCHIVE_FLOOR = ids(16640, 16652, 16659, 16660, 16667, 16674, 16677, 16684);
 	private static final Set<Integer> TEKTON = ids(7540, 7541, 7542, 7543, 7544, 7545, 7546, 7547);
 
 	private TargetEffectRules()
@@ -40,6 +41,10 @@ final class TargetEffectRules
 			return 0;
 		}
 		int id = target.getId();
+		if (ARCHIVE_FLOOR.contains(id))
+		{
+			return target.getDefenceLevel() * 3 / 5;
+		}
 		if (BASE_DEFENCE_FLOOR.contains(id))
 		{
 			return target.getDefenceLevel();

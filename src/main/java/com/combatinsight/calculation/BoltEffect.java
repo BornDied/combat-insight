@@ -29,6 +29,8 @@ public final class BoltEffect
         int armour, boolean zaryte, boolean special, boolean diary, boolean undead, boolean dragonOrFiery, HitTransform transform)
     {
         String name=ammo.toLowerCase(Locale.ROOT);
+        boolean ascension = name.contains("ascension");
+        if (ascension && (zaryte || special || !(name.contains("diamond") || name.contains("onyx")))) return null;
         double p=Math.max(0,Math.min(1,accuracy));
         int baseMax=Math.max(0,maximum);
         double baseMean=baseMax<=0 ? 0 : transform.average(0,baseMax,armour);
@@ -43,14 +45,14 @@ public final class BoltEffect
         }
         else if(name.contains("diamond") && enchanted(name))
         {
-            rate=.10; ignoresAccuracy=true;
+            rate=ascension ? .05 : .10; ignoresAccuracy=true;
             int effectMax=baseMax*(zaryte ? 126 : 115)/100;
             effectMaximum=transform.maximum(effectMax,armour);
             effectMean=transform.average(0,effectMax,armour);
         }
         else if(name.contains("onyx") && enchanted(name))
         {
-            rate=undead ? 0 : .11; ignoresAccuracy=false;
+            rate=undead ? 0 : ascension ? .055 : .11; ignoresAccuracy=false;
             int effectMax=baseMax*(zaryte ? 132 : 120)/100;
             effectMaximum=transform.maximum(effectMax,armour);
             effectMean=transform.average(0,effectMax,armour);

@@ -13,6 +13,7 @@ final class MagicWeaponRules
 	{
 		String name = normalize(weaponName);
 		return name.contains("trident")
+			|| name.contains("zorya's tome")
 			|| name.contains("sanguinesti staff")
 			|| name.contains("tumeken's shadow")
 			|| name.contains("warped sceptre")

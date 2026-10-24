@@ -132,6 +132,11 @@ public enum MagicSpell
 		return spellType;
 	}
 
+	public boolean isDemonbane()
+	{
+		return this == INFERIOR_DEMONBANE || this == SUPERIOR_DEMONBANE || this == DARK_DEMONBANE;
+	}
+
 	public String getElementName()
 	{
 		return element == Element.NONE ? "" : element.name().toLowerCase();

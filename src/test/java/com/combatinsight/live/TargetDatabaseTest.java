@@ -14,7 +14,7 @@ public class TargetDatabaseTest
 	@Test
 	public void loadsTheBundledMonsterSnapshot()
 	{
-		assertEquals(3976, TargetDatabase.size());
+		assertEquals(4001, TargetDatabase.size());
 		TargetProfile scurrius = TargetDatabase.find(7222);
 		assertNotNull(scurrius);
 		assertFalse(scurrius.isAmbiguous());

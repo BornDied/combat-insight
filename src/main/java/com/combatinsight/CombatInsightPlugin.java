@@ -635,6 +635,7 @@ public class CombatInsightPlugin extends Plugin
 		TargetMagicDisplay display = config.targetMagicDisplay();
 		if (display == null || !display.showsInfoBox()
 			|| activeTarget == null || captured.getCombatStyle() != CombatStyle.MAGIC
+            || captured.getCurrentTargetMagicDefenceRoll() < 0
 			|| !targetEffects.hasTargetStats())
 		{
 			removeTargetMagicInfoBox();

@@ -30,5 +30,15 @@ cross-checked against RuneLite's `gameval.NpcID` definitions. The audited roster
 is in `src/test/resources/raid-coverage.tsv`.
 
 Combat Insight is a third-party RuneLite plugin and uses the RuneLite API.
+
+The October 24 alpha2 continuation adds eight curated Fractured Archive records
+from the [Wiki DPS structured monster dataset](https://github.com/weirdgloop/osrs-dps-calc/blob/98e4fac38b580901cc3f8d485bbaa48bbb3277ed/cdn/json/monsters.json),
+cross-checked with RuneLite gameval definitions at
+`fc8d18969e3028af21a78fae38c9ab6c8c7573b1`. The Wiki-derived data retains
+the Wiki's site-content attribution/licensing obligations. The comparison
+report is data derived from those sources, not copied calculator code.
+Source revisions and scope are recorded in
+`docs/research/2026-10-24-encounter-audit.md`. No GearScape implementation was copied.
+
 RuneLite is licensed under the BSD 2-Clause License. RuneLite and Old School
 RuneScape are separate projects; this plugin is not endorsed by Jagex.

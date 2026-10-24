@@ -20,6 +20,7 @@ public enum WeaponCategory
 	CHINCHOMPA("Chinchompas"),
 	CLAW("Claw"),
 	CROSSBOW("Crossbow"),
+	EXTENDING_CHAIN_MACE("Extending Chain Mace"),
 	DAGGER("Dagger"),
 	FLAIL("Flail"),
 	GUN("Gun"),
@@ -99,6 +100,7 @@ public enum WeaponCategory
 				return styleIndex == 0 ? AttackType.STAB
 					: styleIndex == 1 ? AttackType.SLASH : AttackType.CRUSH;
 			case BULWARK:
+			case EXTENDING_CHAIN_MACE:
 			case BLUDGEON:
 			case BLUNT:
 			case POLESTAFF:

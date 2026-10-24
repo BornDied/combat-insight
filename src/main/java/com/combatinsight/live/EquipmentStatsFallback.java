@@ -12,6 +12,20 @@ final class EquipmentStatsFallback
     static ItemEquipmentStats resolve(int itemId, ItemEquipmentStats current)
     {
         if (current != null) return current;
+        // Launch stats: docs/FRACTURED_ARCHIVE.md. Live RuneLite data wins.
+        switch (itemId)
+        {
+            case 34681: return ItemEquipmentStats.builder().slot(3).aspeed(3).amagic(3).arange(34).build();
+            case 34684: return ItemEquipmentStats.builder().slot(13).rstr(53).build();
+            case 34690: case 34696: case 34702: case 34708:
+                return ItemEquipmentStats.builder().slot(13).rstr(58).build();
+            case 34715: case 34717:
+                return ItemEquipmentStats.builder().slot(3).aspeed(5).astab(22).aslash(-8).acrush(120).str(40).prayer(3).build();
+            case 34719: return ItemEquipmentStats.builder().slot(5).amagic(-5).arange(-8).str(8).build();
+            case 34725: case 34727:
+                return ItemEquipmentStats.builder().slot(3).aspeed(3).amagic(45).mdmg(15).prayer(2).build();
+            default: break;
+        }
         if (itemId == 33639) // Necklace of rupture
             return ItemEquipmentStats.builder().slot(2).arange(20).rstr(8).prayer(3).build();
         int strength;

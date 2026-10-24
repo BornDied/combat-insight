@@ -82,6 +82,8 @@ final class TargetMechanics
 
 	static boolean isImmune(int npcId, AttackType attackType)
 	{
+		// RuneLite PHASE3_CHARGING IDs; Wiki variants are explicitly invulnerable.
+		if (npcId == 11763 || npcId == 11764) return true;
 		int nyloStyle = nylocasStyle(npcId);
 		if (nyloStyle != 0)
 		{

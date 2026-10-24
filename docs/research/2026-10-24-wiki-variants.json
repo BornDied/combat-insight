@@ -1,0 +1,1294 @@
+{
+  "wiki_variant_records": 2918,
+  "unique_wiki_ids": 2874,
+  "local_ids": 4001,
+  "duplicate_ids": {
+    "7706": [
+      "TzKal-Zuk (Enraged)",
+      "TzKal-Zuk (Normal)"
+    ],
+    "8367": [
+      "Blood spawn (Entry)",
+      "Blood spawn (Normal)"
+    ],
+    "9435": [
+      "Totem (Phosani's Nightmare)",
+      "Totem (The Nightmare)"
+    ],
+    "9436": [
+      "Totem (Phosani's Nightmare)",
+      "Totem (The Nightmare)"
+    ],
+    "11761": [
+      "Elidinis' Warden (Damaged)",
+      "Elidinis' Warden (Enraged)"
+    ],
+    "11762": [
+      "Tumeken's Warden (Damaged)",
+      "Tumeken's Warden (Enraged)"
+    ],
+    "12191": [
+      "Duke Sucellus (Awakened, Awake)",
+      "Duke Sucellus (Post-quest, Awake)"
+    ],
+    "12204": [
+      "The Whisperer (Awakened)",
+      "The Whisperer (Post-quest)"
+    ],
+    "12214": [
+      "The Leviathan (Awakened)",
+      "The Leviathan (Post-quest)"
+    ],
+    "12223": [
+      "Vardorvis (Awakened)",
+      "Vardorvis (Post-quest)"
+    ],
+    "12353": [
+      "Jhallan",
+      "Jhallan"
+    ],
+    "12452": [
+      "Giant goblin (Annihilation)",
+      "Giant goblin (Apocalypse)",
+      "Giant goblin (Armageddon)",
+      "Giant goblin (Permanent)"
+    ],
+    "13012": [
+      "Eclipse Moon (Clone)",
+      "Eclipse Moon (Regular)"
+    ],
+    "13663": [
+      "Magic Mark (Annihilation)",
+      "Magic Mark (Armageddon)",
+      "Magic Mark (Permanent)"
+    ],
+    "13664": [
+      "Ranging Ro (Annihilation)",
+      "Ranging Ro (Armageddon)",
+      "Ranging Ro (Permanent)"
+    ],
+    "13732": [
+      "Emissary Acolyte (1)",
+      "Emissary Acolyte (2)",
+      "Emissary Acolyte (3)",
+      "Emissary Acolyte (4)",
+      "Emissary Acolyte (5)",
+      "Emissary Acolyte (6)"
+    ],
+    "14176": [
+      "Yama (Normal)",
+      "Yama (Phase 3)"
+    ],
+    "14179": [
+      "Void Flare (Fire)",
+      "Void Flare (Shadow)"
+    ],
+    "14407": [
+      "Emissary Archer (1)",
+      "Emissary Archer (2)"
+    ],
+    "14420": [
+      "Earthen Nagua (Normal)",
+      "Earthen Nagua (Weakened)"
+    ],
+    "14707": [
+      "Doom of Mokhaiotl (Deep Delve)",
+      "Doom of Mokhaiotl (Delve 1)",
+      "Doom of Mokhaiotl (Delve 2)",
+      "Doom of Mokhaiotl (Delve 3)",
+      "Doom of Mokhaiotl (Delve 4)",
+      "Doom of Mokhaiotl (Delve 5)",
+      "Doom of Mokhaiotl (Delve 6)",
+      "Doom of Mokhaiotl (Delve 7)",
+      "Doom of Mokhaiotl (Delve 8)"
+    ],
+    "15025": [
+      "Black Eye Bethel (Dragon scimitar)",
+      "Black Eye Bethel (Rune scimitar)",
+      "Black Eye Bethel (Steel scimitar)"
+    ],
+    "15547": [
+      "Big Evil Chicken (Annihilation)",
+      "Big Evil Chicken (Permanent)"
+    ],
+    "15553": [
+      "I DSCIM YOU (Annihilation)",
+      "I DSCIM YOU (Permanent)"
+    ],
+    "15742": [
+      "Maggot King (Far)",
+      "Maggot King (Nearby)",
+      "Maggot King (Roaring)"
+    ],
+    "16659": [
+      "Archive Guardian (Flying)",
+      "Archive Guardian (Grounded)"
+    ],
+    "100001": [
+      "Yama (Glyphic Attenuation)",
+      "Yama (Glyphic Attenuation, Phase 3)"
+    ]
+  },
+  "unmatched": [
+    {
+      "id": 16598,
+      "name": "Blink",
+      "version": "Combo Eating"
+    },
+    {
+      "id": 16625,
+      "name": "Blink",
+      "version": "Special Attacks"
+    },
+    {
+      "id": 16357,
+      "name": "Giant Mole (LANScape)",
+      "version": "Bandos"
+    },
+    {
+      "id": 16356,
+      "name": "Giant Mole (LANScape)",
+      "version": "Guthix"
+    },
+    {
+      "id": 16355,
+      "name": "Giant Mole (LANScape)",
+      "version": "Saradomin"
+    },
+    {
+      "id": 16354,
+      "name": "Giant Mole (LANScape)",
+      "version": "Zamorak"
+    },
+    {
+      "id": 14424,
+      "name": "Giant Rock Crab",
+      "version": "Tonali Cavern"
+    },
+    {
+      "id": 16673,
+      "name": "Ocellus",
+      "version": "Phase 1"
+    },
+    {
+      "id": 16675,
+      "name": "Ocellus",
+      "version": "Phase 2"
+    },
+    {
+      "id": 16528,
+      "name": "Outlaw (A Ruff Situation)",
+      "version": "Level 22"
+    },
+    {
+      "id": 16527,
+      "name": "Outlaw (A Ruff Situation)",
+      "version": "Level 23"
+    },
+    {
+      "id": 16579,
+      "name": "Pete Kayer",
+      "version": "Final Challenge"
+    },
+    {
+      "id": 16588,
+      "name": "Pete Kayer",
+      "version": "Penultimate Challenge"
+    },
+    {
+      "id": 16607,
+      "name": "Sparring partner",
+      "version": "1"
+    },
+    {
+      "id": 16616,
+      "name": "Sparring partner",
+      "version": "10"
+    },
+    {
+      "id": 16617,
+      "name": "Sparring partner",
+      "version": "11"
+    },
+    {
+      "id": 16608,
+      "name": "Sparring partner",
+      "version": "2"
+    },
+    {
+      "id": 16609,
+      "name": "Sparring partner",
+      "version": "3"
+    },
+    {
+      "id": 16610,
+      "name": "Sparring partner",
+      "version": "4"
+    },
+    {
+      "id": 16611,
+      "name": "Sparring partner",
+      "version": "5"
+    },
+    {
+      "id": 16612,
+      "name": "Sparring partner",
+      "version": "6"
+    },
+    {
+      "id": 16613,
+      "name": "Sparring partner",
+      "version": "7"
+    },
+    {
+      "id": 16614,
+      "name": "Sparring partner",
+      "version": "8"
+    },
+    {
+      "id": 16615,
+      "name": "Sparring partner",
+      "version": "9"
+    },
+    {
+      "id": 16213,
+      "name": "Venator (The Blood Moon Rises)",
+      "version": "1"
+    },
+    {
+      "id": 16214,
+      "name": "Venator (The Blood Moon Rises)",
+      "version": "2"
+    },
+    {
+      "id": 16215,
+      "name": "Venator (The Blood Moon Rises)",
+      "version": "3"
+    },
+    {
+      "id": 16216,
+      "name": "Venator (The Blood Moon Rises)",
+      "version": "4"
+    },
+    {
+      "id": 16217,
+      "name": "Venator (The Blood Moon Rises)",
+      "version": "5"
+    }
+  ],
+  "non_live_records": [
+    {
+      "id": 100001,
+      "name": "Yama",
+      "version": "Glyphic Attenuation"
+    },
+    {
+      "id": 100001,
+      "name": "Yama",
+      "version": "Glyphic Attenuation, Phase 3"
+    }
+  ],
+  "numeric_differences": [
+    {
+      "id": 16659,
+      "name": "Archive Guardian",
+      "version": "Grounded",
+      "differences": {
+        "defensive.slash": {
+          "local": 110,
+          "wiki": 90
+        },
+        "defensive.light": {
+          "local": 75,
+          "wiki": 50
+        },
+        "defensive.standard": {
+          "local": 120,
+          "wiki": 115
+        }
+      }
+    },
+    {
+      "id": 15547,
+      "name": "Big Evil Chicken",
+      "version": "Permanent",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1000
+        }
+      }
+    },
+    {
+      "id": 15025,
+      "name": "Black Eye Bethel",
+      "version": "Rune scimitar",
+      "differences": {
+        "skills.def": {
+          "local": 56,
+          "wiki": 85
+        },
+        "skills.magic": {
+          "local": 45,
+          "wiki": 68
+        }
+      }
+    },
+    {
+      "id": 15025,
+      "name": "Black Eye Bethel",
+      "version": "Steel scimitar",
+      "differences": {
+        "skills.def": {
+          "local": 56,
+          "wiki": 100
+        },
+        "skills.magic": {
+          "local": 45,
+          "wiki": 80
+        }
+      }
+    },
+    {
+      "id": 8367,
+      "name": "Blood spawn",
+      "version": "Entry",
+      "differences": {
+        "skills.hp": {
+          "local": 120,
+          "wiki": 7
+        }
+      }
+    },
+    {
+      "id": 16640,
+      "name": "Bork",
+      "version": "",
+      "differences": {
+        "offensive.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "defensive.flat_armour": {
+          "local": 10,
+          "wiki": 0
+        },
+        "defensive.crush": {
+          "local": 20,
+          "wiki": 10
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 1",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 525
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 2",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 550
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 3",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 575
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 4",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 600
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 6",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 650
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 7",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 650
+        }
+      }
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 8",
+      "differences": {
+        "skills.hp": {
+          "local": 625,
+          "wiki": 675
+        }
+      }
+    },
+    {
+      "id": 12191,
+      "name": "Duke Sucellus",
+      "version": "Post-quest, Awake",
+      "differences": {
+        "skills.def": {
+          "local": 316,
+          "wiki": 275
+        },
+        "skills.magic": {
+          "local": 465,
+          "wiki": 310
+        },
+        "skills.hp": {
+          "local": 1697,
+          "wiki": 485
+        },
+        "defensive.slash": {
+          "local": 65,
+          "wiki": 45
+        }
+      }
+    },
+    {
+      "id": 14420,
+      "name": "Earthen Nagua",
+      "version": "Weakened",
+      "differences": {
+        "defensive.stab": {
+          "local": 30,
+          "wiki": 0
+        },
+        "defensive.slash": {
+          "local": 50,
+          "wiki": 0
+        },
+        "defensive.crush": {
+          "local": 50,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 13012,
+      "name": "Eclipse Moon",
+      "version": "Regular",
+      "differences": {
+        "defensive.flat_armour": {
+          "local": 4,
+          "wiki": 6
+        }
+      }
+    },
+    {
+      "id": 11761,
+      "name": "Elidinis' Warden",
+      "version": "Enraged",
+      "differences": {
+        "skills.def": {
+          "local": 150,
+          "wiki": 180
+        }
+      }
+    },
+    {
+      "id": 4431,
+      "name": "Feral Vampyre",
+      "version": "Level 64 (Burgh de Rott/Crombwick Manor)",
+      "differences": {
+        "skills.def": {
+          "local": 60,
+          "wiki": 30
+        }
+      }
+    },
+    {
+      "id": 3707,
+      "name": "Feral Vampyre",
+      "version": "Level 64 (Meiyerditch)",
+      "differences": {
+        "skills.def": {
+          "local": 60,
+          "wiki": 30
+        }
+      }
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Apocalypse",
+      "differences": {
+        "skills.def": {
+          "local": 200,
+          "wiki": 250
+        },
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 750
+        }
+      }
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Armageddon",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1000
+        }
+      }
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Permanent",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1000
+        }
+      }
+    },
+    {
+      "id": 15553,
+      "name": "I DSCIM YOU",
+      "version": "Permanent",
+      "differences": {
+        "skills.hp": {
+          "local": 1500,
+          "wiki": 750
+        }
+      }
+    },
+    {
+      "id": 12353,
+      "name": "Jhallan",
+      "version": "",
+      "differences": {
+        "skills.def": {
+          "local": 83,
+          "wiki": 250
+        },
+        "skills.magic": {
+          "local": 83,
+          "wiki": 250
+        },
+        "skills.hp": {
+          "local": 1,
+          "wiki": 1500
+        }
+      }
+    },
+    {
+      "id": 15742,
+      "name": "Maggot King",
+      "version": "Nearby",
+      "differences": {
+        "defensive.magic": {
+          "local": 150,
+          "wiki": 400
+        }
+      }
+    },
+    {
+      "id": 15742,
+      "name": "Maggot King",
+      "version": "Roaring",
+      "differences": {
+        "skills.def": {
+          "local": 200,
+          "wiki": 100
+        }
+      }
+    },
+    {
+      "id": 13663,
+      "name": "Magic Mark",
+      "version": "Armageddon",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1500
+        }
+      }
+    },
+    {
+      "id": 13663,
+      "name": "Magic Mark",
+      "version": "Permanent",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1500
+        }
+      }
+    },
+    {
+      "id": 8383,
+      "name": "Nylocas Hagios",
+      "version": "Verzik",
+      "differences": {
+        "skills.def": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.hp": {
+          "local": 11,
+          "wiki": 25
+        },
+        "offensive.magic": {
+          "local": 1073,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 10843,
+      "name": "Nylocas Hagios",
+      "version": "Verzik (Entry Mode)",
+      "differences": {
+        "skills.def": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.hp": {
+          "local": 2,
+          "wiki": 3
+        },
+        "offensive.magic": {
+          "local": 505,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 8381,
+      "name": "Nylocas Ischyros",
+      "version": "Verzik",
+      "differences": {
+        "skills.def": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.hp": {
+          "local": 11,
+          "wiki": 25
+        },
+        "offensive.magic": {
+          "local": 1073,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 10841,
+      "name": "Nylocas Ischyros",
+      "version": "Verzik (Entry Mode)",
+      "differences": {
+        "skills.def": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.hp": {
+          "local": 2,
+          "wiki": 3
+        },
+        "offensive.magic": {
+          "local": 505,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 8382,
+      "name": "Nylocas Toxobolos",
+      "version": "Verzik",
+      "differences": {
+        "skills.def": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.hp": {
+          "local": 11,
+          "wiki": 25
+        },
+        "offensive.magic": {
+          "local": 1073,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 10842,
+      "name": "Nylocas Toxobolos",
+      "version": "Verzik (Entry Mode)",
+      "differences": {
+        "skills.def": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "skills.hp": {
+          "local": 2,
+          "wiki": 3
+        },
+        "offensive.magic": {
+          "local": 505,
+          "wiki": 0
+        }
+      }
+    },
+    {
+      "id": 13664,
+      "name": "Ranging Ro",
+      "version": "Armageddon",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1500
+        }
+      }
+    },
+    {
+      "id": 13664,
+      "name": "Ranging Ro",
+      "version": "Permanent",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1500
+        }
+      }
+    },
+    {
+      "id": 12214,
+      "name": "The Leviathan",
+      "version": "Post-quest",
+      "differences": {
+        "skills.def": {
+          "local": 287,
+          "wiki": 250
+        },
+        "skills.magic": {
+          "local": 280,
+          "wiki": 160
+        },
+        "skills.hp": {
+          "local": 2700,
+          "wiki": 900
+        }
+      }
+    },
+    {
+      "id": 8363,
+      "name": "The Maiden of Sugadinti",
+      "version": "30% Health",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1050
+        }
+      }
+    },
+    {
+      "id": 8362,
+      "name": "The Maiden of Sugadinti",
+      "version": "50% Health",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 1750
+        }
+      }
+    },
+    {
+      "id": 8361,
+      "name": "The Maiden of Sugadinti",
+      "version": "70% Health",
+      "differences": {
+        "skills.hp": {
+          "local": 3500,
+          "wiki": 2450
+        }
+      }
+    },
+    {
+      "id": 12204,
+      "name": "The Whisperer",
+      "version": "Post-quest",
+      "differences": {
+        "skills.def": {
+          "local": 300,
+          "wiki": 250
+        },
+        "skills.magic": {
+          "local": 225,
+          "wiki": 180
+        },
+        "skills.hp": {
+          "local": 2700,
+          "wiki": 900
+        }
+      }
+    },
+    {
+      "id": 9435,
+      "name": "Totem (The Nightmare)",
+      "version": "",
+      "differences": {
+        "skills.hp": {
+          "local": 200,
+          "wiki": 300
+        }
+      }
+    },
+    {
+      "id": 9436,
+      "name": "Totem (The Nightmare)",
+      "version": "",
+      "differences": {
+        "skills.hp": {
+          "local": 200,
+          "wiki": 300
+        }
+      }
+    },
+    {
+      "id": 11762,
+      "name": "Tumeken's Warden",
+      "version": "Enraged",
+      "differences": {
+        "skills.def": {
+          "local": 150,
+          "wiki": 180
+        }
+      }
+    },
+    {
+      "id": 12223,
+      "name": "Vardorvis",
+      "version": "Post-quest",
+      "differences": {
+        "skills.hp": {
+          "local": 1400,
+          "wiki": 700
+        }
+      }
+    },
+    {
+      "id": 14176,
+      "name": "Yama",
+      "version": "Phase 3",
+      "differences": {
+        "defensive.stab": {
+          "local": 100,
+          "wiki": 135
+        },
+        "defensive.slash": {
+          "local": 80,
+          "wiki": 108
+        },
+        "defensive.crush": {
+          "local": 333,
+          "wiki": 449
+        },
+        "defensive.magic": {
+          "local": 0,
+          "wiki": 81
+        },
+        "defensive.light": {
+          "local": 333,
+          "wiki": 449
+        },
+        "defensive.standard": {
+          "local": 220,
+          "wiki": 297
+        },
+        "defensive.heavy": {
+          "local": 333,
+          "wiki": 449
+        }
+      }
+    }
+  ],
+  "ambiguous_matches": [
+    {
+      "id": 9248,
+      "name": "Arianwyn (Nightmare Zone)",
+      "version": "Normal Mode"
+    },
+    {
+      "id": 15547,
+      "name": "Big Evil Chicken",
+      "version": "Annihilation"
+    },
+    {
+      "id": 15547,
+      "name": "Big Evil Chicken",
+      "version": "Permanent"
+    },
+    {
+      "id": 15025,
+      "name": "Black Eye Bethel",
+      "version": "Dragon scimitar"
+    },
+    {
+      "id": 15025,
+      "name": "Black Eye Bethel",
+      "version": "Rune scimitar"
+    },
+    {
+      "id": 15025,
+      "name": "Black Eye Bethel",
+      "version": "Steel scimitar"
+    },
+    {
+      "id": 16640,
+      "name": "Bork",
+      "version": ""
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Deep Delve"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 1"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 2"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 3"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 4"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 5"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 6"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 7"
+    },
+    {
+      "id": 14707,
+      "name": "Doom of Mokhaiotl",
+      "version": "Delve 8"
+    },
+    {
+      "id": 12191,
+      "name": "Duke Sucellus",
+      "version": "Awakened, Awake"
+    },
+    {
+      "id": 12191,
+      "name": "Duke Sucellus",
+      "version": "Post-quest, Awake"
+    },
+    {
+      "id": 14420,
+      "name": "Earthen Nagua",
+      "version": "Normal"
+    },
+    {
+      "id": 14420,
+      "name": "Earthen Nagua",
+      "version": "Weakened"
+    },
+    {
+      "id": 13012,
+      "name": "Eclipse Moon",
+      "version": "Clone"
+    },
+    {
+      "id": 13012,
+      "name": "Eclipse Moon",
+      "version": "Regular"
+    },
+    {
+      "id": 11761,
+      "name": "Elidinis' Warden",
+      "version": "Damaged"
+    },
+    {
+      "id": 11761,
+      "name": "Elidinis' Warden",
+      "version": "Enraged"
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Annihilation"
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Apocalypse"
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Armageddon"
+    },
+    {
+      "id": 12452,
+      "name": "Giant goblin",
+      "version": "Permanent"
+    },
+    {
+      "id": 15553,
+      "name": "I DSCIM YOU",
+      "version": "Annihilation"
+    },
+    {
+      "id": 15553,
+      "name": "I DSCIM YOU",
+      "version": "Permanent"
+    },
+    {
+      "id": 12353,
+      "name": "Jhallan",
+      "version": ""
+    },
+    {
+      "id": 12353,
+      "name": "Jhallan",
+      "version": ""
+    },
+    {
+      "id": 15742,
+      "name": "Maggot King",
+      "version": "Far"
+    },
+    {
+      "id": 15742,
+      "name": "Maggot King",
+      "version": "Nearby"
+    },
+    {
+      "id": 15742,
+      "name": "Maggot King",
+      "version": "Roaring"
+    },
+    {
+      "id": 13663,
+      "name": "Magic Mark",
+      "version": "Annihilation"
+    },
+    {
+      "id": 13663,
+      "name": "Magic Mark",
+      "version": "Armageddon"
+    },
+    {
+      "id": 13663,
+      "name": "Magic Mark",
+      "version": "Permanent"
+    },
+    {
+      "id": 8383,
+      "name": "Nylocas Hagios",
+      "version": "Verzik"
+    },
+    {
+      "id": 10843,
+      "name": "Nylocas Hagios",
+      "version": "Verzik (Entry Mode)"
+    },
+    {
+      "id": 8381,
+      "name": "Nylocas Ischyros",
+      "version": "Verzik"
+    },
+    {
+      "id": 10841,
+      "name": "Nylocas Ischyros",
+      "version": "Verzik (Entry Mode)"
+    },
+    {
+      "id": 8382,
+      "name": "Nylocas Toxobolos",
+      "version": "Verzik"
+    },
+    {
+      "id": 10842,
+      "name": "Nylocas Toxobolos",
+      "version": "Verzik (Entry Mode)"
+    },
+    {
+      "id": 13664,
+      "name": "Ranging Ro",
+      "version": "Annihilation"
+    },
+    {
+      "id": 13664,
+      "name": "Ranging Ro",
+      "version": "Armageddon"
+    },
+    {
+      "id": 13664,
+      "name": "Ranging Ro",
+      "version": "Permanent"
+    },
+    {
+      "id": 12214,
+      "name": "The Leviathan",
+      "version": "Awakened"
+    },
+    {
+      "id": 12214,
+      "name": "The Leviathan",
+      "version": "Post-quest"
+    },
+    {
+      "id": 12204,
+      "name": "The Whisperer",
+      "version": "Awakened"
+    },
+    {
+      "id": 12204,
+      "name": "The Whisperer",
+      "version": "Post-quest"
+    },
+    {
+      "id": 9435,
+      "name": "Totem (Phosani's Nightmare)",
+      "version": ""
+    },
+    {
+      "id": 9436,
+      "name": "Totem (Phosani's Nightmare)",
+      "version": ""
+    },
+    {
+      "id": 9435,
+      "name": "Totem (The Nightmare)",
+      "version": ""
+    },
+    {
+      "id": 9436,
+      "name": "Totem (The Nightmare)",
+      "version": ""
+    },
+    {
+      "id": 11762,
+      "name": "Tumeken's Warden",
+      "version": "Damaged"
+    },
+    {
+      "id": 11762,
+      "name": "Tumeken's Warden",
+      "version": "Enraged"
+    },
+    {
+      "id": 12223,
+      "name": "Vardorvis",
+      "version": "Awakened"
+    },
+    {
+      "id": 12223,
+      "name": "Vardorvis",
+      "version": "Post-quest"
+    },
+    {
+      "id": 16680,
+      "name": "Void Augmenter",
+      "version": ""
+    },
+    {
+      "id": 16678,
+      "name": "Void Rift",
+      "version": ""
+    },
+    {
+      "id": 16679,
+      "name": "Void Siphon",
+      "version": ""
+    },
+    {
+      "id": 16681,
+      "name": "Void Vine",
+      "version": ""
+    },
+    {
+      "id": 14176,
+      "name": "Yama",
+      "version": "Normal"
+    },
+    {
+      "id": 14176,
+      "name": "Yama",
+      "version": "Phase 3"
+    }
+  ]
+}
