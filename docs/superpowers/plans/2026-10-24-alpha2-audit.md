@@ -30,33 +30,33 @@
 
 Files: monsters.tsv, ArchiveEncounterRules.java, ArchiveTargetTest.java, new ArchiveAddTest.java.
 
-- [ ] Pin current Wiki and RuneLite source revisions; record Bork's phase-dependent conflict, Guardian mapping and Ocellus intro versus combat mapping.
-- [ ] Write failing live snapshot tests for Xarth normal/doused corpses, Dreadnoth jelly and undead binder; assert distinct weaknesses/defences, no invented HP and available supported damage.
-- [ ] Write failing tests for Ocellus adds with incomplete size/state evidence; require explicit unavailable results and excluded intro/debug IDs.
-- [ ] Add only curated supported rows; retain uncertainty guards for incomplete adds and boss phases. Run focused tests then full suite.
+- [x] Pin current Wiki and RuneLite source revisions; record Bork's phase-dependent conflict, Guardian mapping and Ocellus intro versus combat mapping.
+- [x] Write failing live snapshot tests for Xarth normal/doused corpses, Dreadnoth jelly and undead binder; assert distinct weaknesses/defences, no invented HP and available supported damage.
+- [x] Write failing tests for Ocellus adds with incomplete size/state evidence; require explicit unavailable results and excluded intro/debug IDs.
+- [x] Add only curated supported rows; retain uncertainty guards for incomplete adds and boss phases. Run focused tests then full suite.
 
 ## Task 3: Demonbane effectiveness
 
 Files: DemonbaneRules.java, DemonbaneRulesTest.java and live integration tests.
 
-- [ ] Write failing tests: Dreadnoth/jelly use 25% of ordinary bonus, Xarth/Ocellus 80%, Duke 70%, Ice demon 115%; unrelated demons retain 100%. Preserve reference integer rounding.
-- [ ] Implement ID-based vulnerability in the existing shared helper, exercised by melee/ranged/Magic accuracy and damage callers.
-- [ ] Test real snapshot results for affected weapons, including saved spell and non-demon control; run focused and full suite.
+- [x] Write failing tests: Dreadnoth/jelly use 25% of ordinary bonus, Xarth/Ocellus 80%, Duke 70%, Ice demon 115%; unrelated demons retain 100%. Preserve reference integer rounding.
+- [x] Implement ID-based vulnerability in the existing shared helper, exercised by melee/ranged/Magic accuracy and damage callers.
+- [x] Test real snapshot results for affected weapons, including saved spell and non-demon control; run focused and full suite.
 
 ## Task 4: Reproducible variant audit and remaining coverage
 
 Files: scripts/audit_wiki_variants.py, scripts/test_audit_wiki_variants.py, docs/research/2026-10-24-encounter-audit.md, updated audit documents.
 
-- [ ] Add a read-only report tool with tests for duplicate IDs, virtual IDs, absent IDs and numeric differences; never mutate source data.
-- [ ] Compare current Wiki records against the recovered/updated snapshot; review all four raids, DT2, PNM, Zulrah and other notable mismatches in context of existing resolver/scaling/transform code.
-- [ ] Record classification, evidence/revisions, fixes, unresolved mechanics and prioritized live tests. No blanket dataset replacement.
+- [x] Add a read-only report tool with tests for duplicate IDs, virtual IDs, absent IDs and numeric differences; never mutate source data.
+- [x] Compare current Wiki records against the recovered/updated snapshot; review all four raids, DT2, PNM, Zulrah and other notable mismatches in context of existing resolver/scaling/transform code.
+- [x] Record classification, evidence/revisions, fixes, unresolved mechanics and prioritized live tests. No blanket dataset replacement.
 
 ## Task 5: Verification and GitHub delivery
 
-- [ ] Run Gradle clean test check build shadowJar and all Python tests; summarize exact counts and warnings.
-- [ ] Review full diff including recovered alpha2, secrets, unrelated files and resources; independent final review if available.
-- [ ] Recheck origin/main, commit only intended files, push new branch, open draft PR with limitations and live test checklist.
-- [ ] Prepare the new project for IntelliJ without changing older projects or logging into OSRS.
+- [x] Run Gradle clean test check build shadowJar and all Python tests; summarize exact counts and warnings.
+- [x] Review full diff including recovered alpha2, secrets, unrelated files and resources; independent final review if available.
+- [x] Recheck origin/main, commit only intended files, push new branch, open draft PR with limitations and live test checklist.
+- [ ] Verify the project is open/imported in IntelliJ. Buildable folder and artifacts are ready; both launcher and Computer Use attempts exposed no targetable IDE window. Older projects were not changed.
 
 ## Execution ledger
 
@@ -64,3 +64,7 @@ Files: scripts/audit_wiki_variants.py, scripts/test_audit_wiki_variants.py, docs
 - Wiki reference: 98e4fac38b580901cc3f8d485bbaa48bbb3277ed. RuneLite gameval reference: fc8d18969e3028af21a78fae38c9ab6c8c7573b1.
 - Ruling: keep Bork unavailable. Current Wiki phase code requires Smorks health quartile and stun state; static GearScape fixture cannot establish live detection.
 - Ruling: retain Ocellus 16674 and Guardian 16659/16660; pinned RuneLite definitions resolve conflicting Wiki IDs.
+
+- Final verification: Gradle clean test/check/build/shadowJar successful; 271 Java tests, zero failures/errors/skips; Python 12 tests OK. Independent review finding fixed and re-reviewed. Final staged whitespace and credential-pattern checks passed.
+- Delivery: source commit 85aaf0bb6ef3a84a562ed16b69e0572ea756e486 pushed to audit/alpha2-encounter-reconciliation; draft PR https://github.com/BornDied/combat-insight/pull/4 is open and unmerged. Main remains a0f2e060973d1e00a835bcd2afa1e95cfa298bca.
+- Ruling: live implementation gaps remain explicitly documented; this delivery is a draft review build, not complete encounter support or release-ready.

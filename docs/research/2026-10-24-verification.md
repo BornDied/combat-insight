@@ -52,3 +52,7 @@ The initial sandboxed Gradle invocation could not access the shared wrapper-cach
 These checks validate compilation, regression behavior and local artifact production. They do not validate live raids, server formulas, the GUI import lifecycle, party synchronization or actual combat performance. Use [the encounter audit](2026-10-24-encounter-audit.md) and [testing checklist](../../TESTING-0.9.0.md) before relying on new calculations. Material implementation gaps warrant a **draft PR**, not a release-ready claim.
 
 For local IntelliJ testing, open the new `combat-insight-audit` folder containing `build.gradle`, import Gradle with Java 11 or newer, and run the existing Gradle `run` task. Do not replace the older project or copy a JAR into the published Plugin Hub installation.
+
+Delivery: [draft PR #4](https://github.com/BornDied/combat-insight/pull/4) is open and unmerged. Source commit: `85aaf0bb6ef3a84a562ed16b69e0572ea756e486`; subsequent handoff-only documentation may follow on the same branch. Remote main was rechecked after push and still equals the recovery base.
+
+IntelliJ launcher and Windows Computer Use launch attempts did not expose a running IDE/project window. The source folder and built JARs are ready, but an open/imported IntelliJ session could not be verified. No existing project selection, account or gameplay state was changed.
