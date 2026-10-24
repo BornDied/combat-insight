@@ -16,9 +16,10 @@ public final class HitTransform
     public static HitTransform multiplier(int numerator, int denominator) { return new HitTransform(numerator,Math.max(1,denominator),0,-1); }
     /** Above 50 only: replace this hitsplat by a uniform integer in 45..50. */
     public static HitTransform zulrah() { return new HitTransform(1,1,0,-2); }
+    public static HitTransform flatReduction(int amount) { return new HitTransform(Math.max(0,amount),1,0,-3); }
     public static HitTransform randomCap(int cap) { return new HitTransform(1,1,0,Math.max(0,cap)); }
     public int maxForHit(int hit)
-    { return cap == -2 ? Math.min(hit,50) : cap >= 0 ? Math.min(hit,cap) : Math.max(minimum,(int)((long)hit*numerator/denominator)); }
+    { return cap == -3 ? Math.max(0,hit-numerator) : cap == -2 ? Math.min(hit,50) : cap >= 0 ? Math.min(hit,cap) : Math.max(minimum,(int)((long)hit*numerator/denominator)); }
     public double meanForHit(int hit)
     {
         if (cap == -2) return hit > 50 ? 47.5 : hit;

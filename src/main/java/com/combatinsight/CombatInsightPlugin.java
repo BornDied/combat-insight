@@ -13,6 +13,7 @@ import com.combatinsight.live.SpecialAttackTracker;
 import com.combatinsight.live.TargetEffectSnapshot;
 import com.combatinsight.live.RaidScaling;
 import com.combatinsight.live.EncounterContext;
+import com.combatinsight.live.ArchiveStateTracker;
 import com.combatinsight.live.RaidInputResolver;
 import com.combatinsight.live.TheatrePartyTracker;
 import net.runelite.api.gameval.VarbitID;
@@ -216,6 +217,7 @@ public class CombatInsightPlugin extends Plugin
 	private final ObservedHitTracker observedHitTracker = new ObservedHitTracker();
 	private final SpecialAttackTracker specialAttackTracker = new SpecialAttackTracker();
     private final TheatrePartyTracker theatrePartyTracker = new TheatrePartyTracker();
+    private final ArchiveStateTracker archiveStateTracker = new ArchiveStateTracker();
 
 	@Override
 	protected void startUp()
@@ -243,6 +245,7 @@ public class CombatInsightPlugin extends Plugin
 		clearCombatDummyTarget();
 		observedHitTracker.clear();
 		specialAttackTracker.clear();
+            archiveStateTracker.clear();
             theatrePartyTracker.clear();
 		lastCombatAt = 0L;
 		maxHitChangedAt = 0L;
@@ -294,6 +297,7 @@ public class CombatInsightPlugin extends Plugin
 			clearCombatDummyTarget();
 			observedHitTracker.clear();
 			specialAttackTracker.clear();
+            archiveStateTracker.clear();
             if (event.getGameState() != GameState.LOADING) theatrePartyTracker.clear();
 			lastCombatAt = 0L;
 			return;
@@ -312,7 +316,9 @@ public class CombatInsightPlugin extends Plugin
 		}
 		heldDetails.clear();
         if ("enableInspector".equals(event.getKey())) syncInspector();
-        if ("dt2EncounterMode".equals(event.getKey()) || "defenceTrackingMode".equals(event.getKey()))
+        if ("dt2EncounterMode".equals(event.getKey()) || "defenceTrackingMode".equals(event.getKey())
+            || "toaPartySize".equals(event.getKey()) || "toaPathLevel".equals(event.getKey())
+            || "toaInvocationLevel".equals(event.getKey()))
             clientThread.invokeLater(this::refreshSnapshot);
 		if ("targetDefenceDisplay".equals(event.getKey())
 			|| "targetMagicDisplay".equals(event.getKey())
@@ -420,6 +426,8 @@ public class CombatInsightPlugin extends Plugin
 		if (event.getActor() instanceof NPC)
 		{
 			NPC target = (NPC) event.getActor();
+            archiveStateTracker.onDeath(client,target);
+            archiveStateTracker.remove(target);
 			removeTargetInfoBoxesIfSame(target);
 			specialAttackTracker.remove(target);
 		}
@@ -436,7 +444,8 @@ public class CombatInsightPlugin extends Plugin
 		{
 			refreshSnapshot();
 		}
-		removeTargetInfoBoxesIfSame(event.getNpc());
+		archiveStateTracker.remove(event.getNpc());
+        removeTargetInfoBoxesIfSame(event.getNpc());
 		specialAttackTracker.remove(event.getNpc());
 		if (targetTracker.endActiveIfSame(event.getNpc()))
 		{
@@ -526,7 +535,8 @@ public class CombatInsightPlugin extends Plugin
 		try
 		{
 			RaidScaling raidScaling = new RaidScaling(config.coxPartySize(), config.coxChallengeMode(),
-				config.coxHighestCombat(), config.coxHighestHitpoints(), config.coxAverageMining(), config.tobPartySize());
+				config.coxHighestCombat(), config.coxHighestHitpoints(), config.coxAverageMining(), config.tobPartySize())
+                .withTombsInputs(config.toaPartySize(),config.toaPathLevel());
             raidScaling = RaidInputResolver.resolve(raidScaling, config.automaticCoxInputs(),
                 client.getVarbitValue(VarbitID.RAIDS_CLIENT_INDUNGEON)==1,
                 client.getVarbitValue(VarbitID.RAIDS_CLIENT_PARTYSIZE_SCALED),
@@ -561,7 +571,7 @@ public class CombatInsightPlugin extends Plugin
 				targetEffects,
 				observedHitTracker.hasSamples(),
 				selectedCombatDummy,
-				raidScaling, EncounterContext.from(client, activeTarget, config.dt2EncounterMode()), config.kandarinHardDiary(), config.defenceTrackingMode());
+				raidScaling, archiveStateTracker.apply(activeTarget, EncounterContext.from(client, activeTarget, config.dt2EncounterMode())), config.kandarinHardDiary(), config.defenceTrackingMode());
 			snapshot = captured;
 			updateTargetDefenceInfoBox(activeTarget, targetEffects);
 			updateTargetMagicInfoBox(activeTarget, targetEffects, captured);
@@ -725,6 +735,7 @@ public class CombatInsightPlugin extends Plugin
 		targetTracker.clear();
 		observedHitTracker.clear();
 		specialAttackTracker.clear();
+            archiveStateTracker.clear();
             theatrePartyTracker.clear();
 		specialAttackTracker.resetEnergy(client.getVarpValue(VarPlayerID.SA_ENERGY));
 		removeTargetInfoBoxes();

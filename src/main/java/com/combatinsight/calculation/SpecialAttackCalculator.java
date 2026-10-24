@@ -478,7 +478,7 @@ public final class SpecialAttackCalculator
 		int targetMagicLevel,
 		int targetDefenceFloor)
 	{
-		int perHitMaximum = scale(baseMaximumHit, 3, 4);
+		int perHitMaximum = baseMaximumHit - baseMaximumHit / 4;
 		DamageSummary firstHit = singleHit(perHitMaximum, 0, flatArmour, firstHitChance);
 		int defenceDrain = Math.max(0, targetMagicLevel) / 8;
 		int reducedDefence = Math.max(

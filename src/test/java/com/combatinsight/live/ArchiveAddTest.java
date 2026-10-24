@@ -38,6 +38,7 @@ public class ArchiveAddTest
         assertTrue(TargetDatabase.find(16666).hasAttribute("demon"));
         // The Wiki record does not establish the undead attribute for binders.
         assertFalse(TargetDatabase.find(16670).hasAttribute("undead"));
+        assertEquals("Immune",cast(16670,MagicSpell.CRUMBLE_UNDEAD).getMaxHitText());
     }
 
     @Test public void incompleteOcellusAddsWithholdDamageInsteadOfAssumingOrdinaryTargets()

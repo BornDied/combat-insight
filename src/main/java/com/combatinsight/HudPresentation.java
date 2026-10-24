@@ -30,6 +30,9 @@ final class HudPresentation
         }
     }
 
+    static String calculation(String text, boolean available)
+    { return "Immune".equals(text) ? text : available ? value(text) : "?"; }
+
     static String value(String text)
     {
         return text == null || text.isEmpty() || text.startsWith("Select ") ? "—" : text;

@@ -1,5 +1,7 @@
 # GearScape comparison fixtures — October 23, 2026
 
+**Alpha3 follow-up:** [current behavior, sources, limitations and tests](research/2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
+
 October 24: Bork's displayed base inputs were rechecked and still match the GearScape inputs below. They conflict with current Wiki base data and do not resolve its live stun/quartile. These are static numerical fixtures, not permission to enable Bork live calculations. The historical Smash accuracy fixture also does not establish live COM_MODE slots: current mode/stance handling follows the three-style Wiki reference and needs the in-game button check documented in TESTING-0.9.0.md. See the [current reconciliation](research/2026-10-24-encounter-audit.md).
 
 Reference: https://gearscape.net/calculators/dps (public calculator UI). No implementation code copied. Figures below are displayed UI results; tests use a 0.000005 tolerance for five-decimal DPS.

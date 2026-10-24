@@ -1,5 +1,7 @@
 # Combat Insight 0.9.0-alpha2: local testing
 
+**Alpha3 follow-up:** [current behavior, sources, limitations and tests](docs/research/2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
+
 ## October 24 continuation
 
 The source ZIP has been recovered on an isolated review branch. See the [current encounter audit](docs/research/2026-10-24-encounter-audit.md) and [verification record](docs/research/2026-10-24-verification.md) for changes after the original alpha2 handoff below. This remains partial support, with no in-game verification.

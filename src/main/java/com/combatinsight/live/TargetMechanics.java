@@ -18,7 +18,7 @@ final class TargetMechanics
 		11730, 11732, 11733,
 		11751, 11750, 11752,
 		11753, 11754, 11756, 11757,
-		11755, 11758,
+		11755, 11758, 11770, 11771,
 		11761, 11763, 11762, 11764);
 
 	private static final Set<Integer> MAGIC_USES_DEFENCE_LEVEL = ids(
@@ -59,6 +59,15 @@ final class TargetMechanics
 	{
 	}
 
+    static boolean isWardenP2(int id)
+    { return id==11753 || id==11754 || id==11756 || id==11757; }
+
+    static boolean isWardenCore(int id) { return id==11770 || id==11771; }
+
+    static boolean isGuaranteedMaximum(int id, AttackType type)
+    { return isGuaranteedMaxHitTarget(id) || isWardenCore(id) && type.isMelee()
+        || id==16688 && (type.isMelee() || type==AttackType.RANGED_LIGHT); }
+
 	static boolean isInTombsOfAmascut(int npcId)
 	{
 		return TOMBS_OF_AMASCUT.contains(npcId);
@@ -82,7 +91,8 @@ final class TargetMechanics
 
 	static boolean isImmune(int npcId, AttackType attackType)
 	{
-		// RuneLite PHASE3_CHARGING IDs; Wiki variants are explicitly invulnerable.
+        if(isWardenP2(npcId) && attackType.isMelee()) return true;
+        // RuneLite PHASE3_CHARGING IDs; Wiki variants are explicitly invulnerable.
 		if (npcId == 11763 || npcId == 11764) return true;
 		int nyloStyle = nylocasStyle(npcId);
 		if (nyloStyle != 0)

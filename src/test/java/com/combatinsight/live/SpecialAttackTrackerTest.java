@@ -89,6 +89,21 @@ public class SpecialAttackTrackerTest
 		assertEquals(50, tracker.getTargetEffects(first, 1).getCurrentDefence());
 	}
 
+    @Test public void ralosTracksBorkBeforeStunAndStopsAtHisDefenceFloor()
+    {
+        SpecialAttackTracker tracker=new SpecialAttackTracker();NPC bork=npc(16640,"Bork");
+        tracker.resetEnergy(1000);
+        tracker.onEnergyChanged(500,SpecialAttackWeapon.TONALZTICS_OF_RALOS,bork,1);
+        tracker.onHitsplat(bork,12,true,2);tracker.onHitsplat(bork,15,true,2);
+        assertEquals(278,tracker.getTargetEffects(bork,2).getCurrentDefence());
+        for(int i=0;i<20;i++)
+        {
+            tracker.resetEnergy(1000);tracker.onEnergyChanged(500,SpecialAttackWeapon.TONALZTICS_OF_RALOS,bork,3);
+            tracker.onHitsplat(bork,12,true,4);tracker.onHitsplat(bork,12,true,4);
+        }
+        assertEquals(180,tracker.getTargetEffects(bork,4).getCurrentDefence());
+    }
+
 	@Test
 	public void tonalzticsConsumesAndTracksTwoHitsplats()
 	{

@@ -113,7 +113,7 @@ public final class SpecialAttackResult
 			safeStatus, safeStatus, safeStatus);
 	}
 
-	static SpecialAttackResult immune(SpecialAttackWeapon weapon)
+	public static SpecialAttackResult immune(SpecialAttackWeapon weapon)
 	{
 		return new SpecialAttackResult(
 			weapon, false, true, true, true, false, new int[0], 0.0, 0.0,

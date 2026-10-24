@@ -3979,7 +3979,7 @@
 16332	40	0	90	0	1	0	0	0	10	200	200	40	200	fire	50	1		0
 16344	300	100	500	0	1	0	600	600	50	600	50	50	50	earth	5	0		0
 # Fractured Archive launch research 2026-10-22; see docs/FRACTURED_ARCHIVE.md. HP is base only; runtime scaling withheld.
-16640	300	90	1500	1	4	10	140	130	20	300	80	50	5	earth	40	0	fractured_archive	1
+16640	300	90	1500	0	4	0	140	130	10	300	80	50	5	earth	40	0	fractured_archive	1
 16641	220	185	600	185	3	2	220	170	160	400	80	150	80	earth	85	0	fractured_archive	0
 16643	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
 16644	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0

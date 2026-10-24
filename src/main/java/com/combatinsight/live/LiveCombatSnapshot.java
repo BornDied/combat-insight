@@ -343,13 +343,13 @@ public final class LiveCombatSnapshot
 		}
 		TargetProfile target = combatDummy
 			? selectedCombatDummy.getTargetProfile()
-			: targetId < 0 ? null : raidScaling.apply(EncounterResolver.resolve(targetId, encounterContext));
+			: targetId < 0 ? null : raidScaling.applyTombs(raidScaling.apply(EncounterResolver.resolve(targetId, encounterContext)),toaInvocationLevel);
 		String raidNotice = raidScaling.notice(target);
 		if (!raidNotice.isEmpty()) warnings.add(raidNotice);
         String encounterNotice = EncounterResolver.notice(targetId, encounterContext);
         if (!combatDummy && !encounterNotice.isEmpty()) warnings.add(encounterNotice);
-        if (!combatDummy && ArchiveEncounterRules.isArchive(targetId))
-            warnings.add("Archive HP scaling unavailable; HP-dependent damage withheld. Published launch stats; live validation pending.");
+        if (!combatDummy && ArchiveEncounterRules.isArchive(targetId) && encounterContext.observedMaximumHp<=0)
+            warnings.add("Archive HP scaling unavailable; HP-dependent damage withheld unless the boss HUD identifies this target's health.");
         if (BoltEffect.enchanted(equipment.ammoNameLower))
             warnings.add("Bolt effects: " + equipment.ammoNameLower + "; Kandarin hard diary " + (kandarinDiary ? "on" : "off")
                 + (equipment.ammoNameLower.contains("ruby") ? "; current target HP is estimated" : ""));
@@ -372,9 +372,8 @@ public final class LiveCombatSnapshot
             targetDataAvailable = false;
             liveTargetEffects = TargetEffectSnapshot.empty();
         }
-		int targetMaximumHitpoints = targetDataAvailable && !TargetMechanics.isInTombsOfAmascut(targetId)
-            && !ArchiveEncounterRules.isArchive(targetId)
-            ? Math.max(0, target.getHitpoints()) : 0;
+		int targetMaximumHitpoints = encounterContext.observedMaximumHp>0 ? encounterContext.observedMaximumHp
+            : targetDataAvailable && !ArchiveEncounterRules.isArchive(targetId) ? Math.max(0,target.getHitpoints()) : 0;
 		int baseTargetMagicDefenceRoll = targetDataAvailable
 			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
 			: -1;
@@ -385,14 +384,13 @@ public final class LiveCombatSnapshot
 		int currentTargetMagicDefenceRoll = targetDataAvailable
 			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
 			: -1;
-		int targetCurrentHitpoints = estimateTargetCurrentHitpoints(
-			targetHealthRatio,
-			targetHealthScale,
-			targetMaximumHitpoints);
+		int targetCurrentHitpoints = encounterContext.observedMaximumHp>0 ? encounterContext.observedCurrentHp
+            : estimateTargetCurrentHitpoints(targetHealthRatio,targetHealthScale,targetMaximumHitpoints);
 		if (TargetMechanics.isInTombsOfAmascut(targetId))
 		{
 			warnings.add("ToA invocation input: " + Math.max(0, toaInvocationLevel));
-            warnings.add("ToA HP scaling unavailable: party size/path levels not resolved; ruby damage withheld");
+            warnings.add("ToA "+raidScaling.tombsInputs()+"; HP is estimated from the visible health bar");
+            if(targetMaximumHitpoints<=0) warnings.add("Set ToA party size and current path level for HP-dependent damage");
 		}
 		if (targetId >= 0 && target == null)
 		{
@@ -415,6 +413,7 @@ public final class LiveCombatSnapshot
 		int minimumHit = 0;
 		int maxHit = 0;
         int fangTrueMaximum = -1;
+        int ralosTrueMaximum = -1;
 		boolean maxHitAvailable = true;
 		String maxHitStatusText = "";
 		String weaponOrSpellName = equipment.weaponName;
@@ -561,6 +560,11 @@ public final class LiveCombatSnapshot
 					}
 				}
 
+                if(equipment.weaponNameLower.contains("tonalztics of ralos") && maxHitAvailable)
+                {
+                    ralosTrueMaximum=maxHit;
+                    maxHit-=maxHit/4;
+                }
 				if (equipment.isTwistedBow())
 				{
 					if (!targetDataAvailable)
@@ -607,6 +611,11 @@ public final class LiveCombatSnapshot
 				{
 					magicBaseMaxHit += 3;
 				}
+
+                int chargeBonus=SpellEquipmentRules.chargeBonus(manualSpell,equipment.capeName,
+                    client.getVarpValue(VarPlayerID.MAGEARENA_CHARGE)>0,!magicBase.poweredWeapon);
+                magicBaseMaxHit+=chargeBonus;
+                if(chargeBonus>0) appliedEffects.add("Charge: matching god cape, +10 base damage");
 
                 int elementalUpgrade = magicBase.poweredWeapon ? 0 : ElementalUpgrade.bonus(client, manualSpell);
                 if (elementalUpgrade > 0)
@@ -683,6 +692,9 @@ public final class LiveCombatSnapshot
 						maxHit += elementalBaseMax * target.getWeaknessSeverity() / 100;
 					}
 				}
+                int beforeTome=maxHit;
+                maxHit=SpellEquipmentRules.damage(maxHit,manualSpell,equipment.shieldId,!magicBase.poweredWeapon);
+                if(maxHit!=beforeTome) appliedEffects.add("Charged matching elemental tome: damage x1.1");
 				if (equipment.weaponNameLower.contains("dawnbringer"))
 				{
 					maxHit = Math.max(2, maxHit / 2);
@@ -714,17 +726,9 @@ public final class LiveCombatSnapshot
 						warnings.add("Target is weak to " + target.getWeaknessElement() + " spells");
 					}
 				}
-				if (!magicBase.poweredWeapon && manualSpell.getSpellType() == MagicSpell.SpellType.GOD)
-				{
-					warnings.add("Charge and god-cape state are not detected yet");
-				}
 				if (!magicBase.poweredWeapon && manualSpell.getSpellType() == MagicSpell.SpellType.TARGET_DEPENDENT)
 				{
 					warnings.add("This spell has a target-dependent modifier");
-				}
-				if (!magicBase.poweredWeapon && equipment.hasTome())
-				{
-					warnings.add("Charged tome and matching element need verification");
 				}
 				break;
 		}
@@ -751,8 +755,20 @@ public final class LiveCombatSnapshot
         }
         String archiveStatus = guardianMagicUnknown ? "Guardian Magic drain pending"
             : combatDummy ? "" : ArchiveEncounterRules.unresolved(targetId, style.attackType);
+        if(targetId==16640 && targetDataAvailable)
+        {
+            archiveStatus="";
+            appliedEffects.add(encounterContext.borkStunned ? "Bork: observed stun; armour 0, guaranteed melee accuracy"
+                : "Bork: Smorks HP quartile "+encounterContext.borkQuartile+"; armour "+target.getFlatArmour());
+        }
+        if(targetDataAvailable && (targetId==16676 || targetId>=16678 && targetId<=16681)) archiveStatus="";
         if (archiveStatus.isEmpty() && !combatDummy)
             archiveStatus = RaidDamageRules.unresolvedEncounter(targetId);
+        if (!combatDummy && TargetMechanics.isWardenP2(targetId) && !style.attackType.isMelee()
+            && (encounterContext==null || encounterContext.protectionMask<0))
+            archiveStatus="Warden protection unavailable";
+        if (!combatDummy && TargetMechanics.isWardenCore(targetId) && !style.attackType.isMelee())
+            archiveStatus="Warden core non-melee stats pending";
         if (!archiveStatus.isEmpty())
         {
             maxHitAvailable = false;
@@ -777,6 +793,8 @@ public final class LiveCombatSnapshot
                 equipment.usesSpellbookMagic() && manualSpell.isDemonbane()),
             equipment.weaponNameLower, client.getRealSkillLevel(Skill.MINING));
 
+        if(!combatDummy && targetId==16640 && style.attackType==AttackType.MAGIC && targetDataAvailable)
+            encounterDamage=HitTransform.flatReduction(Math.max(0,target.getFlatArmour()-8));
         if (!combatDummy && targetDataAvailable && !isTargetImmune(targetId,style,equipment,target))
         {
             if (TargetMechanics.isZulrah(targetId)) appliedEffects.add("Zulrah: each hitsplat above 50 rerolls 45–50");
@@ -812,11 +830,26 @@ public final class LiveCombatSnapshot
 			attackSpeedTicks,
 			combatDummy, encounterDamage, targetCurrentHitpoints, kandarinDiary, client.getBoostedSkillLevel(Skill.HITPOINTS));
 		boolean targetImmune = archiveAncientImmune || targetDataAvailable && isTargetImmune(targetId, style, equipment, target);
-        if (archiveAncientImmune) targetResult = TargetResult.immune(0, 0, 0);
+        if (archiveAncientImmune || targetId==16670 && style.combatStyle==CombatStyle.MAGIC
+            && equipment.usesSpellbookMagic() && manualSpell==MagicSpell.CRUMBLE_UNDEAD)
+        { targetResult = TargetResult.immune(0, 0, 0);targetImmune=true; }
         if (!archiveStatus.isEmpty()) targetResult = TargetResult.unavailable(archiveStatus);
+        if(!combatDummy && targetId==16677 && encounterContext.ocellusFinalPhase)
+        {
+            maxHitAvailable=false;maxHitStatusText="Ocellus final-phase damage/timing unverified";
+            targetResult=TargetResult.unavailable(maxHitStatusText);
+        }
+        if(!combatDummy && targetId==16677 && encounterContext.ocellusAirborne && style.combatStyle==CombatStyle.MELEE)
+        { targetResult=TargetResult.immune(0,0,0);targetImmune=true; }
+        if (!combatDummy && encounterContext!=null && encounterContext.protects(style.attackType)
+            && (TargetMechanics.isWardenP2(targetId) || targetId==16674 || targetId==16677))
+        {
+            targetResult=TargetResult.immune(0,0,0);
+            targetImmune=true;
+        }
         boolean voidwaker = equipment.weaponNameLower.contains("voidwaker");
         boolean soulreaper = equipment.weaponNameLower.equals("soulreaper axe") || equipment.weaponNameLower.equals("soulreaper axe (o)");
-        int specialBaseMaximum = fangTrueMaximum >= 0 ? fangTrueMaximum : maxHit;
+        int specialBaseMaximum = ralosTrueMaximum>=0 ? ralosTrueMaximum : fangTrueMaximum >= 0 ? fangTrueMaximum : maxHit;
         if (voidwaker || soulreaper)
         {
             StyleState meleeStyle = getStyleState(client,equipment,MagicSpell.NOT_SET);
@@ -854,6 +887,16 @@ public final class LiveCombatSnapshot
             if (special != null) specialAttackResult = SpecialAttackResult.unavailable(special, archiveStatus);
         }
 
+        if(!combatDummy && targetId==16677 && specialAttackResult.getWeapon()!=null)
+        {
+            if(encounterContext.ocellusFinalPhase)
+                specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Ocellus final-phase damage/timing unverified");
+            if(encounterContext.ocellusAirborne && specialAttackResult.getWeapon().getCombatStyle()==CombatStyle.MELEE)
+                specialAttackResult=SpecialAttackResult.immune(specialAttackResult.getWeapon());
+        }
+        if(!combatDummy && specialAttackResult.getWeapon()!=null && encounterContext.protects(specialAttackResult.getWeapon().getAttackType())
+            && (TargetMechanics.isWardenP2(targetId) || targetId==16674 || targetId==16677))
+            specialAttackResult=SpecialAttackResult.immune(specialAttackResult.getWeapon());
 		return new LiveCombatSnapshot(
 			true,
 			style.combatStyle,
@@ -899,7 +942,11 @@ public final class LiveCombatSnapshot
                 + "; style override=" + combatStyleOverride + "; manual spell=" + manualSpell
                 + "; blowpipe dart=" + blowpipeDart + "; Kandarin diary=" + kandarinDiary
                 + "; defence tracking=" + trackingMode + "; Party Hub import=none"
-                + "; DT2 mode=" + encounterContext.mode + "; observed target combat=" + encounterContext.combatLevel,
+                + "; DT2 mode=" + encounterContext.mode + "; observed target combat=" + encounterContext.combatLevel
+                + "; NPC size="+encounterContext.npcSize+"; protection="+encounterContext.protectionMask
+                + "; Bork stunned="+encounterContext.borkStunned+"; Smorks quartile="+encounterContext.borkQuartile
+                + "; Ocellus airborne="+encounterContext.ocellusAirborne+"; final phase="+encounterContext.ocellusFinalPhase
+                + "; observed boss HP="+encounterContext.observedCurrentHp+"/"+encounterContext.observedMaximumHp,
                 combatStyleOverride != CombatStyleOverride.AUTO || combatDummy
                     || (style.combatStyle == CombatStyle.MAGIC && equipment.usesSpellbookMagic() && manualSpell.isSet())
                     || (style.combatStyle == CombatStyle.RANGED && equipment.isBlowpipe() && blowpipeDart.isSet())
@@ -930,14 +977,19 @@ public final class LiveCombatSnapshot
 		boolean targetHasLocalHits,
 		boolean combatDummy, int currentHp, boolean diary, int playerHp)
 	{
+        targetDataAvailable = targetDataAvailable && target != null && !target.isAmbiguous();
 		SpecialAttackWeapon weapon = SpecialAttackWeapon.forWeapon(equipment.weaponNameLower);
-		if (weapon == null)
-		{
-			return SpecialAttackResult.noWeapon();
-		}
+        if (!combatDummy && TargetMechanics.isWardenP2(targetId) && weapon!=null)
+            return SpecialAttackResult.unavailable(weapon,"Warden P2 special distribution pending");
+        if (!combatDummy && TargetMechanics.isWardenCore(targetId) && weapon!=null && !weapon.getAttackType().isMelee())
+            return SpecialAttackResult.unavailable(weapon,"Warden core non-melee stats pending");
+        if (weapon == null) return SpecialAttackResult.noWeapon();
+        if(weapon==SpecialAttackWeapon.TONALZTICS_OF_RALOS && equipment.weaponNameLower.contains("uncharged"))
+            return SpecialAttackResult.unavailable(weapon,"Charge Ralos");
         if (weapon != SpecialAttackWeapon.VOIDWAKER && currentStyle.combatStyle != weapon.getCombatStyle())
             return SpecialAttackResult.unavailable(weapon,"Special requires " + weapon.getCombatStyle().toString().toLowerCase(Locale.ROOT) + " inputs");
 		String archiveStatus = combatDummy ? "" : ArchiveEncounterRules.unresolved(targetId, weapon.getAttackType());
+        if(targetDataAvailable && (targetId==16640 || targetId==16676 || targetId>=16678 && targetId<=16681)) archiveStatus="";
         if (archiveStatus.isEmpty() && !combatDummy)
             archiveStatus = RaidDamageRules.unresolvedEncounter(targetId);
         if (!archiveStatus.isEmpty()) return SpecialAttackResult.unavailable(weapon, archiveStatus);
@@ -947,6 +999,10 @@ public final class LiveCombatSnapshot
 
         HitTransform specialTransform = combatDummy ? HitTransform.IDENTITY
             : RaidDamageRules.transform(targetId,weapon.getAttackType(),false,equipment.weaponNameLower,1);
+        if(targetId==16640 && targetDataAvailable && weapon.getAttackType()==AttackType.MAGIC)
+            specialTransform=HitTransform.flatReduction(Math.max(0,target.getFlatArmour()-8));
+        int baseDefenceFloor=targetDataAvailable ? TargetEffectRules.defenceFloor(targetEffects.hasTargetStats()
+            ? target.withCombatStats(targetEffects.getBaseDefence(),targetEffects.getBaseMagic(),targetEffects.getBaseMagicDefence()) : target) : 0;
 		int attackRoll = 0;
 		int defenceRoll = 0;
 		boolean specialImmune = false;
@@ -1002,7 +1058,7 @@ public final class LiveCombatSnapshot
             return SpecialAttackResult.unavailable(weapon, "Tekton first-special history unknown");
         boolean firstTektonReduction = tektonReduction && !targetEffects.isTektonDefenceSpecialAttempted();
 		boolean guaranteedMaximum = combatDummy || targetDataAvailable
-			&& TargetMechanics.isGuaranteedMaxHitTarget(targetId);
+			&& TargetMechanics.isGuaranteedMaximum(targetId, weapon.getAttackType());
 		int specialMaximumHitOverride = -1;
 		if (weapon == SpecialAttackWeapon.EYE_OF_AYAK
 			|| weapon == SpecialAttackWeapon.ACCURSED_SCEPTRE || weapon == SpecialAttackWeapon.ZORYAS_TOME)
@@ -1019,8 +1075,6 @@ public final class LiveCombatSnapshot
 		}
         if (weapon == SpecialAttackWeapon.ZARYTE_CROSSBOW)
         {
-            if (!combatDummy && TargetMechanics.isInTombsOfAmascut(targetId) && equipment.ammoNameLower.contains("ruby"))
-                return SpecialAttackResult.unavailable(weapon,"ToA HP scaling unavailable");
             if (!targetDataAvailable || !baseMaximumAvailable) return SpecialAttackResult.unavailable(weapon, "Select resolved target");
             if (specialImmune) return SpecialAttackResult.unavailable(weapon, "Immune");
             if (equipment.ammoNameLower.contains("ruby") && playerHp<=10) return SpecialAttackResult.unavailable(weapon, "Ruby: player HP too low");
@@ -1055,16 +1109,17 @@ public final class LiveCombatSnapshot
 			attackRoll,
 			defenceRoll,
 			targetDataAvailable,
-			targetDataAvailable ? target.getFlatArmour() : 0,
+			targetDataAvailable && weapon.getAttackType()!=AttackType.MAGIC ? target.getFlatArmour() : 0,
 			specialImmune,
-			combatDummy || firstTektonReduction || guaranteedMaximum,
+			combatDummy || firstTektonReduction || guaranteedMaximum
+                || targetId==16640 && target.getFlatArmour()==0 && weapon.getAttackType().isMelee(),
 			guaranteedMaximum,
 			equipment.hasTwoArrowsEquipped(),
 			equipment.hasDragonArrows(),
 			equipment.hasArrowEquipped(),
 			targetDataAvailable ? target.getDefenceLevel() : 0,
 			targetDataAvailable ? target.getMagicLevel() : 0,
-			targetDataAvailable ? TargetEffectRules.defenceFloor(target) : 0,
+			baseDefenceFloor,
 			specialMaximumHitOverride,
 			!targetHasLocalHits,
             AmmunitionRules.accurateDamageFloor(equipment.weaponNameLower, equipment.ammoNameLower) == 3, specialTransform);
@@ -1194,11 +1249,12 @@ public final class LiveCombatSnapshot
 		}
 
 		double chance;
-		boolean guaranteedMaxHit = TargetMechanics.isGuaranteedMaxHitTarget(targetId);
+		boolean guaranteedMaxHit = TargetMechanics.isGuaranteedMaximum(targetId, style.attackType);
 		boolean fangAccuracy = equipment.isFang() && style.attackType == AttackType.STAB;
-		if (guaranteedMaxHit)
-		{
-			chance = 1.0;
+        if (guaranteedMaxHit || TargetMechanics.isWardenP2(targetId)
+            || targetId==16640 && style.attackType.isMelee() && target.getFlatArmour()==0)
+        {
+            chance = 1.0;
 		}
 		else if (fangAccuracy && TargetMechanics.isInTombsOfAmascut(targetId))
 		{
@@ -1233,13 +1289,20 @@ public final class LiveCombatSnapshot
 				"Multi-hit DPS unavailable");
 		}
 
+        if (TargetMechanics.isWardenP2(targetId) && style.combatStyle!=CombatStyle.MELEE)
+        {
+            // Wiki: max attack roll minus one third of the scaled NPC defence roll.
+            int delta=Math.max(0,attackRoll-defenceRoll/3);
+            int percent=15+(int)Math.min(25,25L*delta/42000);
+            minimumHit=maximumHit*percent/100;
+            maximumHit=maximumHit*(percent+20)/100;
+        }
+
         if (style.combatStyle == CombatStyle.RANGED && equipment.weaponNameLower.contains("crossbow")
             && BoltEffect.enchanted(equipment.ammoNameLower))
         {
-            if (TargetMechanics.isInTombsOfAmascut(targetId) && equipment.ammoNameLower.contains("ruby"))
-                return TargetResult.accuracyOnly(attackRoll,defenceRoll,effectiveAccuracy,chance,"ToA HP scaling unavailable");
             BoltEffect.Result bolt = (equipment.ammoNameLower.contains("ruby") && playerHp <= 10) ? null
-                : BoltEffect.calculate(equipment.ammoNameLower,maximumHit,boostedRanged,chance,currentHp,
+                : BoltEffect.calculate(equipment.ammoNameLower,minimumHit,maximumHit,boostedRanged,chance,currentHp,
                     target.getFlatArmour(),equipment.weaponNameLower.contains("zaryte"),false,diary,
                     target.hasAttribute("undead"),target.hasAttribute("dragon") || target.hasAttribute("fiery"), encounterDamage);
             if(bolt==null) return TargetResult.accuracyOnly(attackRoll,defenceRoll,effectiveAccuracy,chance,
@@ -1416,9 +1479,11 @@ public final class LiveCombatSnapshot
 			target,
 			manualSpell,
 			useAccuracySlayerBonus);
-		int defenceRoll = CombatPrediction.defenceRoll(
-			target,
-			defenceAttackType,
+        if(TargetMechanics.isWardenP2(targetId) && equipment.isTwistedBow() && style.combatStyle==CombatStyle.RANGED)
+            attackRoll=twistedBowScale(attackRoll,target,true);
+        int defenceRoll = CombatPrediction.defenceRoll(
+            target,
+            defenceAttackType,
 			TargetMechanics.magicUsesDefenceLevel(targetId));
 		if (TargetMechanics.scalesWithToaInvocation(targetId) && toaInvocationLevel > 0)
 		{
@@ -1554,6 +1619,7 @@ public final class LiveCombatSnapshot
 				{
 					attackRoll += scale(attackRoll, DemonbaneRules.bonusPercent(target.getId(), 20), 100);
 				}
+                attackRoll=SpellEquipmentRules.accuracy(attackRoll,manualSpell,equipment.shieldId,equipment.usesSpellbookMagic());
 				if (equipment.usesSpellbookMagic()
                     && manualSpell.isSet()
 					&& manualSpell.getElementName().equals(target.getWeaknessElement()))
@@ -1704,7 +1770,7 @@ public final class LiveCombatSnapshot
 				? 4 : equipment.weaponNameLower.contains("twinflame staff") ? 6 : 5;
 		}
 		else if (style.combatStyle == CombatStyle.RANGED
-			&& ("Rapid".equals(style.name) || "Flare".equals(style.name)))
+			&& ("Rapid".equals(style.name) || "Rapid (forced)".equals(style.name) || "Flare".equals(style.name)))
 		{
 			ticks = equipment.attackSpeedTicks - 1;
 		}
@@ -1880,7 +1946,9 @@ public final class LiveCombatSnapshot
 
 			ItemStats stats = itemManager.getItemStats(item.getId());
 			ItemEquipmentStats equipment = EquipmentStatsFallback.resolve(item.getId(), stats == null ? null : stats.getEquipment());
-			result.inspectItemName(lowerName);
+            if(slot==EquipmentInventorySlot.SHIELD.getSlotIdx()) result.shieldId=item.getId();
+            if(slot==EquipmentInventorySlot.CAPE.getSlotIdx()) result.capeName=lowerName;
+            result.inspectItemName(lowerName);
 			addEquipmentBonuses(result, equipment);
 		}
 
@@ -2482,7 +2550,7 @@ public final class LiveCombatSnapshot
 		List<String> warnings)
 	{
 		String weapon = equipment.weaponNameLower;
-		if (containsAny(weapon, "venator bow", "chinchompa", "tonalztics of ralos"))
+		if (containsAny(weapon, "venator bow", "chinchompa"))
 		{
 			warnings.add("Multi-hit total needs target size and attack behaviour");
 		}
@@ -3439,7 +3507,9 @@ public final class LiveCombatSnapshot
 		private boolean bloodMoonTassets;
 		private boolean chaosGauntlets;
 		private boolean smokeStaff;
-		private boolean tome;
+        private int shieldId=-1;
+        private String capeName="";
+        private boolean tome;
 		private int virtusPieces;
 		private boolean obsidianHelm;
 		private boolean obsidianBody;
@@ -3856,8 +3926,7 @@ public final class LiveCombatSnapshot
 		{
 			return containsAny(weaponNameLower,
 				"venator bow",
-				"chinchompa",
-				"tonalztics of ralos");
+                "chinchompa");
 		}
 
 		private boolean hasTome()

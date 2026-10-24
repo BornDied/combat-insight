@@ -540,7 +540,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "toaInvocationLevel",
 		name = "ToA invocation",
-		description = "Tombs of Amascut raid invocation used for target defence scaling; leave at 0 outside ToA",
+		description = "Tombs of Amascut raid invocation used for defence rolls and HP scaling; verify against your raid",
 		position = 8,
 		section = raidSection
 	)
@@ -548,6 +548,16 @@ public interface CombatInsightConfig extends Config
 	{
 		return 0;
 	}
+
+    @Range(min=0,max=8)
+    @ConfigItem(keyName="toaPartySize", name="ToA party size", position=9, section=raidSection,
+        description="Starting party size, 1-8. Zero means unknown and withholds ToA HP and ruby damage.")
+    default int toaPartySize() { return 0; }
+
+    @Range(min=-1,max=6)
+    @ConfigItem(keyName="toaPathLevel", name="ToA current path level", position=10, section=raidSection,
+        description="Level of the path you are currently fighting, 0-6. -1 means unknown. Wardens do not use this input.")
+    default int toaPathLevel() { return -1; }
 
 	@ConfigItem(
 		keyName = "showAttackSpeed",
@@ -564,7 +574,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showWarnings",
 		name = "Show calculation notices",
-		description = "Explain missing inputs and mechanics that are not safe to calculate yet",
+		description = "Show a compact ? notice. Read full explanations in Inspector or copied diagnostics.",
 		position = 6,
 		section = advancedRowsSection
 	)

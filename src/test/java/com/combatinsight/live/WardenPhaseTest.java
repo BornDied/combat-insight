@@ -14,6 +14,11 @@ public class WardenPhaseTest
             for (CombatStyleOverride style : new CombatStyleOverride[]{CombatStyleOverride.AUTO, CombatStyleOverride.MAGIC})
             {
                 LiveCombatSnapshot snapshot = ArchiveMagicTest.capture(MagicSpell.FIRE_SURGE, 0, style, id);
+                if(style==CombatStyleOverride.AUTO && TargetMechanics.isWardenP2(id))
+                {
+                    assertEquals("Immune",snapshot.getMaxHitText());
+                    continue;
+                }
                 assertFalse("Unmodelled Warden distribution " + id, snapshot.isDpsAvailable());
                 assertFalse(snapshot.isAccuracyAvailable());
                 assertTrue(snapshot.getMaxHitText().contains("Warden"));

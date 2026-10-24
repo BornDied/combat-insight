@@ -11,8 +11,19 @@ public final class EncounterResolver
     public static TargetProfile resolve(int id, EncounterContext context)
     {
         TargetProfile base = TargetDatabase.find(id);
+        if (TargetMechanics.isWardenCore(id))
+        {
+            // Wiki's Core-ejected variant is indexed by the exposed body, not the live Core.
+            TargetProfile core=TargetDatabase.find(id==11770 ? 11758 : 11755);
+            return core.withEncounterIdentity(id, context==null ? 0 : context.npcSize);
+        }
         if (base == null) return null;
         EncounterContext c = context == null ? EncounterContext.UNKNOWN : context;
+        if(id==16640 && (c.borkStunned || c.borkQuartile>=0))
+            return base.withEncounterStats(base.getDefenceLevel(),base.getMagicLevel(),base.getHitpoints(),
+                base.defenceBonus(AttackType.SLASH),false).withFlatArmour(c.borkStunned?0:8+2*c.borkQuartile);
+        if((id==16676 || id>=16678 && id<=16681) && c.npcSize>0)
+            return base.withEncounterIdentity(id,c.npcSize);
         if (isNightmarePillar(id))
             return base.withEncounterStats(base.getDefenceLevel(), base.getMagicLevel(),
                 c.nightmarePillarHp, base.defenceBonus(AttackType.SLASH), false);
@@ -47,6 +58,16 @@ public final class EncounterResolver
         if (id == 12223) return vardorvis(base, c, defence, awakened ? 181 : 145, magic, hp);
         int slash = id == 12191 ? (awakened ? 65 : 45) : base.defenceBonus(AttackType.SLASH);
         return base.withEncounterStats(defence, magic, hp, slash, false);
+    }
+
+    /** Damage uncertainty does not erase separately verified Defence and Magic drain inputs. */
+    static TargetProfile resolveForTracking(int id, EncounterContext context)
+    {
+        TargetProfile target=resolve(id,context);
+        if(target!=null && (id==16640 || id==16676))
+            return target.withEncounterStats(target.getDefenceLevel(),target.getMagicLevel(),0,
+                target.defenceBonus(AttackType.SLASH),false);
+        return target;
     }
 
     public static boolean isNightmarePillar(int id)

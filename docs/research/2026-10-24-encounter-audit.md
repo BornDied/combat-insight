@@ -1,5 +1,7 @@
 # Encounter audit and alpha2 recovery — 24 October 2026
 
+**Alpha3 follow-up:** [current behavior, sources, limitations and tests](2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
+
 This is a review branch for local testing, not a release or proof of in-game correctness. The ZIP was recovered against its exact base `a0f2e060973d1e00a835bcd2afa1e95cfa298bca`; freshly cloned GitHub main was identical. No older local project was modified. The recovered source is retained separately from the Git checkout.
 
 ## Evidence and reproducibility

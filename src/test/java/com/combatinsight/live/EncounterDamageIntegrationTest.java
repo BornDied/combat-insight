@@ -10,9 +10,10 @@ public class EncounterDamageIntegrationTest {
   double p=(double)value(r,"hitChance");
   assertTrue((double)value(r,"damagePerSecond")>0);
  }
- @Test public void toaRubyDoesNotUseUnscaledHitpoints() throws Exception {
+ @Test public void toaRubyCanUseResolvedCurrentHitpoints() throws Exception {
   Object r=result(11789,"rune crossbow","ruby bolts (e)");
-  assertEquals("ToA HP scaling unavailable",value(r,"dpsStatus"));
+  assertTrue((boolean)value(r,"dpsAvailable"));
+  assertEquals(100,value(r,"maximumHit"));
  }
  private static Object result(int id,String weapon,String ammo) throws Exception {
   Object e=create("EquipmentState"),p=create("PrayerState");set(e,"weaponNameLower",weapon);set(e,"ammoNameLower",ammo);

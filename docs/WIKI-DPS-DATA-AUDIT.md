@@ -1,5 +1,7 @@
 # Wiki DPS data audit — 24 October 2026
 
+**Alpha3 follow-up:** [current behavior, sources, limitations and tests](research/2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
+
 ## Continuation against current data
 
 The original comparison below is retained as history. Current reference is `98e4fac38b580901cc3f8d485bbaa48bbb3277ed`: 2,918 variants / 2,874 distinct IDs. After eight curated Archive additions, the local snapshot has 4,001 IDs. The new read-only `scripts/audit_wiki_variants.py` reports **29 unmatched live-ID variant records, two calculator-only Yama records, and 46 numeric-difference candidates**. It preserves duplicated IDs instead of picking a last row. [Generated report](research/2026-10-24-wiki-variants.json) and [all-candidate disposition / raid audit](research/2026-10-24-encounter-audit.md).

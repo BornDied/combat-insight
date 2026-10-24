@@ -109,6 +109,31 @@ public class CombatInsightOverlayTest
 		assertEquals(2, overlay.getPanelComponent().getChildren().size());
 	}
 
+    @Test public void unknownCalculationShowsQuestionMarkWithoutExpandingTheHud() throws Exception
+    {
+        Settings settings=new Settings();
+        CombatInsightOverlay overlay=overlay(settings);overlay.setClearChildren(false);
+        Field status=LiveCombatSnapshot.class.getDeclaredField("maxHitStatusText");status.setAccessible(true);
+        status.set(settings.snapshot,"Unknown");
+        Dimension shortSize=render(overlay);
+        status.set(settings.snapshot,"Ocellus phase and blowpipe ammunition could not be resolved from the available live inputs");
+        assertEquals(shortSize,render(overlay));
+        net.runelite.client.ui.overlay.components.LineComponent max=(net.runelite.client.ui.overlay.components.LineComponent)
+            overlay.getPanelComponent().getChildren().get(0);
+        assertEquals("?",right(max));
+        settings.mode=HudDisplayMode.ADVANCED;
+        Field warnings=LiveCombatSnapshot.class.getDeclaredField("warnings");warnings.setAccessible(true);
+        warnings.set(settings.snapshot,java.util.Arrays.asList("An unavailable encounter calculation with a very long explanation",
+            "A second missing data explanation", "Another missing phase explanation"));
+        render(overlay);
+        for(net.runelite.client.ui.overlay.components.LayoutableRenderableEntity child:overlay.getPanelComponent().getChildren())
+            if(child instanceof net.runelite.client.ui.overlay.components.LineComponent)
+                assertFalse(right(child).contains("explanation"));
+    }
+
+    private static String right(Object line) throws Exception
+    { Field f=line.getClass().getDeclaredField("right");f.setAccessible(true);return (String)f.get(line); }
+
 	private static CombatInsightOverlay overlay(Settings settings) throws Exception
 	{
 		CombatInsightPlugin plugin = new CombatInsightPlugin()

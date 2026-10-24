@@ -18,7 +18,6 @@ final class ArchiveEncounterRules
         if (id == 16640) return "Bork stun state pending";
         if (id >= 16643 && id <= 16648) return "Trio shield/buff pending";
         if (id == 16667) return "Moia phase pending";
-        if (id == 16674 && type.isMelee()) return "Ocellus protection pending";
         if (id == 16675 || id == 16676) return "Blade phase data pending";
         if (id >= 16678 && id <= 16681) return "Ocellus add mechanics pending";
         return "";

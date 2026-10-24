@@ -87,7 +87,7 @@ public class CombatInsightOverlay extends OverlayPanel
 		{
 			addLine(
 				config.showInputMarker() && snapshot.hasInputNotices() ? "Max hit *" : "Max hit",
-				snapshot.getMaxHitText(),
+				HudPresentation.calculation(snapshot.getMaxHitText(), snapshot.isMaxHitAvailable()),
 				Color.WHITE,
 				snapshot.isTargetImmune() ? WARNING
 					: snapshot.isMaxHitAvailable() ? plugin.getMaxHitChangeColor() : WARNING);
@@ -109,7 +109,7 @@ public class CombatInsightOverlay extends OverlayPanel
 		{
 			addLine(
 				"Hit chance",
-				snapshot.getHitChanceText(),
+				HudPresentation.calculation(snapshot.getHitChanceText(), snapshot.isAccuracyAvailable()),
 				Color.WHITE,
 				snapshot.isAccuracyAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 		}
@@ -118,7 +118,7 @@ public class CombatInsightOverlay extends OverlayPanel
 		{
 			addLine(
 				"DPS",
-				snapshot.getDpsText(),
+				HudPresentation.calculation(snapshot.getDpsText(), snapshot.isDpsAvailable()),
 				Color.WHITE,
 				snapshot.isDpsAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 		}
@@ -132,7 +132,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			{
 				addLine(
 					"Spec max",
-					snapshot.getSpecialMaximumText(mode == HudDisplayMode.ADVANCED),
+					HudPresentation.calculation(snapshot.getSpecialMaximumText(mode == HudDisplayMode.ADVANCED), snapshot.isSpecialMaximumAvailable()),
                     HudPresentation.specialColor(snapshot.getSpecialAttackWeapon(), snapshot.isSpecialMaximumAvailable(),
                         config.highlightSpecialAttack(), config.specialHighlightColor(), Color.WHITE),
                     HudPresentation.specialColor(snapshot.getSpecialAttackWeapon(), snapshot.isSpecialMaximumAvailable(),
@@ -143,7 +143,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			{
 				addLine(
 					"Spec chance",
-					snapshot.getSpecialHitChanceText(),
+					HudPresentation.calculation(snapshot.getSpecialHitChanceText(), snapshot.isSpecialAccuracyAvailable()),
 					Color.WHITE,
 					snapshot.isSpecialAccuracyAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 			}
@@ -188,7 +188,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			{
 				addLine(
 					"Avg spec dmg",
-					snapshot.getSpecialExpectedDamageText(),
+					HudPresentation.calculation(snapshot.getSpecialExpectedDamageText(), snapshot.isSpecialExpectedDamageAvailable()),
 					Color.WHITE,
 					snapshot.isSpecialExpectedDamageAvailable() ? routineColor(SUCCESS) : snapshot.hasTarget() ? WARNING : MUTED);
 			}
@@ -263,7 +263,7 @@ public class CombatInsightOverlay extends OverlayPanel
 			{
 				addLine(
 					"Your / target roll",
-					snapshot.getRollText(),
+					HudPresentation.calculation(snapshot.getRollText(), snapshot.isAccuracyAvailable()),
 					Color.WHITE,
 					snapshot.isAccuracyAvailable() ? Color.WHITE : WARNING);
 			}
@@ -282,19 +282,8 @@ public class CombatInsightOverlay extends OverlayPanel
 					plugin.hasObservedHits() ? routineColor(SUCCESS) : MUTED);
 			}
 
-			if (config.showWarnings())
-			{
-				List<String> warnings = snapshot.getWarnings();
-				int visibleWarnings = Math.min(2, warnings.size());
-				for (int i = 0; i < visibleWarnings; i++)
-				{
-					addLine(i == 0 ? "Notice" : "", shorten(warnings.get(i), 31), WARNING, WARNING);
-				}
-				if (warnings.size() > visibleWarnings)
-				{
-					addLine("", "+" + (warnings.size() - visibleWarnings) + " more notices", WARNING, WARNING);
-				}
-			}
+            if (config.showWarnings() && !snapshot.getWarnings().isEmpty())
+                addLine("Notice", "?", WARNING, WARNING);
 
 		}
 

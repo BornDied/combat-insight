@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'com.combatinsight'
-version = '0.9.0-alpha2'
+version = '0.9.0-alpha3'
 
 repositories {
 	mavenLocal()

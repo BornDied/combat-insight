@@ -1,5 +1,7 @@
 # Windows verification — 24 October 2026
 
+**Alpha3 follow-up:** [current behavior, sources, limitations and tests](2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
+
 Review build: `0.9.0-alpha2`. No in-game verification performed.
 
 ## Recovery provenance

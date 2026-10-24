@@ -44,6 +44,11 @@ public class ArchiveMagicTest
     { return capture(spell,unlocked,style,targetId,TargetEffectSnapshot.empty()); }
     static LiveCombatSnapshot capture(MagicSpell spell,int unlocked,CombatStyleOverride style,int targetId,TargetEffectSnapshot effects)
     {
+        return capture(spell,unlocked,style,targetId,effects,RaidScaling.DEFAULT,EncounterContext.UNKNOWN,0);
+    }
+    static LiveCombatSnapshot capture(MagicSpell spell,int unlocked,CombatStyleOverride style,int targetId,
+        TargetEffectSnapshot effects,RaidScaling raids,EncounterContext context,int invocation)
+    {
         Client client=(Client)Proxy.newProxyInstance(Client.class.getClassLoader(),new Class<?>[]{Client.class},(p,m,a)-> {
             if(m.getName().equals("getGameState"))return GameState.LOGGED_IN;
             if(m.getName().equals("getVarbitValue"))return ((Integer)a[0])==unlocked ? 1 : 0;
@@ -52,7 +57,7 @@ public class ArchiveMagicTest
             if(m.getReturnType()==int.class)return 0;
             return null;
         });
-        return LiveCombatSnapshot.capture(client,null,style,BlowpipeDart.NOT_SET,spell,false,0,targetId,"Test NPC",30,30,
-            effects,false,null,RaidScaling.DEFAULT,EncounterContext.UNKNOWN,false,DefenceTrackingMode.LOCAL);
+        return LiveCombatSnapshot.capture(client,null,style,BlowpipeDart.NOT_SET,spell,false,invocation,targetId,"Test NPC",30,30,
+            effects,false,null,raids,context,false,DefenceTrackingMode.LOCAL);
     }
 }
