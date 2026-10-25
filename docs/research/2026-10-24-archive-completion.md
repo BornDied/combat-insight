@@ -1,5 +1,7 @@
 # Archive follow-up: local alpha4
 
+**October25 preflight:** [alpha4-local.1 patch, verification and quick startup checks](2026-10-25-preflight.md).
+
 This work is **local and unpublished** on `local/archive-completion`, based on `df00806805617dc97a7b2a494d10a2721dd185ae`. No push, PR update, release, merge or Plugin Hub change was made during this follow-up. It is not a claim of complete encounter support or in-game verification.
 
 ## Sources and conflicts

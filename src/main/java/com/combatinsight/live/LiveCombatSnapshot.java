@@ -845,6 +845,17 @@ public final class LiveCombatSnapshot
 			maxHitStatusText,
 			attackSpeedTicks,
 			combatDummy, encounterDamage, targetCurrentHitpoints, kandarinDiary, client.getBoostedSkillLevel(Skill.HITPOINTS));
+        // A missing bolt-effect result must not fall back to an unenchanted maximum
+        // or ordinary hit chance: both can differ from the proc distribution.
+        if(targetDataAvailable && maxHitAvailable && style.combatStyle==CombatStyle.RANGED
+            && equipment.weaponNameLower.contains("crossbow") && BoltEffect.enchanted(equipment.ammoNameLower)
+            && targetResult.maximumHit<0)
+        {
+            maxHitAvailable=false;
+            maxHitStatusText=targetResult.dpsStatus;
+            warnings.add(maxHitStatusText);
+            targetResult=TargetResult.unavailable(maxHitStatusText);
+        }
 		boolean targetImmune = archiveAncientImmune || targetDataAvailable && isTargetImmune(targetId, style, equipment, target);
         if (archiveAncientImmune || targetId==16670 && style.combatStyle==CombatStyle.MAGIC
             && equipment.usesSpellbookMagic() && manualSpell==MagicSpell.CRUMBLE_UNDEAD)

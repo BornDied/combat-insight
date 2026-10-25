@@ -1,5 +1,7 @@
 # Combat Insight 0.9.0-alpha2: local testing
 
+**October25 preflight:** [alpha4-local.1 patch, verification and quick startup checks](docs/research/2026-10-25-preflight.md).
+
 **Local alpha4 continuation:** [current changes, complete combat roster, party HP inputs and unresolved mechanics](docs/research/2026-10-24-archive-completion.md). Unpublished; no new push or Plugin Hub update. The historical sections below are superseded where that note differs.
 
 **Alpha3 follow-up:** [current behavior, sources, limitations and tests](docs/research/2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.

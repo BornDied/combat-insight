@@ -105,7 +105,7 @@ public class ArchiveObservedStateTest
             }
         });
     }
-    private static Client client(int id,int hp,int max,boolean extra,NPC... actors)
+    static Client client(int id,int hp,int max,boolean extra,NPC... actors)
     {
         return (Client)Proxy.newProxyInstance(Client.class.getClassLoader(),new Class<?>[]{Client.class},(p,m,a)->{
             if(m.getName().equals("getNpcs"))return Arrays.asList(actors);
