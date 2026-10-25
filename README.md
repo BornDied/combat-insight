@@ -1,62 +1,65 @@
 # Combat Insight
 
-See your max hit, hit chance and estimated DPS while you play. Combat Insight uses your equipped gear, combat style, active prayers, boosted levels and current NPC target. Swap a weapon, change prayers or land a supported defence drain, and the numbers update.
+Combat Insight shows your max hit, hit chance and estimated DPS against the NPC you are fighting. It uses your equipped gear, attack style, active prayers and boosted levels, and updates as your setup changes.
 
-## What it shows
+Use it to compare weapons, see the effect of your own defence drains, or check a special attack without opening a separate calculator.
 
-- **Max hit and hit splits** for supported single-hit and multi-hit attacks.
-- **Hit chance and basic-attack DPS** against your current target.
-- **Special attack previews:** maximum damage, chance to hit, expected damage and on-hit effects for supported weapons.
-- **Tracked target stats:** Defence, Magic and Magic defence changes from your own supported special attacks, with optional infoboxes.
-- **Combat details:** attack interval, target health when known, gear bonuses, prayers and the average of your observed hitsplats.
-- **Calculation Inspector:** a separate panel with inputs, applied effects, notices and a copyable diagnostic report.
+## Features
 
-Calculations include supported effects for weapons such as the twisted bow, Tumeken's shadow, scythe, fang, blowpipe, Obligator, Ascension crossbows and Zorya's tome. Compatible ammunition, set effects, elemental weaknesses and applicable Salve/Slayer bonuses are included. POH combat dummies can be selected for comparisons.
+- **Max hit**, including separate hits for supported multi-hit weapons.
+- **Hit chance and basic-attack DPS** for your current target.
+- **Special attack previews** with maximum damage, hit chance, average damage and on-hit effects for supported weapons.
+- **Target stat tracking** for Defence, Magic and Magic defence changes caused by your own supported specials. Optional infoboxes keep those stats visible.
+- **Combat details** such as attack speed, known target health, gear bonuses, prayer effects and your average observed hitsplat.
+- **Calculation Inspector** with the inputs and effects behind a result, explanations for unavailable values, and a copyable diagnostic report.
+
+Weapon calculations include the twisted bow, Tumeken's shadow, scythe, fang, blowpipe, Obligator, Ascension crossbows and Zorya's tome. The plugin also handles applicable ammunition, set effects, elemental weaknesses, and Salve and Slayer bonuses. POH combat dummies can be selected for comparisons.
 
 ## Getting started
 
-1. Install **Combat Insight** from RuneLite's **Plugin Hub**, then open its configuration.
-2. Choose **Minimal**, **Standard** or **Advanced**.
-3. Equip your gear and select your attack style. **Automatic** combat type is recommended.
-4. Attack or cast on an NPC. The overlay updates for that target and retains its information between kills.
-5. Set any inputs your setup needs under **Calculation inputs** and the raid settings.
+1. Install **Combat Insight** from RuneLite's **Plugin Hub** and open its settings.
+2. Choose **Minimal**, **Standard** or **Advanced**. Leave combat type on **Automatic** for normal use.
+3. Equip your gear, select your attack style, then attack or cast on an NPC.
+4. Check the inputs below for your weapon or raid. The HUD updates for the target and retains its information between attacks.
 
-Use RuneLite's overlay controls to move or resize the HUD. Each display mode keeps its own row settings.
+Use RuneLite's overlay controls to move or resize the HUD.
 
-| Mode | What you can display |
+## Choose what stays on screen
+
+| Mode | Available information |
 | --- | --- |
 | Minimal | Max hit |
-| Standard | Max hit, hit chance, DPS, special maximum/chance and optional gear, style and prayer rows |
-| Advanced | Standard rows plus hit splits, expected special damage, target stats, health, attack interval and accuracy rolls |
+| Standard | Max hit, hit chance, DPS and special previews, with optional weapon, style, gear and prayer rows |
+| Advanced | Standard information plus hit splits, average special damage, target stats, health, attack speed and accuracy rolls |
 
-Choose compact spacing, quiet colours, a background style and optional max-hit change flashes. Special maximum highlighting has its own toggle and colour. A configurable hold-details key temporarily opens the detailed view without changing your saved mode.
+Each mode keeps its own row settings. You can adjust spacing, colours and the background, enable max-hit change flashes, and choose whether special maximums are highlighted. A hold-details key temporarily shows Advanced information without changing your saved mode.
+
+The optional Inspector keeps longer explanations away from the combat HUD. Enable it in settings, then **Alt-right-click the HUD → Inspect calculation**. The same menu has **Copy diagnostic snapshot** and **Clear tracked reductions**.
 
 ## Inputs to check
 
-**Blowpipe darts:** select the darts stored inside your blowpipe. The worn ammo slot cannot tell the plugin what is loaded. Update this setting when you change darts.
+**Blowpipe:** select the darts loaded inside it. The worn ammo slot does not tell the plugin which darts are loaded. Change this setting when you change darts.
 
-**Spellbook casting:** select your active spell under **Manual magic spell** when needed. Powered staves use their own attack; a saved spell does not override a detected melee attack.
+**Spells:** select your active spell under **Manual magic spell** when needed. Powered staves use their own attack. A saved spell does not replace a detected melee or ranged attack.
 
-**Slayer task:** enable **Target is Slayer task** when the current target qualifies for your equipped helmet or mask bonus. Turn it off after the task.
+**Slayer:** enable **Target is Slayer task** when the current target qualifies for your helmet or mask bonus. Turn it off after the task.
 
-**Raids:** check the party, mode and scaling settings. ToA HP calculations need your invocation, starting party size and the current path's level. Unknown party/path inputs withhold HP-dependent damage; Wardens do not use path level. CoX and ToB use available observed inputs and their configured fallbacks. Archive starting party size is explicit (0 means unknown); published table cells or matching boss HUD HP are used without extrapolation.
+**Raids:** open **Raid inputs** and check party size, mode and scaling settings. ToA HP calculations need invocation, starting party size and current path level; Wardens do not use path level. CoX and ToB have observed inputs and manual fallbacks. **Archive starting party size** accepts 1–8; 0 means unknown. Archive HP uses published table entries or matching boss-HUD data, so some targets still have no HP estimate.
 
-**Defence tracking:** the plugin tracks your own confirmed supported specials. It does not automatically know your teammates' drains. Clear tracked reductions from the HUD menu if the encounter resets or the tracked state no longer matches the fight.
+**Defence tracking:** reductions come from your own confirmed supported specials. Teammates' drains are not imported. Clear tracked reductions from the HUD menu when an encounter resets or the estimate no longer matches the fight.
 
-## What does `?` mean?
+## Reading the results
 
-A required input or encounter rule is unavailable. The HUD keeps the value short. Enable the optional Inspector and use **Inspect calculation** from the HUD menu to see the reason, or choose **Copy diagnostic snapshot**. The report includes the plugin version, NPC ID, equipment IDs, style and calculation inputs, making it useful when reporting a mismatch.
+**`?`** means a required input or calculation is unavailable. Open Inspector for the reason. **Immune** means a recognized rule prevents that attack from damaging the target.
 
-**Immune** means a supported rule blocks that attack style. DPS estimates assume continuous basic attacks; movement, eating, missed attack cycles and unmodelled temporary encounter effects can change your actual damage.
+DPS assumes continuous basic attacks. Movement, eating, missed attack cycles and encounter downtime affect the damage you actually deal.
 
-## Encounter coverage
+There are encounter rules for CoX, ToB, ToA, Fractured Archive, DT2 bosses, Nightmare pillars, Zulrah and other targets. Coverage varies by phase. Some temporary buffs and raid phases still have unavailable calculations, including the Trio's imp-enhanced attack, Ezekiel's enrage and Ocellus's final-phase effects. Rondache's charge-based maximum is shown in Inspector; its shield accuracy and DPS are not available.
 
-Combat Insight includes rules for CoX, ToB, ToA, Fractured Archive, DT2 bosses, Nightmare pillars, Zulrah and other supported encounters. Coverage varies by phase. Bork uses observed stun state and Smorks health to select his armour; Ralos drains can be tracked even while Bork's damage state is unknown. Doused Xarth corpses, Ocellus protection prayers and attackable Archive adds have separate handling.
-
-Some mechanics still show `?`, including the Trio imp-enhanced attack, Ezekiel enrage, positive Moia shield states, guaranteed-max enchanted-bolt interactions, Ocellus's final-phase damage/timing modifiers and Warden P2 special distributions. Rondache's charge-based shield-bash maximum is available in the Inspector; shield accuracy and DPS remain unavailable. See the [current calculation notes and limitations](docs/research/2026-10-24-archive-completion.md) for details.
+See the [calculation notes and remaining limits](docs/research/2026-10-24-archive-completion.md) and [latest testing notes](docs/research/2026-10-25-preflight.md) for details.
 
 ## Reporting a problem
 
-Open an issue on [GitHub](https://github.com/BornDied/combat-insight/issues) with the boss/form, weapon and ammo, expected result, and a copied diagnostic snapshot. Include the HUD mode if it is a display issue. Screenshots help with animation or phase mismatches.
+[Open a GitHub issue](https://github.com/BornDied/combat-insight/issues) with the boss or form, weapon and ammunition, what you expected, and a copied diagnostic snapshot. Include the HUD mode for a display problem. The report identifies the plugin version, NPC, equipment, style and calculation inputs.
 
-For local development, import this folder as a Gradle project with Java 11 or newer. Run `gradlew test` to check the code and `gradlew run` to launch the developer client. The [testing checklist](TESTING-0.9.0.md) lists the live checks still needed.
+For local development, open this folder as a Gradle project with Java 11 or newer. Run `gradlew test` for the tests and `gradlew run` for the developer client. The [testing checklist](TESTING-0.9.0.md) covers the remaining manual checks.

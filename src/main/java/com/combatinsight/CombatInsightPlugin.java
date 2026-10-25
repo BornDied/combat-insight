@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
 
 @PluginDescriptor(
 	name = "Combat Insight",
-	description = "Live OSRS max hit, hit chance, and target-aware DPS"
+	description = "Live max hit, hit chance and DPS for your gear and target, with special attack previews"
 )
 public class CombatInsightPlugin extends Plugin
 {

@@ -1,5 +1,7 @@
 # Local testing preflight — October 25, 2026
 
+**Submission follow-up:** [alpha4 scope, page wording and verification](2026-10-25-alpha4-submission.md). Local checkpoint results below are retained as history.
+
 Build: **0.9.0-alpha4-local.1**, branch `local/archive-completion`. No push, PR change, merge, release or Plugin Hub submission.
 
 ## Patch found before manual testing
