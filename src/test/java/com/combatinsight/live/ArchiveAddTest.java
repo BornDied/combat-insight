@@ -41,20 +41,36 @@ public class ArchiveAddTest
         assertEquals("Immune",cast(16670,MagicSpell.CRUMBLE_UNDEAD).getMaxHitText());
     }
 
-    @Test public void incompleteOcellusAddsWithholdDamageInsteadOfAssumingOrdinaryTargets()
+    @Test public void combatOcellusAddsUseVerifiedSizesAndStyleSpecificGuaranteedMaximums()
     {
-        for (int id : new int[]{16678, 16679, 16680, 16681})
-        {
-            assertNotNull("Missing research record " + id, TargetDatabase.find(id));
-            LiveCombatSnapshot snapshot = cast(id, MagicSpell.FIRE_SURGE);
-            assertFalse(snapshot.isDpsAvailable());
-            assertFalse(snapshot.isAccuracyAvailable());
-            assertTrue(snapshot.getMaxHitText().contains("Ocellus add"));
-            assertFalse(snapshot.hasTargetHealth());
+        int[] ids={16678,16679,16680};
+        AttackType[] styles={AttackType.CRUSH,AttackType.RANGED_LIGHT,AttackType.MAGIC};
+        for(int i=0;i<ids.length;i++) {
+            for(AttackType type:styles)assertEquals(ids[i]+" "+type,type==styles[i],TargetMechanics.isGuaranteedMaximum(ids[i],type));
+            assertEquals(1,TargetDatabase.find(ids[i]).getSize());
+            assertTrue(cast(ids[i],MagicSpell.FIRE_SURGE).isDpsAvailable());
         }
-        for (int id : new int[]{16671, 16672, 16673, 16675, 16682, 16683})
-            assertNull("Intro/controller/debug is not the combat target " + id, TargetDatabase.find(id));
-        assertTrue(cast(16674, MagicSpell.FIRE_SURGE).isDpsAvailable());
+        assertEquals("100.0%",cast(16680,MagicSpell.FIRE_SURGE).getHitChanceText());
+        assertEquals("8.00",cast(16680,MagicSpell.FIRE_SURGE).getDpsText());
+        assertTrue(cast(16681,MagicSpell.FIRE_SURGE).isDpsAvailable());
+        for(int id:new int[]{16671,16672,16673,16675,16682,16683})assertNull(TargetDatabase.find(id));
+    }
+    @Test public void moiaRangedAndMagicDoNotRequireAnInventedShieldMultiplier()
+    {
+        assertTrue(cast(16667,MagicSpell.FIRE_SURGE).isDpsAvailable());
+        assertTrue(ArchiveMagicTest.capture(MagicSpell.NOT_SET,0,CombatStyleOverride.RANGED,16667).isDpsAvailable());
+        assertEquals("Immune",ArchiveMagicTest.capture(MagicSpell.NOT_SET,0,CombatStyleOverride.MELEE,16667).getMaxHitText());
+    }
+
+    @Test public void unknownStatueEarthWeaknessCannotShowAnOrdinaryEarthMaximum()
+    {
+        assertFalse(cast(16662,MagicSpell.EARTH_SURGE).isDpsAvailable());
+        assertTrue(cast(16662,MagicSpell.FIRE_SURGE).isDpsAvailable());
+        assertFalse(ArchiveMagicTest.capture(MagicSpell.NOT_SET,0,CombatStyleOverride.RANGED,16662).isDpsAvailable());
+    }
+    @Test public void aPositiveMoiaShieldSignalCannotAssumeAnUnknownDamageFormula()
+    {
+        assertFalse(ArchiveMagicTest.capture(MagicSpell.FIRE_SURGE,16418,CombatStyleOverride.MAGIC,16667).isDpsAvailable());
     }
 
     private static LiveCombatSnapshot cast(int id, MagicSpell spell)

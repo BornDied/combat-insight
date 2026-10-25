@@ -1,5 +1,7 @@
 # Wiki DPS data audit — 24 October 2026
 
+**Local alpha4 continuation:** [current changes, complete combat roster, party HP inputs and unresolved mechanics](research/2026-10-24-archive-completion.md). Unpublished; no new push or Plugin Hub update. The historical sections below are superseded where that note differs.
+
 **Alpha3 follow-up:** [current behavior, sources, limitations and tests](research/2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
 
 ## Continuation against current data

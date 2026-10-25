@@ -60,18 +60,22 @@ public class LiveEquipmentCaptureTest
 
     private static LiveCombatSnapshot blowpipe(int id,BlowpipeDart dart,int mode,int target,MagicSpell saved) throws Exception
     { return equipped(id,"Toxic blowpipe",ItemEquipmentStats.builder().slot(3).arange(60).rstr(30).aspeed(3).build(),dart,mode,target,saved,EncounterContext.UNKNOWN); }
-    private static LiveCombatSnapshot equipped(int id,String name,ItemEquipmentStats weaponStats,BlowpipeDart dart,int mode,int target,MagicSpell saved,EncounterContext context) throws Exception
+    static LiveCombatSnapshot equipped(int id,String name,ItemEquipmentStats weaponStats,BlowpipeDart dart,int mode,int target,MagicSpell saved,EncounterContext context) throws Exception
+    { return equipped(id,name,weaponStats,dart,mode,target,saved,context,CombatStyleOverride.RANGED); }
+    static LiveCombatSnapshot equipped(int id,String name,ItemEquipmentStats weaponStats,BlowpipeDart dart,int mode,int target,MagicSpell saved,EncounterContext context,CombatStyleOverride forced) throws Exception
+    { return equipped(id,name,weaponStats,dart,mode,target,saved,context,forced,11212,"Dragon arrow",60); }
+    static LiveCombatSnapshot equipped(int id,String name,ItemEquipmentStats weaponStats,BlowpipeDart dart,int mode,int target,MagicSpell saved,EncounterContext context,CombatStyleOverride forced,int ammoId,String ammoName,int ammoStrength) throws Exception
     {
-        Map<Integer,String> names=new HashMap<>();names.put(id,name);names.put(11212,"Dragon arrow");
+        Map<Integer,String> names=new HashMap<>();names.put(id,name);names.put(ammoId,ammoName);
         Map<Integer,ItemStats> stats=new HashMap<>();
         stats.put(id,new ItemStats(true,0,0,weaponStats));
-        stats.put(11212,new ItemStats(true,0,0,ItemEquipmentStats.builder().slot(13).rstr(60).build()));
-        Item[] worn=new Item[14];worn[3]=new Item(id,1);worn[13]=new Item(11212,1000);
+        stats.put(ammoId,new ItemStats(true,0,0,ItemEquipmentStats.builder().slot(13).rstr(ammoStrength).build()));
+        Item[] worn=new Item[14];worn[3]=new Item(id,1);worn[13]=new Item(ammoId,1000);
         Client client=(Client)Proxy.newProxyInstance(Client.class.getClassLoader(),new Class<?>[]{Client.class},(p,m,a)->{
             switch(m.getName()) {
                 case "getGameState":return GameState.LOGGED_IN;
                 case "getBoostedSkillLevel":case "getRealSkillLevel":return 99;
-                case "isPrayerActive":return a[0]==Prayer.RIGOUR;
+                case "isPrayerActive":return a[0]==(forced==CombatStyleOverride.MELEE?Prayer.PIETY:forced==CombatStyleOverride.MAGIC?Prayer.AUGURY:Prayer.RIGOUR);
                 case "getVarpValue":return (int)a[0]==43?mode:0;
                 case "getItemContainer":return Proxy.newProxyInstance(ItemContainer.class.getClassLoader(),new Class<?>[]{ItemContainer.class},
                     (q,n,b)->n.getName().equals("getItems")?worn:zero(n.getReturnType()));
@@ -87,7 +91,7 @@ public class LiveEquipmentCaptureTest
         RuneLiteConfig config=(RuneLiteConfig)Proxy.newProxyInstance(RuneLiteConfig.class.getClassLoader(),new Class<?>[]{RuneLiteConfig.class},(p,m,a)->zero(m.getReturnType()));
         ItemManager manager=(ItemManager)ctor.newInstance(client,idle,null,new EventBus(),null,config);
         Field map=ItemManager.class.getDeclaredField("itemStats");map.setAccessible(true);map.set(manager,stats);
-        return LiveCombatSnapshot.capture(client,manager,CombatStyleOverride.RANGED,dart,saved,false,0,target,"Archive target",-1,-1,
+        return LiveCombatSnapshot.capture(client,manager,forced,dart,saved,false,0,target,"Archive target",-1,-1,
             TargetEffectSnapshot.empty(),false,null,RaidScaling.DEFAULT,context,false,DefenceTrackingMode.LOCAL);
     }
     private static int strength(LiveCombatSnapshot s) throws Exception

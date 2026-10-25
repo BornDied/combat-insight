@@ -69,6 +69,15 @@ public final class TargetProfile
 		this.ambiguous = ambiguous;
 	}
 
+    /** Footprint evidence alone cannot resolve unrelated combat-stat ambiguity. */
+    public TargetProfile withSize(int liveSize)
+    {
+        return new TargetProfile(id,defenceLevel,magicLevel,hitpoints,offensiveMagic,Math.max(1,liveSize),
+            flatArmour,stabDefence,slashDefence,crushDefence,magicDefence,
+            lightRangedDefence,standardRangedDefence,heavyRangedDefence,weaknessElement,
+            weaknessSeverity,slayerMonster,attributes,ambiguous);
+    }
+
     public TargetProfile withFlatArmour(int armour)
     {
         return new TargetProfile(id,defenceLevel,magicLevel,hitpoints,offensiveMagic,size,

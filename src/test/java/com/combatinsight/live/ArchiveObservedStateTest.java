@@ -86,7 +86,7 @@ public class ArchiveObservedStateTest
     }
     private static LiveCombatSnapshot capture(int id,CombatStyleOverride style,EncounterContext c)
     {return ArchiveMagicTest.capture(MagicSpell.FIRE_SURGE,0,style,id,TargetEffectSnapshot.empty(),RaidScaling.DEFAULT,c,0);}
-    private static NPC npc(int id,int ratio,int scale,int animation,int size,int icon)
+    static NPC npc(int id,int ratio,int scale,int animation,int size,int icon)
     {
         NPCComposition definition=(NPCComposition)Proxy.newProxyInstance(NPCComposition.class.getClassLoader(),
             new Class<?>[]{NPCComposition.class},(p,m,a)->m.getName().equals("getId")?id:m.getName().equals("getSize")?size:m.getReturnType()==int.class?0:null);

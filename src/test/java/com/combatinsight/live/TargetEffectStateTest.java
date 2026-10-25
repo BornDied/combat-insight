@@ -11,6 +11,20 @@ import static org.junit.Assert.assertTrue;
 
 public class TargetEffectStateTest
 {
+    @Test public void ocellusNewCombatPhaseResetsDefenceButMovementWithinPhaseKeepsIt()
+    {
+        TargetEffectState state=new TargetEffectState(TargetDatabase.find(16674));
+        state.apply(SpecialAttackWeapon.ELDER_MAUL,1,true,"Ocellus",0);
+        assertEquals(140,state.snapshot().getCurrentDefence());
+        state.rebase(TargetDatabase.find(16674));
+        assertEquals(140,state.snapshot().getCurrentDefence());
+        state.rebase(TargetDatabase.find(16676));
+        assertEquals(250,state.snapshot().getCurrentDefence());
+        state.apply(SpecialAttackWeapon.ELDER_MAUL,1,true,"The Blade",1);
+        state.rebase(TargetDatabase.find(16677));
+        assertEquals(250,state.snapshot().getCurrentDefence());
+    }
+
 	@Test
 	public void percentageReductionsUseTheCurrentDefenceLevel()
 	{

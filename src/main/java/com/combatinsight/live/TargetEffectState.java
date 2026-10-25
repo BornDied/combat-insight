@@ -35,6 +35,12 @@ final class TargetEffectState
 			return;
 		}
 
+        // Ocellus restores Defence between combat phases, not when moving quadrants.
+        boolean phaseReset=targetId!=target.getId() && isOcellusPhase(targetId) && isOcellusPhase(target.getId());
+        if(phaseReset) {
+            currentDefence=baseDefence;currentMagic=baseMagic;currentMagicDefence=baseMagicDefence;
+            nextRecoveryTick=-1;estimatedDefenceRecovery=false;estimatedMagicRecovery=false;
+        }
 		int previousDefenceDrain = Math.max(0, baseDefence - currentDefence);
 		int previousMagicDrain = Math.max(0, baseMagic - currentMagic);
 		int previousMagicDefenceDrain = Math.max(0, baseMagicDefence - currentMagicDefence);
@@ -50,6 +56,8 @@ final class TargetEffectState
 			? Math.max(0, baseMagicDefence - previousMagicDefenceDrain)
 			: baseMagicDefence;
 	}
+
+    private static boolean isOcellusPhase(int id) { return id==16674 || id==16676 || id==16677; }
 
 	boolean apply(
 		SpecialAttackWeapon weapon,

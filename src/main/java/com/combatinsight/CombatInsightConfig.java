@@ -144,6 +144,12 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(keyName = "tobPartySize", name = "ToB starting party size", description = "Party size at raid start, including players who later die. Normal/Hard solos and duos use trio health scaling.", position = 5, section = raidSection)
 	default int tobPartySize() { return 5; }
 
+    @Range(min = 0, max = 8)
+    @ConfigItem(keyName = "archivePartySize", name = "Archive starting party size",
+        description = "Include players who later die or leave. 0 means unknown. Uses published HP table cells only; a matching boss HUD takes priority. Observed roster is diagnostic because joining mid-raid can miss departed members.",
+        position = 10, section = raidSection)
+    default int archivePartySize() { return 0; }
+
 	@ConfigItem(
 		keyName = "showHud",
 		name = "Show HUD",

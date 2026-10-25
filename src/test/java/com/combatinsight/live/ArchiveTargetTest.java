@@ -17,7 +17,7 @@ public class ArchiveTargetTest
     }
     @Test public void unresolvedStatesWithholdNumbersAndUnknownScalingDoesNotInventHp()
     {
-        for(int id:new int[]{16640,16643,16667,16676})
+        for(int id:new int[]{16640})
         {
             LiveCombatSnapshot snapshot=ArchiveMagicTest.capture(MagicSpell.FIRE_SURGE,0,CombatStyleOverride.AUTO,id);
             assertFalse("State needs resolution: "+id,snapshot.isDpsAvailable());

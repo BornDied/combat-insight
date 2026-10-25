@@ -19,11 +19,10 @@ public final class EncounterResolver
         }
         if (base == null) return null;
         EncounterContext c = context == null ? EncounterContext.UNKNOWN : context;
+        if(ArchiveEncounterRules.isArchive(id) && c.npcSize>0)base=base.withSize(c.npcSize);
         if(id==16640 && (c.borkStunned || c.borkQuartile>=0))
             return base.withEncounterStats(base.getDefenceLevel(),base.getMagicLevel(),base.getHitpoints(),
                 base.defenceBonus(AttackType.SLASH),false).withFlatArmour(c.borkStunned?0:8+2*c.borkQuartile);
-        if((id==16676 || id>=16678 && id<=16681) && c.npcSize>0)
-            return base.withEncounterIdentity(id,c.npcSize);
         if (isNightmarePillar(id))
             return base.withEncounterStats(base.getDefenceLevel(), base.getMagicLevel(),
                 c.nightmarePillarHp, base.defenceBonus(AttackType.SLASH), false);

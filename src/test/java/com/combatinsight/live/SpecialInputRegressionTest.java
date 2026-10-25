@@ -8,7 +8,7 @@ public class SpecialInputRegressionTest
 {
     @Test public void unresolvedRaidPhasesCannotShowAnOrdinaryVoidwakerSpecial() throws Exception
     {
-        for (int id : new int[]{11753,11754,11755,11756,11757,11758,16678,16679,16680,16681})
+        for (int id : new int[]{11753,11754,11755,11756,11757,11758})
         {
             SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,id,80);
             assertFalse("Unresolved phase "+id,result.isMaximumAvailable());

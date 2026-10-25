@@ -255,6 +255,7 @@ public class CombatInsightPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+        archiveStateTracker.observeRoom(client);
 		specialAttackTracker.onGameTick(client.getTickCount());
 		LiveCombatSnapshot previous = snapshot;
 		NPC activeTarget = targetTracker.getActiveTarget();
@@ -297,7 +298,8 @@ public class CombatInsightPlugin extends Plugin
 			clearCombatDummyTarget();
 			observedHitTracker.clear();
 			specialAttackTracker.clear();
-            archiveStateTracker.clear();
+            if(event.getGameState()==GameState.LOADING)archiveStateTracker.clearActors();
+            else archiveStateTracker.clear();
             if (event.getGameState() != GameState.LOADING) theatrePartyTracker.clear();
 			lastCombatAt = 0L;
 			return;
@@ -318,7 +320,7 @@ public class CombatInsightPlugin extends Plugin
         if ("enableInspector".equals(event.getKey())) syncInspector();
         if ("dt2EncounterMode".equals(event.getKey()) || "defenceTrackingMode".equals(event.getKey())
             || "toaPartySize".equals(event.getKey()) || "toaPathLevel".equals(event.getKey())
-            || "toaInvocationLevel".equals(event.getKey()))
+            || "toaInvocationLevel".equals(event.getKey()) || "archivePartySize".equals(event.getKey()))
             clientThread.invokeLater(this::refreshSnapshot);
 		if ("targetDefenceDisplay".equals(event.getKey())
 			|| "targetMagicDisplay".equals(event.getKey())
@@ -571,7 +573,7 @@ public class CombatInsightPlugin extends Plugin
 				targetEffects,
 				observedHitTracker.hasSamples(),
 				selectedCombatDummy,
-				raidScaling, archiveStateTracker.apply(activeTarget, EncounterContext.from(client, activeTarget, config.dt2EncounterMode())), config.kandarinHardDiary(), config.defenceTrackingMode());
+				raidScaling, archiveStateTracker.apply(activeTarget, EncounterContext.from(client, activeTarget, config.dt2EncounterMode())).withArchivePartySize(config.archivePartySize()), config.kandarinHardDiary(), config.defenceTrackingMode());
 			snapshot = captured;
 			updateTargetDefenceInfoBox(activeTarget, targetEffects);
 			updateTargetMagicInfoBox(activeTarget, targetEffects, captured);

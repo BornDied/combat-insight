@@ -3982,27 +3982,31 @@
 16640	300	90	1500	0	4	0	140	130	10	300	80	50	5	earth	40	0	fractured_archive	1
 16641	220	185	600	185	3	2	220	170	160	400	80	150	80	earth	85	0	fractured_archive	0
 16643	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
-16644	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16644	100	290	7	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
 16645	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
-16646	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16646	100	290	7	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
 16647	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
-16648	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16648	100	290	7	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
 16652	130	200	3000	250	3	0	150	90	35	200	445	370	320	earth	25	0	fractured_archive	0
 16659	260	250	550	350	5	0	120	110	20	130	75	120	50	fire	80	0	fractured_archive,flying	0
-16660	260	250	550	350	5	0	120	90	20	130	50	115	50	fire	40	0	fractured_archive	0
+16660	260	250	1100	350	5	0	120	90	20	130	50	115	50	fire	40	0	fractured_archive	0
 16665	125	220	2100	0	5	0	15	20	5	20	100	80	80	fire	85	0	fractured_archive,demon	0
 16667	195	350	785	300	3	0	20	110	15	30	60	120	140	air	80	0	fractured_archive	0
 16674	215	350	2500	150	3	0	150	95	60	100	50	135	50		0	0	fractured_archive,demon	0
-16676	250	220	0	0	3	0	150	120	10	100	100	110	80		0	0	fractured_archive	1
+16676	250	220	1000	0	3	0	150	120	10	100	100	110	80		0	0	fractured_archive	0
 16677	250	300	5250	350	3	0	150	100	30	200	250	250	250		0	0	fractured_archive,demon	0
 16684	170	350	2600	250	3	0	115	105	20	205	125	230	155	water	85	0	fractured_archive,demon	0
 # Archive adds: Wiki DPS 98e4fac3, live IDs RuneLite fc8d1896; see docs/research/2026-10-24-encounter-audit.md.
-# Ocellus portals/vine remain unavailable pending size and encounter rules; zero size is not a verified footprint.
+# Ocellus add sizes and style guarantees resolved by the cache/strategy audit in 2026-10-24-archive-completion.md.
 16666	100	100	61	0	1	0	4	5	0	15	-45	18	-50	fire	60	0	fractured_archive,demon	0
 16670	225	50	95	0	1	0	12	15	10	-20	0	0	0		0	0	fractured_archive	0
-16678	175	300	44	0	0	0	0	0	0	0	0	0	0	earth	75	0	fractured_archive	1
-16679	175	300	44	0	1	0	50	50	50	0	0	0	0		0	0	fractured_archive	1
-16680	175	300	44	0	0	0	0	0	0	0	0	0	0	earth	75	0	fractured_archive	1
-16681	0	0	44	0	1	0	0	0	0	0	0	0	0		0	0	fractured_archive	1
+16678	175	300	44	0	1	0	0	0	0	0	0	0	0	earth	75	0	fractured_archive	0
+16679	175	300	44	0	1	0	50	50	50	0	0	0	0		0	0	fractured_archive	0
+16680	175	300	44	0	1	0	0	0	0	0	0	0	0	earth	75	0	fractured_archive	0
+16681	0	0	44	0	1	0	0	0	0	0	0	0	0		0	0	fractured_archive	0
 16687	100	100	62	0	1	0	100	100	100	0	-20	80	80	water	40	0	fractured_archive,undead	0
 16688	100	100	62	0	1	0	-20	-20	-20	0	-20	80	80	fire	100	0	fractured_archive,undead	0
+# Archive cache audit: geometry/Attack options from NPC archive 1792425499; source notes in docs/research/2026-10-24-archive-completion.md.
+16650	50	125	44	1	1	0	0	0	0	0	0	0	0		0	0	fractured_archive	0
+16653	115	90	0	0	3	0	100	100	100	100	0	0	0	air	100	0	fractured_archive	0
+16662	50	50	0	0	2	0	0	20	-20	-20	0	0	0		0	0	fractured_archive	0

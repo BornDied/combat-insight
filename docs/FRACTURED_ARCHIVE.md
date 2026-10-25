@@ -1,5 +1,7 @@
 # Fractured Archive: coverage and research, 23 October 2026
 
+**Local alpha4 continuation:** [current changes, complete combat roster, party HP inputs and unresolved mechanics](research/2026-10-24-archive-completion.md). Unpublished; no new push or Plugin Hub update. The historical sections below are superseded where that note differs.
+
 **Alpha3 follow-up:** [current behavior, sources, limitations and tests](research/2026-10-24-alpha3-follow-up.md). The alpha2 material below is retained as history; its Bork/Warden/HP and submission-status statements are superseded where described in that follow-up.
 
 **October 24 continuation:** see the [current encounter audit](research/2026-10-24-encounter-audit.md) and [verification](research/2026-10-24-verification.md). The sections below preserve the supplied alpha2 research history. New work adds eight Archive research/combat records (4,001 total IDs), keeps incomplete Ocellus adds unavailable, applies reduced demonbane effectiveness, and corrects Obligator mode selection. Corpse exclusions below are superseded: 16687/16688 are now represented as distinct target states. Bork remains unavailable. The audit also records ToA/ToB uncertainty guards.

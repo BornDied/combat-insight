@@ -31,7 +31,7 @@ final class TargetMechanics
 	private static final Set<Integer> KEPHRI_OVERLORDS = ids(11724, 11725, 11726);
 
 	private static final Set<Integer> MELEE_IMMUNE = ids(
-		494, 7533, 7706, 7708,
+		494, 7533, 7706, 7708, 16667,
 		12214, 12215, 12219,
 		2042, 2043, 2044);
 
@@ -66,7 +66,9 @@ final class TargetMechanics
 
     static boolean isGuaranteedMaximum(int id, AttackType type)
     { return isGuaranteedMaxHitTarget(id) || isWardenCore(id) && type.isMelee()
-        || id==16688 && (type.isMelee() || type==AttackType.RANGED_LIGHT); }
+        || id==16688 && (type.isMelee() || type==AttackType.RANGED_LIGHT)
+        || id==16678 && type.isMelee() || id==16679 && type.isRanged()
+        || id==16680 && type==AttackType.MAGIC; }
 
 	static boolean isInTombsOfAmascut(int npcId)
 	{
@@ -86,7 +88,7 @@ final class TargetMechanics
 	/** Scurrius's summoned rats are always hit and always receive the max damage roll. */
 	static boolean isGuaranteedMaxHitTarget(int npcId)
 	{
-		return npcId == SCURRIUS_SPAWNED_RAT;
+		return npcId == SCURRIUS_SPAWNED_RAT || npcId==16650;
 	}
 
 	static boolean isImmune(int npcId, AttackType attackType)

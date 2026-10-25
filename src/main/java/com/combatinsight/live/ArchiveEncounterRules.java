@@ -16,10 +16,10 @@ final class ArchiveEncounterRules
     static String unresolved(int id, AttackType type)
     {
         if (id == 16640) return "Bork stun state pending";
-        if (id >= 16643 && id <= 16648) return "Trio shield/buff pending";
-        if (id == 16667) return "Moia phase pending";
-        if (id == 16675 || id == 16676) return "Blade phase data pending";
-        if (id >= 16678 && id <= 16681) return "Ocellus add mechanics pending";
+        // The six Trio actors have the same ordinary combat defences. A replenishing
+        // shield bar is not evidence of a damage multiplier. Imp-enhanced attacks
+        // are handled separately from ordinary target stats.
+        if ((id==16653 || id==16662) && type.isRanged()) return "Add ranged defence unverified";
         return "";
     }
 

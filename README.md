@@ -39,7 +39,7 @@ Choose compact spacing, quiet colours, a background style and optional max-hit c
 
 **Slayer task:** enable **Target is Slayer task** when the current target qualifies for your equipped helmet or mask bonus. Turn it off after the task.
 
-**Raids:** check the party, mode and scaling settings. ToA HP calculations need your invocation, starting party size and the current path's level. Unknown party/path inputs withhold HP-dependent damage; Wardens do not use path level. CoX and ToB use available observed inputs and their configured fallbacks.
+**Raids:** check the party, mode and scaling settings. ToA HP calculations need your invocation, starting party size and the current path's level. Unknown party/path inputs withhold HP-dependent damage; Wardens do not use path level. CoX and ToB use available observed inputs and their configured fallbacks. Archive starting party size is explicit (0 means unknown); published table cells or matching boss HUD HP are used without extrapolation.
 
 **Defence tracking:** the plugin tracks your own confirmed supported specials. It does not automatically know your teammates' drains. Clear tracked reductions from the HUD menu if the encounter resets or the tracked state no longer matches the fight.
 
@@ -53,7 +53,7 @@ A required input or encounter rule is unavailable. The HUD keeps the value short
 
 Combat Insight includes rules for CoX, ToB, ToA, Fractured Archive, DT2 bosses, Nightmare pillars, Zulrah and other supported encounters. Coverage varies by phase. Bork uses observed stun state and Smorks health to select his armour; Ralos drains can be tracked even while Bork's damage state is unknown. Doused Xarth corpses, Ocellus protection prayers and attackable Archive adds have separate handling.
 
-Some mechanics still show `?`, including unresolved Trio/Moia states, Ocellus's final-phase damage/timing modifiers and Warden P2 special distributions. Rondache's charge-based shield-bash maximum is available in the Inspector; shield accuracy and DPS remain unavailable. See the [current calculation notes and limitations](docs/research/2026-10-24-alpha3-follow-up.md) for details.
+Some mechanics still show `?`, including the Trio imp-enhanced attack, Ezekiel enrage, positive Moia shield states, guaranteed-max enchanted-bolt interactions, Ocellus's final-phase damage/timing modifiers and Warden P2 special distributions. Rondache's charge-based shield-bash maximum is available in the Inspector; shield accuracy and DPS remain unavailable. See the [current calculation notes and limitations](docs/research/2026-10-24-archive-completion.md) for details.
 
 ## Reporting a problem
 

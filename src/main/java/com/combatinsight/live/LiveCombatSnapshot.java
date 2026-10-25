@@ -348,8 +348,11 @@ public final class LiveCombatSnapshot
 		if (!raidNotice.isEmpty()) warnings.add(raidNotice);
         String encounterNotice = EncounterResolver.notice(targetId, encounterContext);
         if (!combatDummy && !encounterNotice.isEmpty()) warnings.add(encounterNotice);
-        if (!combatDummy && ArchiveEncounterRules.isArchive(targetId) && encounterContext.observedMaximumHp<=0)
-            warnings.add("Archive HP scaling unavailable; HP-dependent damage withheld unless the boss HUD identifies this target's health.");
+        int archiveMaximumHp=ArchiveHealth.maximum(targetId,encounterContext.archive.manualPartySize);
+        if (!combatDummy && ArchiveEncounterRules.isArchive(targetId) && encounterContext.observedMaximumHp<=0 && archiveMaximumHp<=0)
+            warnings.add("Archive HP scaling unavailable; HP-dependent damage withheld unless a published party table or the boss HUD identifies this target's health.");
+        if(!combatDummy && ArchiveEncounterRules.isArchive(targetId) && archiveMaximumHp>0 && encounterContext.observedMaximumHp<=0)
+            warnings.add("Archive HP: published table; manual starting party="+encounterContext.archive.manualPartySize);
         if (BoltEffect.enchanted(equipment.ammoNameLower))
             warnings.add("Bolt effects: " + equipment.ammoNameLower + "; Kandarin hard diary " + (kandarinDiary ? "on" : "off")
                 + (equipment.ammoNameLower.contains("ruby") ? "; current target HP is estimated" : ""));
@@ -373,7 +376,7 @@ public final class LiveCombatSnapshot
             liveTargetEffects = TargetEffectSnapshot.empty();
         }
 		int targetMaximumHitpoints = encounterContext.observedMaximumHp>0 ? encounterContext.observedMaximumHp
-            : targetDataAvailable && !ArchiveEncounterRules.isArchive(targetId) ? Math.max(0,target.getHitpoints()) : 0;
+            : targetDataAvailable ? (ArchiveEncounterRules.isArchive(targetId) ? archiveMaximumHp : Math.max(0,target.getHitpoints())) : 0;
 		int baseTargetMagicDefenceRoll = targetDataAvailable
 			? targetMagicDefenceRoll(target, targetId, toaInvocationLevel)
 			: -1;
@@ -764,6 +767,19 @@ public final class LiveCombatSnapshot
         if(targetDataAvailable && (targetId==16676 || targetId>=16678 && targetId<=16681)) archiveStatus="";
         if (archiveStatus.isEmpty() && !combatDummy)
             archiveStatus = RaidDamageRules.unresolvedEncounter(targetId);
+        if(!combatDummy && targetId==16652 && encounterContext.archive.ezekielEnraged)
+            archiveStatus="Ezekiel enrage damage curve unverified";
+        boolean moiaShieldUnknown=!combatDummy && targetId==16667 && client.getVarbitValue(16418)>0;
+        if(moiaShieldUnknown)archiveStatus="Moia shadow shield damage unverified";
+        if(!combatDummy && targetId==16662 && style.combatStyle==CombatStyle.MAGIC
+            && equipment.usesSpellbookMagic() && "earth".equals(manualSpell.getElementName()))
+            archiveStatus="Inert guardian earth weakness unverified";
+        boolean enchantedMaximumUnknown=!combatDummy && style.attackType.isRanged()
+            && TargetMechanics.isGuaranteedMaximum(targetId,style.attackType)
+            && equipment.weaponNameLower.contains("crossbow") && BoltEffect.enchanted(equipment.ammoNameLower);
+        if(enchantedMaximumUnknown)archiveStatus="Guaranteed maximum with enchanted bolts unverified";
+        boolean impBuffUnknown=!combatDummy && targetId>=16643 && targetId<=16650 && encounterContext.archive.impBuffUncertain;
+        if(impBuffUnknown)archiveStatus="Imp next-attack buff unverified";
         if (!combatDummy && TargetMechanics.isWardenP2(targetId) && !style.attackType.isMelee()
             && (encounterContext==null || encounterContext.protectionMask<0))
             archiveStatus="Warden protection unavailable";
@@ -887,11 +903,17 @@ public final class LiveCombatSnapshot
             if (special != null) specialAttackResult = SpecialAttackResult.unavailable(special, archiveStatus);
         }
 
+        if(moiaShieldUnknown && specialAttackResult.getWeapon()!=null)
+            specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Moia shadow shield damage unverified");
+        if(impBuffUnknown && specialAttackResult.getWeapon()!=null)
+            specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Imp next-attack buff unverified");
+        if(!combatDummy && targetId==16652 && encounterContext.archive.ezekielEnraged && specialAttackResult.getWeapon()!=null)
+            specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Ezekiel enrage damage curve unverified");
         if(!combatDummy && targetId==16677 && specialAttackResult.getWeapon()!=null)
         {
             if(encounterContext.ocellusFinalPhase)
                 specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Ocellus final-phase damage/timing unverified");
-            if(encounterContext.ocellusAirborne && specialAttackResult.getWeapon().getCombatStyle()==CombatStyle.MELEE)
+            if(encounterContext.ocellusAirborne && specialNeedsMeleeRange(specialAttackResult.getWeapon()))
                 specialAttackResult=SpecialAttackResult.immune(specialAttackResult.getWeapon());
         }
         if(!combatDummy && specialAttackResult.getWeapon()!=null && encounterContext.protects(specialAttackResult.getWeapon().getAttackType())
@@ -946,11 +968,14 @@ public final class LiveCombatSnapshot
                 + "; NPC size="+encounterContext.npcSize+"; protection="+encounterContext.protectionMask
                 + "; Bork stunned="+encounterContext.borkStunned+"; Smorks quartile="+encounterContext.borkQuartile
                 + "; Ocellus airborne="+encounterContext.ocellusAirborne+"; final phase="+encounterContext.ocellusFinalPhase
+                + "; Archive observed roster="+encounterContext.archive.partySize+"; manual starting party="+encounterContext.archive.manualPartySize+"; Ezekiel enrage="+encounterContext.archive.ezekielEnraged
+                + "; Imp buff unresolved="+encounterContext.archive.impBuffUncertain
                 + "; observed boss HP="+encounterContext.observedCurrentHp+"/"+encounterContext.observedMaximumHp,
                 combatStyleOverride != CombatStyleOverride.AUTO || combatDummy
                     || (style.combatStyle == CombatStyle.MAGIC && equipment.usesSpellbookMagic() && manualSpell.isSet())
                     || (style.combatStyle == CombatStyle.RANGED && equipment.isBlowpipe() && blowpipeDart.isSet())
                     || (slayerInputApplies && (useSlayerBonus || useAccuracySlayerBonus))
+                    || (!combatDummy && ArchiveEncounterRules.isArchive(targetId) && encounterContext.archive.manualPartySize>0)
                     || (encounterContext.mode != EncounterMode.AUTO && targetId >= 12191 && targetId <= 12228)
                     || (targetDataAvailable && (target.hasAttribute("xerician") || (target.hasAttribute("theatre_of_blood") && raidScaling.hasManualTheatreSize())
                         || TargetMechanics.isInTombsOfAmascut(targetId))), appliedEffects);
@@ -984,6 +1009,15 @@ public final class LiveCombatSnapshot
         if (!combatDummy && TargetMechanics.isWardenCore(targetId) && weapon!=null && !weapon.getAttackType().isMelee())
             return SpecialAttackResult.unavailable(weapon,"Warden core non-melee stats pending");
         if (weapon == null) return SpecialAttackResult.noWeapon();
+        // Reach belongs to the weapon, independently of the special's damage type.
+        if(!combatDummy && specialNeedsMeleeRange(weapon)
+            && (targetId==16667 || target!=null && target.hasAttribute("flying")
+                && (TargetMechanics.isVespula(targetId) || equipment.weaponCategory!=WeaponCategory.POLEARM)))
+            return SpecialAttackResult.immune(weapon);
+        if(!combatDummy && weapon==SpecialAttackWeapon.ZARYTE_CROSSBOW
+            && TargetMechanics.isGuaranteedMaximum(targetId,AttackType.RANGED_HEAVY)
+            && BoltEffect.enchanted(equipment.ammoNameLower))
+            return SpecialAttackResult.unavailable(weapon,"Guaranteed maximum with enchanted bolts unverified");
         if(weapon==SpecialAttackWeapon.TONALZTICS_OF_RALOS && equipment.weaponNameLower.contains("uncharged"))
             return SpecialAttackResult.unavailable(weapon,"Charge Ralos");
         if (weapon != SpecialAttackWeapon.VOIDWAKER && currentStyle.combatStyle != weapon.getCombatStyle())
@@ -1301,6 +1335,7 @@ public final class LiveCombatSnapshot
         if (style.combatStyle == CombatStyle.RANGED && equipment.weaponNameLower.contains("crossbow")
             && BoltEffect.enchanted(equipment.ammoNameLower))
         {
+            if(guaranteedMaxHit)return TargetResult.unavailable("Guaranteed maximum with enchanted bolts unverified");
             BoltEffect.Result bolt = (equipment.ammoNameLower.contains("ruby") && playerHp <= 10) ? null
                 : BoltEffect.calculate(equipment.ammoNameLower,minimumHit,maximumHit,boostedRanged,chance,currentHp,
                     target.getFlatArmour(),equipment.weaponNameLower.contains("zaryte"),false,diary,
@@ -1831,6 +1866,9 @@ public final class LiveCombatSnapshot
 		}
 		return target.isAmbiguous() ? "Target variant" : "Target needed";
 	}
+
+    private static boolean specialNeedsMeleeRange(SpecialAttackWeapon weapon)
+    { return weapon.getCombatStyle()==CombatStyle.MELEE || weapon==SpecialAttackWeapon.VOIDWAKER; }
 
 	private static boolean isTargetImmune(
 		int targetId,
