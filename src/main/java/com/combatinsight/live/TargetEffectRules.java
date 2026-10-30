@@ -40,14 +40,18 @@ final class TargetEffectRules
 		{
 			return 0;
 		}
-		int id = target.getId();
+        return defenceFloor(target.getId(),target.getDefenceLevel());
+    }
+
+    static int defenceFloor(int id,int baseDefence)
+    {
 		if (ARCHIVE_FLOOR.contains(id))
 		{
-			return target.getDefenceLevel() * 3 / 5;
+			return baseDefence * 3 / 5;
 		}
 		if (BASE_DEFENCE_FLOOR.contains(id))
 		{
-			return target.getDefenceLevel();
+			return baseDefence;
 		}
 		if (SOTETSEG.contains(id))
 		{

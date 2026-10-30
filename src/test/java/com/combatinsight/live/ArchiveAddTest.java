@@ -9,6 +9,15 @@ import static org.junit.Assert.*;
 
 public class ArchiveAddTest
 {
+    @Test public void unknownAddRangedDefenceDoesNotEraseDefenceIndependentMaximum()
+    {
+        for(int id:new int[]{16653,16662})
+        {
+            LiveCombatSnapshot s=ArchiveMagicTest.capture(MagicSpell.NOT_SET,0,CombatStyleOverride.RANGED,id);
+            assertTrue(s.isMaxHitAvailable());
+            assertFalse(s.isAccuracyAvailable());assertFalse(s.isDpsAvailable());
+        }
+    }
     @Test public void dousingACorpseChangesWeaknessAndMeleeDefence()
     {
         TargetProfile normal = TargetDatabase.find(16687);

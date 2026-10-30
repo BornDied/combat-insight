@@ -51,7 +51,10 @@ public final class EncounterContext
         return new EncounterContext(mode,npc.getCombatLevel(),npc.getHealthRatio(),npc.getHealthScale(),0,
             definition==null?0:definition.getSize(),protection(npc),stunned,enraged?3:-1,-1,0,
             npc.getId()==16677 && (animation==14841 || pose==14841),
-            npc.getId()==16677 && (hasCurse(npc) || animation>=14863 && animation<=14871))
+            // Prayer IN/LOOP/OUT14869..14871 also occurs before quadrant
+            // destruction in P3 (confirmed by the October30 live recording).
+            // Only the deflect family or a visible curse establishes P4 here.
+            npc.getId()==16677 && (hasCurse(npc) || animation>=14863 && animation<=14868))
             .withArchiveState(ArchiveEncounterState.observe(null,npc));
     }
 
@@ -132,7 +135,12 @@ public final class EncounterContext
             {
                 if(actor==null)continue;
                 if(npc.getId()==16640 && actor.getId()==16641)
-                    quartile=healthQuartile(actor.getHealthRatio(),actor.getHealthScale());
+                {
+                    int observedQuartile=healthQuartile(actor.getHealthRatio(),actor.getHealthScale());
+                    // Preserve the existing animation fallback only when the bar
+                    // is unavailable. A usable Smorks bar keeps its precedence.
+                    if(observedQuartile>=0)quartile=observedQuartile;
+                }
                 if(EncounterResolver.isNightmarePillar(npc.getId()))
                 {
                     if("Phosani's Nightmare".equals(actor.getName()))pillar=200;

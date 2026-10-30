@@ -36,6 +36,10 @@ Each mode keeps its own row settings. You can adjust spacing, colours and the ba
 
 The optional Inspector keeps longer explanations away from the combat HUD. Enable it in settings, then **Alt-right-click the HUD → Inspect calculation**. The same menu has **Copy diagnostic snapshot** and **Clear tracked reductions**.
 
+For a longer Archive test, enable **Calculation inspector → Record raid diagnostics** before the encounter. Stop it afterward and use **Copy encounter report** in the Inspector. Recording is off by default, stays in memory and has a size limit shown in the report. Starting another recording or restarting the client clears it. It records observed NPC signals and calculation changes; it does not automatically certify a complete fight or identify every phase.
+
+**Count Defence down to cap** shows how much Defence can still be drained. A displayed **0** means the tracked estimate has reached the minimum, which can be above zero. The tooltip and Inspector retain the actual level and floor. Disable the option to display the full Defence level instead. These remain local estimates; Party Hub reductions are not imported.
+
 ## Inputs to check
 
 **Blowpipe:** select the darts loaded inside it. The worn ammo slot does not tell the plugin which darts are loaded. Change this setting when you change darts.

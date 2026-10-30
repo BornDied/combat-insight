@@ -1,5 +1,17 @@
 # Third-party notices
 
+The October30 local defence-tracking candidate adapts projectile-delay arithmetic,
+same-tick hitsplat ordering and deferred live-input/HP-XP observations from RuneLite's
+Special Attack Counter (SpecialCounterPlugin.java and SpecialWeapon.java), copyright
+2018 Raqes. Its full BSD2-Clause notice is retained in SpecialHitTiming.java and in
+the bundled resource com/combatinsight/third-party/RuneLite-SpecialCounter-LICENSE.txt.
+Source: https://github.com/runelite/runelite/tree/master/runelite-client/src/main/java/net/runelite/client/plugins/specialcounter
+
+Better Party Defence's current Plugin Hub pin3d5848574bce1c1a8254c1ea887293b4292eb9b9
+was reviewed as a behaviour reference for current-minus-floor display and uncertainty.
+No Better Party Defence or OSParty source implementation is copied into this candidate.
+https://github.com/Falsary/better-party-defence/tree/3d5848574bce1c1a8254c1ea887293b4292eb9b9
+
 Combat Insight source code is distributed under the BSD 2-Clause License; see
 `LICENSE`.
 

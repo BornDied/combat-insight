@@ -9,6 +9,31 @@ import static org.junit.Assert.*;
 
 public class ArchiveObservedStateTest
 {
+    @Test public void unreadableSmorksBarCannotEraseObservedBorkEnrage()
+    {
+        NPC bork=npc(16640,-1,-1,14546,4,-1),smorks=npc(16641,-1,-1,-1,3,-1);
+        EncounterContext c=EncounterContext.from(client(0,0,0,false,bork,smorks),bork,EncounterMode.AUTO);
+        assertEquals(3,c.borkQuartile);
+        assertFalse(EncounterResolver.resolve(16640,c).isAmbiguous());
+        assertTrue(capture(16640,CombatStyleOverride.MELEE,c).isDpsAvailable());
+    }
+
+    @Test public void absentBorkSignalsCannotInventAQuartileOrAStun()
+    {
+        NPC bork=npc(16640,-1,-1,-1,4,-1),smorks=npc(16641,-1,-1,-1,3,-1);
+        EncounterContext c=EncounterContext.from(client(0,0,0,false,bork,smorks),bork,EncounterMode.AUTO);
+        assertEquals(-1,c.borkQuartile);
+        assertFalse(c.borkStunned);
+        assertFalse(capture(16640,CombatStyleOverride.MELEE,c).isDpsAvailable());
+    }
+
+    @Test public void readableSmorksHealthStillOverridesTheAnimationFallback()
+    {
+        NPC bork=npc(16640,-1,-1,14546,4,-1),smorks=npc(16641,71,101,-1,3,-1);
+        EncounterContext c=EncounterContext.from(client(0,0,0,false,bork,smorks),bork,EncounterMode.AUTO);
+        assertEquals(1,c.borkQuartile);
+    }
+
     @Test public void smorksHealthSelectsBorkArmourAndEnablesStandingDamage()
     {
         int[] ratios={101,71,41,11};
@@ -61,7 +86,35 @@ public class ArchiveObservedStateTest
         EncounterContext finalPhase=EncounterContext.from(npc(16677,50,100,14864,3,12),EncounterMode.AUTO);
         tracker.apply(boss,finalPhase);
         assertFalse(capture(16677,CombatStyleOverride.RANGED,tracker.apply(boss,EncounterContext.UNKNOWN)).isDpsAvailable());
+        assertTrue(capture(16677,CombatStyleOverride.RANGED,tracker.apply(boss,EncounterContext.UNKNOWN)).isAccuracyAvailable());
+        assertTrue(capture(16677,CombatStyleOverride.RANGED,tracker.apply(boss,EncounterContext.UNKNOWN)).getWarnings().toString().contains("final-phase"));
         tracker.remove(boss);assertTrue(capture(16677,CombatStyleOverride.RANGED,tracker.apply(boss,EncounterContext.UNKNOWN)).isDpsAvailable());
+    }
+    @Test public void liveOcellusPrayerAndQuadrantSequenceCannotLatchFinalPhaseEarly()
+    {
+        // Audit2 recording: prayer animation14869 at tick3555 /6191of7610 HP;
+        // three quadrant-destruction sequences precede deflect14863 at tick3924.
+        NPC boss=npc(16677,50,100,-1,3,-1);
+        ArchiveStateTracker tracker=new ArchiveStateTracker();
+        int[] earlier={14846,14869,14871,14859,14860,14862,
+            14869,14870,14871,14861,14860,14862,
+            14869,14870,14871,14861,14860,14862};
+        for(int animation:earlier)
+        {
+            EncounterContext frame=EncounterContext.from(npc(16677,50,100,animation,3,-1),EncounterMode.AUTO);
+            EncounterContext state=tracker.apply(boss,frame);
+            assertFalse("Early final-phase flag at animation "+animation,state.ocellusFinalPhase);
+            assertTrue(capture(16677,CombatStyleOverride.MELEE,state).isMaxHitAvailable());
+            assertTrue(capture(16677,CombatStyleOverride.MELEE,state).isDpsAvailable());
+        }
+        EncounterContext deflect=EncounterContext.from(npc(16677,50,100,14863,3,-1),EncounterMode.AUTO);
+        assertTrue(tracker.apply(boss,deflect).ocellusFinalPhase);
+        EncounterContext later=tracker.apply(boss,EncounterContext.UNKNOWN);
+        assertTrue(later.ocellusFinalPhase);
+        assertFalse(capture(16677,CombatStyleOverride.MELEE,later).isMaxHitAvailable());
+        assertTrue(capture(16677,CombatStyleOverride.MELEE,later).isAccuracyAvailable());
+        tracker.remove(boss);
+        assertFalse(tracker.apply(boss,EncounterContext.UNKNOWN).ocellusFinalPhase);
     }
     @Test public void confirmedSmorksDeathSurvivesDespawnForThatBorkOnly()
     {

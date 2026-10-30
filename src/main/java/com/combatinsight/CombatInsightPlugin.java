@@ -37,6 +37,11 @@ import javax.inject.Inject;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.ItemComposition;
+import net.runelite.api.events.StatChanged;
+import net.runelite.api.events.FakeXpDrop;
 import net.runelite.api.HitsplatID;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.NPC;
@@ -122,7 +127,7 @@ public class CombatInsightPlugin extends Plugin
                 return;
             }
             if (inspector != null) return;
-            inspector=new CalculationInspectorPanel(this::copyDiagnostic);
+            inspector=new CalculationInspectorPanel(this::copyDiagnostic, encounterRecorder::report);
             BufferedImage icon=new BufferedImage(16,16,BufferedImage.TYPE_INT_ARGB);
             java.awt.Graphics2D g=icon.createGraphics();
             g.setColor(new Color(66,217,255)); g.drawOval(1,1,9,9); g.drawLine(10,10,15,15); g.dispose();
@@ -216,6 +221,9 @@ public class CombatInsightPlugin extends Plugin
 	private final LiveTargetTracker targetTracker = new LiveTargetTracker();
 	private final ObservedHitTracker observedHitTracker = new ObservedHitTracker();
 	private final SpecialAttackTracker specialAttackTracker = new SpecialAttackTracker();
+    private int lastHpExperience=-1;
+    private int lastHpChangeCycle=-1;
+    private final EncounterRecorder encounterRecorder = new EncounterRecorder();
     private final TheatrePartyTracker theatrePartyTracker = new TheatrePartyTracker();
     private final ArchiveStateTracker archiveStateTracker = new ArchiveStateTracker();
 
@@ -245,6 +253,7 @@ public class CombatInsightPlugin extends Plugin
 		clearCombatDummyTarget();
 		observedHitTracker.clear();
 		specialAttackTracker.clear();
+            encounterRecorder.setEnabled(false);
             archiveStateTracker.clear();
             theatrePartyTracker.clear();
 		lastCombatAt = 0L;
@@ -255,6 +264,7 @@ public class CombatInsightPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+        encounterRecorder.setEnabled(config.recordOcellusEncounter());
         archiveStateTracker.observeRoom(client);
 		specialAttackTracker.onGameTick(client.getTickCount());
 		LiveCombatSnapshot previous = snapshot;
@@ -270,6 +280,11 @@ public class CombatInsightPlugin extends Plugin
 		}
 		refreshSnapshot();
 
+        encounterRecorder.observeRoom(client.getTickCount(),client.getNpcs());
+        NPC recordedTarget=targetTracker.getActiveTarget();
+        if(recordedTarget!=null)
+            encounterRecorder.snapshot(client.getTickCount(),recordedTarget.getId(),snapshot.diagnosticReport(),
+                "Selected combat target; raw actor signals appear in room observations.");
 		LiveCombatSnapshot current = snapshot;
 		if (current.isLoggedIn() && isPlayerEngagedWithConfirmedTarget())
 		{
@@ -297,7 +312,8 @@ public class CombatInsightPlugin extends Plugin
 			targetTracker.clear();
 			clearCombatDummyTarget();
 			observedHitTracker.clear();
-			specialAttackTracker.clear();
+            if(event.getGameState()==GameState.LOADING)specialAttackTracker.onLoading();
+            else {specialAttackTracker.clear();lastHpExperience=-1;lastHpChangeCycle=-1;}
             if(event.getGameState()==GameState.LOADING)archiveStateTracker.clearActors();
             else archiveStateTracker.clear();
             if (event.getGameState() != GameState.LOADING) theatrePartyTracker.clear();
@@ -323,6 +339,7 @@ public class CombatInsightPlugin extends Plugin
             || "toaInvocationLevel".equals(event.getKey()) || "archivePartySize".equals(event.getKey()))
             clientThread.invokeLater(this::refreshSnapshot);
 		if ("targetDefenceDisplay".equals(event.getKey())
+			|| "showRemainingDefence".equals(event.getKey())
 			|| "targetMagicDisplay".equals(event.getKey())
 			|| "animateChanges".equals(event.getKey())
 			|| "targetDefenceTextColor".equals(event.getKey())
@@ -334,32 +351,40 @@ public class CombatInsightPlugin extends Plugin
 		}
 	}
 
-	@Subscribe
-	public void onVarbitChanged(VarbitChanged event)
-	{
-		if (event.getVarpId() != VarPlayerID.SA_ENERGY)
-		{
-			return;
-		}
+    @Subscribe
+    public void onStatChanged(StatChanged event)
+    {
+        if(event.getSkill()==Skill.HITPOINTS)
+        {
+            if(event.getXp()>lastHpExperience)lastHpChangeCycle=client.getGameCycle();
+            lastHpExperience=event.getXp();
+        }
+    }
+    @Subscribe
+    public void onFakeXpDrop(FakeXpDrop event)
+    { if(event.getSkill()==Skill.HITPOINTS)lastHpChangeCycle=client.getGameCycle(); }
 
-		specialAttackTracker.setTrackingMode(config.defenceTrackingMode());
-		NPC target = targetTracker.getActiveTarget();
-		Player player = client.getLocalPlayer();
-		if (target == null && player != null && player.getInteracting() instanceof NPC)
-		{
-			target = (NPC) player.getInteracting();
-		}
-		if (target != null && CombatDummy.forNpcId(target.getId()) != null)
-		{
-			target = null;
-		}
-		SpecialAttackWeapon weapon = SpecialAttackWeapon.forWeapon(snapshot.getWeaponOrSpellName());
-		specialAttackTracker.onEnergyChanged(
-			event.getValue(),
-			weapon,
-			target,
-			client.getTickCount());
-	}
+    @Subscribe
+    public void onVarbitChanged(VarbitChanged event)
+    {
+        if(event.getVarpId()!=VarPlayerID.SA_ENERGY)return;
+        final int energy=event.getValue(),tick=client.getTickCount();
+        // RuneLite's counter defers this read until equipment/interaction updates arrive.
+        clientThread.invokeLater(() -> {
+            if(client.getGameState()!=GameState.LOGGED_IN)return;
+            specialAttackTracker.setTrackingMode(config.defenceTrackingMode());
+            Player player=client.getLocalPlayer();
+            NPC target=player!=null && player.getInteracting() instanceof NPC?(NPC)player.getInteracting():null;
+            if(target!=null && CombatDummy.forNpcId(target.getId())!=null)target=null;
+            ItemContainer worn=client.getItemContainer(net.runelite.api.gameval.InventoryID.WORN);
+            Item weaponItem=worn==null?null:worn.getItem(3);
+            ItemComposition definition=weaponItem==null?null:client.getItemDefinition(weaponItem.getId());
+            SpecialAttackWeapon weapon=definition==null?null:SpecialAttackWeapon.forWeapon(definition.getName());
+            int distance=player!=null && player.getWorldLocation()!=null && target!=null && target.getWorldArea()!=null
+                ? target.getWorldArea().distanceTo(player.getWorldLocation()):-1;
+            specialAttackTracker.onEnergyChanged(energy,weapon,target,tick,distance,lastHpChangeCycle==client.getGameCycle());
+        });
+    }
 
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
@@ -403,6 +428,8 @@ public class CombatInsightPlugin extends Plugin
 			&& event.getHitsplat().isMine())
 		{
 			NPC combatTarget = (NPC) event.getActor();
+            encounterRecorder.event(client.getTickCount(),combatTarget.getId(),"owned hitsplat amount="
+                +event.getHitsplat().getAmount()+"; type="+event.getHitsplat().getHitsplatType());
 			CombatDummy combatDummy = CombatDummy.forNpcId(combatTarget.getId());
 			if (combatDummy != null)
 			{
@@ -428,6 +455,7 @@ public class CombatInsightPlugin extends Plugin
 		if (event.getActor() instanceof NPC)
 		{
 			NPC target = (NPC) event.getActor();
+            encounterRecorder.event(client.getTickCount(),target.getId(),"actor death observed (not an automatic encounter boundary)");
             archiveStateTracker.onDeath(client,target);
             archiveStateTracker.remove(target);
 			removeTargetInfoBoxesIfSame(target);
@@ -446,6 +474,7 @@ public class CombatInsightPlugin extends Plugin
 		{
 			refreshSnapshot();
 		}
+        encounterRecorder.event(client.getTickCount(),event.getNpc().getId(),"actor despawn observed; reduction actor state removed");
 		archiveStateTracker.remove(event.getNpc());
         removeTargetInfoBoxesIfSame(event.getNpc());
 		specialAttackTracker.remove(event.getNpc());
@@ -595,7 +624,7 @@ public class CombatInsightPlugin extends Plugin
 	{
 		TargetDefenceDisplay display = config.targetDefenceDisplay();
 		if (display == null || !display.showsInfoBox()
-			|| activeTarget == null || !targetEffects.hasTargetStats())
+			|| activeTarget == null || !targetEffects.hasTargetStats() || targetEffects.isReductionUncertain())
 		{
 			removeTargetDefenceInfoBox();
 			return;
@@ -613,6 +642,8 @@ public class CombatInsightPlugin extends Plugin
 			activeTarget.getName(),
 			targetEffects.getCurrentDefence(),
 			targetEffects.getBaseDefence(),
+            targetEffects.getDefenceFloor(),
+            config.showRemainingDefence(),
 			targetEffects.hasTrackedEffect(),
 			targetEffects.isEstimatedRecovery(),
 			config.animateChanges(),

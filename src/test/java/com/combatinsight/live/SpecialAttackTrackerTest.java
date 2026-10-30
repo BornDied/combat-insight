@@ -19,7 +19,7 @@ public class SpecialAttackTrackerTest
 		tracker.setRaidScaling(new RaidScaling(1, true, 126, 99, 99, 3));
 		tracker.resetEnergy(1000);
 		assertTrue(tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 1));
-		assertTrue(tracker.onHitsplat(target, 20, 2));
+		assertTrue(tracker.onHitsplat(target, 20, 2));tracker.onGameTick(2);
 		assertEquals(173, tracker.getTargetEffects(target, 2).getCurrentDefence());
 		tracker.setRaidScaling(new RaidScaling(1, true, 126, 99, 99, 3));
 		assertEquals(173, tracker.getTargetEffects(target, 2).getCurrentDefence());
@@ -28,7 +28,7 @@ public class SpecialAttackTrackerTest
 	}
 
 	@Test
-	public void energyDropAndNextMatchingHitsplatApplyTheEffect()
+	public void energyDropAndEndOfMatchingTickApplyTheEffect()
 	{
 		SpecialAttackTracker tracker = new SpecialAttackTracker();
 		NPC target = npc(1, "Man");
@@ -36,7 +36,7 @@ public class SpecialAttackTrackerTest
 		tracker.resetEnergy(1000);
 		assertTrue(tracker.onEnergyChanged(
 			500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 10));
-		assertTrue(tracker.onHitsplat(target, 1, 11));
+		assertTrue(tracker.onHitsplat(target, 1, 11));tracker.onGameTick(11);
 		assertEquals(35, tracker.getTargetEffects(target, 11).getCurrentDefence());
 	}
 
@@ -81,7 +81,7 @@ public class SpecialAttackTrackerTest
 
 		tracker.resetEnergy(1000);
 		tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, first, 0);
-		tracker.onHitsplat(first, 1, 1);
+		tracker.onHitsplat(first, 1, 1);tracker.onGameTick(1);
 
 		assertEquals(35, tracker.getTargetEffects(first, 1).getCurrentDefence());
 		assertEquals(50, tracker.getTargetEffects(second, 1).getCurrentDefence());
@@ -94,14 +94,14 @@ public class SpecialAttackTrackerTest
         SpecialAttackTracker tracker=new SpecialAttackTracker();NPC bork=npc(16640,"Bork");
         tracker.resetEnergy(1000);
         tracker.onEnergyChanged(500,SpecialAttackWeapon.TONALZTICS_OF_RALOS,bork,1);
-        tracker.onHitsplat(bork,12,true,2);tracker.onHitsplat(bork,15,true,2);
-        assertEquals(278,tracker.getTargetEffects(bork,2).getCurrentDefence());
+        tracker.onHitsplat(bork,12,true,3);tracker.onHitsplat(bork,15,true,3);tracker.onGameTick(3);
+        assertEquals(278,tracker.getTargetEffects(bork,3).getCurrentDefence());
         for(int i=0;i<20;i++)
         {
-            tracker.resetEnergy(1000);tracker.onEnergyChanged(500,SpecialAttackWeapon.TONALZTICS_OF_RALOS,bork,3);
-            tracker.onHitsplat(bork,12,true,4);tracker.onHitsplat(bork,12,true,4);
+            tracker.resetEnergy(1000);tracker.onEnergyChanged(500,SpecialAttackWeapon.TONALZTICS_OF_RALOS,bork,4+i*3);
+            tracker.onHitsplat(bork,12,true,6+i*3);tracker.onHitsplat(bork,12,true,6+i*3);tracker.onGameTick(6+i*3);
         }
-        assertEquals(180,tracker.getTargetEffects(bork,4).getCurrentDefence());
+        assertEquals(180,tracker.getTargetEffects(bork,63).getCurrentDefence());
     }
 
 	@Test
@@ -113,11 +113,11 @@ public class SpecialAttackTrackerTest
 		tracker.resetEnergy(1000);
 		assertTrue(tracker.onEnergyChanged(
 			500, SpecialAttackWeapon.TONALZTICS_OF_RALOS, target, 10));
-		assertTrue(tracker.onHitsplat(target, 10, 11));
-		assertEquals(77, tracker.getTargetEffects(target, 11).getCurrentDefence());
-		assertTrue(tracker.onHitsplat(target, 10, 11));
-		assertEquals(64, tracker.getTargetEffects(target, 11).getCurrentDefence());
-		assertFalse(tracker.onHitsplat(target, 10, 11));
+        assertTrue(tracker.onHitsplat(target,10,12));
+        assertEquals(90,tracker.getTargetEffects(target,12).getCurrentDefence());
+        assertTrue(tracker.onHitsplat(target,10,12));tracker.onGameTick(12);
+        assertEquals(64,tracker.getTargetEffects(target,12).getCurrentDefence());
+        assertFalse(tracker.onHitsplat(target,10,12));
 	}
 
     @Test public void dt2ModeChangeClearsDrainsAndPendingSpecial()
@@ -127,7 +127,7 @@ public class SpecialAttackTrackerTest
         tracker.setEncounterMode(EncounterMode.NORMAL);
         tracker.resetEnergy(1000);
         tracker.onEnergyChanged(500,SpecialAttackWeapon.DRAGON_WARHAMMER,duke,1);
-        assertTrue(tracker.onHitsplat(duke,20,2));
+        assertTrue(tracker.onHitsplat(duke,20,2));tracker.onGameTick(2);
         assertEquals(193,tracker.getTargetEffects(duke,2).getCurrentDefence());
         tracker.resetEnergy(1000);
         tracker.onEnergyChanged(500,SpecialAttackWeapon.DRAGON_WARHAMMER,duke,3);
@@ -144,7 +144,7 @@ public class SpecialAttackTrackerTest
         NPC target = npc(1, "Man");
         tracker.resetEnergy(1000);
         tracker.onEnergyChanged(500, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 1);
-        tracker.onHitsplat(target, 20, 2);
+        tracker.onHitsplat(target, 20, 2);tracker.onGameTick(2);
         assertEquals(35, tracker.getTargetEffects(target, 2).getCurrentDefence());
         tracker.onEnergyChanged(0, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 3);
         tracker.setTrackingMode(DefenceTrackingMode.OFF);
@@ -156,7 +156,7 @@ public class SpecialAttackTrackerTest
         assertFalse(tracker.onHitsplat(target, 20, 7));
         assertEquals(50, tracker.getTargetEffects(target, 7).getCurrentDefence());
         assertTrue(tracker.onEnergyChanged(0, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 8));
-        assertTrue(tracker.onHitsplat(target, 20, 9));
+        assertTrue(tracker.onHitsplat(target, 20, 9));tracker.onGameTick(9);
         assertEquals(35, tracker.getTargetEffects(target, 9).getCurrentDefence());
     }
 
@@ -169,7 +169,7 @@ public class SpecialAttackTrackerTest
         tracker.clearTrackedEffects();
         assertFalse(tracker.onHitsplat(target, 20, 2));
         assertTrue(tracker.onEnergyChanged(0, SpecialAttackWeapon.DRAGON_WARHAMMER, target, 3));
-        tracker.onHitsplat(target, 20, 4);
+        tracker.onHitsplat(target, 20, 4);tracker.onGameTick(4);
         assertEquals(35, tracker.getTargetEffects(target, 4).getCurrentDefence());
         tracker.clearTrackedEffects();
         assertEquals(50, tracker.getTargetEffects(target, 4).getCurrentDefence());
@@ -181,7 +181,7 @@ public class SpecialAttackTrackerTest
         NPC tekton = npc(7540,"Tekton");
         tracker.resetEnergy(1000);
         tracker.onEnergyChanged(500,SpecialAttackWeapon.DRAGON_WARHAMMER,tekton,1);
-        tracker.onHitsplat(tekton,20,2);
+        tracker.onHitsplat(tekton,20,2);tracker.onGameTick(2);
         tracker.clearTrackedEffects();
         assertTrue(tracker.getTargetEffects(tekton,2).isTektonDefenceSpecialAttempted());
         assertEquals(205,tracker.getTargetEffects(tekton,2).getCurrentDefence());
@@ -194,7 +194,7 @@ public class SpecialAttackTrackerTest
         assertEquals(205,tracker.getTargetEffects(tekton,4).getCurrentDefence());
     }
 
-	private static NPC npc(int id, String name)
+	static NPC npc(int id, String name)
 	{
 		return (NPC) Proxy.newProxyInstance(
 			NPC.class.getClassLoader(),

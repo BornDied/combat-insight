@@ -30,6 +30,11 @@ public interface CombatInsightConfig extends Config
         position = 0, section = trackingSection)
     default DefenceTrackingMode defenceTrackingMode() { return DefenceTrackingMode.LOCAL; }
 
+    @ConfigItem(keyName="showRemainingDefence",name="Count Defence down to cap",
+        description="Show remaining reducible Defence: 0 means the minimum has been reached, not an actual Defence level of 0. Tooltip and Inspector retain actual levels. Local estimates only.",
+        position=1,section=trackingSection)
+    default boolean showRemainingDefence() { return true; }
+
     @ConfigItem(keyName = "dt2EncounterMode", name = "DT2 encounter mode",
         description = "Auto detects normal or Awakened from the active boss combat level. Quest NPCs remain separate. Vardorvis requires visible health.",
         position = 30, section = calculationSection)
@@ -617,6 +622,11 @@ public interface CombatInsightConfig extends Config
     @ConfigItem(keyName = "enableInspector", name = "Enable calculation inspector",
         description = "Show the Inspect calculation action in the HUD menu", position = 0, section = inspectorSection)
     default boolean enableInspector() { return true; }
+
+    @ConfigItem(keyName = "recordOcellusEncounter", name = "Record raid diagnostics",
+        description = "Temporary local Archive test recorder, including Bork, Smorks and Ocellus. Enable before pull; stop after fight. Starting again clears the previous recording.", position = 1, section = inspectorSection)
+    default boolean recordOcellusEncounter() { return false; }
+
 
     @ConfigItem(keyName = "showManualIndicator", name = "Show manual input indicator",
         description = "Show Manual only when a manual override is active in the current calculation", position = 8, section = effectsSection)

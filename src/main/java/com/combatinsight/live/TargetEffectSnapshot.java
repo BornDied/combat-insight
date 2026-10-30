@@ -21,6 +21,7 @@ public final class TargetEffectSnapshot
 	private final boolean estimatedMagicRecovery;
 	private final boolean tektonDefenceSpecialAttempted;
     private final boolean tektonSpecialHistoryKnown;
+    private final boolean reductionUncertain;
 
 	TargetEffectSnapshot(
 		int targetId,
@@ -45,6 +46,15 @@ public final class TargetEffectSnapshot
         boolean trackedEffect, boolean estimatedDefenceRecovery, boolean estimatedMagicRecovery,
         boolean tektonDefenceSpecialAttempted, boolean tektonSpecialHistoryKnown)
 	{
+        this(targetId,baseDefence,currentDefence,baseMagic,currentMagic,baseMagicDefence,currentMagicDefence,
+            trackedEffect,estimatedDefenceRecovery,estimatedMagicRecovery,tektonDefenceSpecialAttempted,tektonSpecialHistoryKnown,false);
+    }
+
+    private TargetEffectSnapshot(int targetId,int baseDefence,int currentDefence,int baseMagic,int currentMagic,
+        int baseMagicDefence,int currentMagicDefence,boolean trackedEffect,boolean estimatedDefenceRecovery,
+        boolean estimatedMagicRecovery,boolean tektonDefenceSpecialAttempted,boolean tektonSpecialHistoryKnown,boolean uncertain)
+    {
+        this.reductionUncertain=uncertain;
         this.tektonSpecialHistoryKnown = tektonSpecialHistoryKnown;
 		this.targetId = targetId;
 		this.baseDefence = Math.max(0, baseDefence);
@@ -97,7 +107,7 @@ public final class TargetEffectSnapshot
 
 	public TargetProfile applyTo(TargetProfile target)
 	{
-		if (target == null || !appliesTo(target.getId()))
+		if (target == null || !appliesTo(target.getId()) || reductionUncertain)
 		{
 			return target;
 		}
@@ -113,6 +123,26 @@ public final class TargetEffectSnapshot
 	{
 		return currentDefence;
 	}
+
+    public int getDefenceFloor()
+    { return Math.min(baseDefence,Math.max(0,TargetEffectRules.defenceFloor(targetId,baseDefence))); }
+    public int getRemainingDefence() { return Math.max(0,currentDefence-getDefenceFloor()); }
+    public int getBaseReducibleDefence() { return Math.max(0,baseDefence-getDefenceFloor()); }
+    public boolean isAtDefenceFloor() { return hasTargetStats() && !reductionUncertain && currentDefence<=getDefenceFloor(); }
+    public boolean isReductionUncertain() { return reductionUncertain; }
+    TargetEffectSnapshot withUncertainReductions()
+    {
+        return new TargetEffectSnapshot(targetId,baseDefence,currentDefence,baseMagic,currentMagic,
+            baseMagicDefence,currentMagicDefence,trackedEffect,estimatedDefenceRecovery,estimatedMagicRecovery,
+            tektonDefenceSpecialAttempted,tektonSpecialHistoryKnown,true);
+    }
+    public String getRemainingDefenceText()
+    {
+        if(!hasTargetStats())return "Unavailable";
+        if(reductionUncertain)return "Unresolved";
+        return String.format(Locale.ROOT,"%,d / %,d%s",getRemainingDefence(),getBaseReducibleDefence(),
+            hasTrackedDefence()?" est.":"");
+    }
 
 	public int getBaseMagic()
 	{
@@ -173,7 +203,7 @@ public final class TargetEffectSnapshot
     {
         return new TargetEffectSnapshot(targetId, baseDefence, currentDefence, baseMagic,
             currentMagic, baseMagicDefence, currentMagicDefence, trackedEffect,
-            estimatedDefenceRecovery, estimatedMagicRecovery, attempted, known);
+            estimatedDefenceRecovery, estimatedMagicRecovery, attempted, known,reductionUncertain);
     }
 
     public boolean isTektonSpecialHistoryKnown() { return tektonSpecialHistoryKnown; }
@@ -185,6 +215,7 @@ public final class TargetEffectSnapshot
 
 	public String getDefenceText()
 	{
+        if(reductionUncertain)return "Unresolved";
 		if (!hasTargetStats())
 		{
 			return "Unavailable";
@@ -195,6 +226,7 @@ public final class TargetEffectSnapshot
 
 	public String getMagicText()
 	{
+        if(reductionUncertain)return "Unresolved";
 		if (!hasTargetStats())
 		{
 			return "Unavailable";
@@ -205,6 +237,7 @@ public final class TargetEffectSnapshot
 
 	public String getMagicDefenceText()
 	{
+        if(reductionUncertain)return "Unresolved";
 		if (!hasTargetStats())
 		{
 			return "Unavailable";

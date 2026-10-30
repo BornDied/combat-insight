@@ -206,8 +206,8 @@ public class CombatInsightOverlay extends OverlayPanel
 			if (targetDefenceDisplay.showsHudRow() && snapshot.hasLiveTargetEffects())
 			{
 				addLine(
-					"Target Def",
-					snapshot.getTargetDefenceText(),
+					config.showRemainingDefence()?"Def to cap":"Target Def",
+					config.showRemainingDefence()?snapshot.getRemainingDefenceText():snapshot.getTargetDefenceText(),
 					Color.WHITE,
 					snapshot.hasTrackedTargetDefence() ? routineColor(SUCCESS) : MUTED);
 			}

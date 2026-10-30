@@ -370,6 +370,11 @@ public final class LiveCombatSnapshot
             && liveTargetEffects.hasTargetStats()
             && (liveTargetEffects.getCurrentMagic() != liveTargetEffects.getBaseMagic()
                 || liveTargetEffects.getCurrentMagicDefence() != liveTargetEffects.getBaseMagicDefence());
+        if(liveTargetEffects.isReductionUncertain())
+        {
+            targetDataAvailable=false;
+            warnings.add("Local special attribution unresolved; target accuracy/DPS withheld. Clear estimates only when a reset to base is appropriate.");
+        }
         if (guardianMagicUnknown)
         {
             targetDataAvailable = false;
@@ -756,7 +761,8 @@ public final class LiveCombatSnapshot
             warnings.add(shieldMaximum < 0 ? "Rondache charges unavailable"
                 : "Rondache shield-bash accuracy/DPS pending; charge maximum is in Inspector");
         }
-        String archiveStatus = guardianMagicUnknown ? "Guardian Magic drain pending"
+        String archiveStatus = liveTargetEffects.isReductionUncertain() ? "Local reduction attribution unresolved"
+            : guardianMagicUnknown ? "Guardian Magic drain pending"
             : combatDummy ? "" : ArchiveEncounterRules.unresolved(targetId, style.attackType);
         if(targetId==16640 && targetDataAvailable)
         {
@@ -787,8 +793,12 @@ public final class LiveCombatSnapshot
             archiveStatus="Warden core non-melee stats pending";
         if (!archiveStatus.isEmpty())
         {
-            maxHitAvailable = false;
-            maxHitStatusText = archiveStatus;
+            // Missing ranged defence affects accuracy, not ordinary damage rolls.
+            if(!"Add ranged defence unverified".equals(archiveStatus))
+            {
+                maxHitAvailable = false;
+                maxHitStatusText = archiveStatus;
+            }
             warnings.add(archiveStatus);
         }
         boolean archiveAncientImmune = !combatDummy && style.combatStyle == CombatStyle.MAGIC
@@ -864,7 +874,10 @@ public final class LiveCombatSnapshot
         if(!combatDummy && targetId==16677 && encounterContext.ocellusFinalPhase)
         {
             maxHitAvailable=false;maxHitStatusText="Ocellus final-phase damage/timing unverified";
-            targetResult=TargetResult.unavailable(maxHitStatusText);
+            warnings.add(maxHitStatusText);
+            if(targetResult.accuracyAvailable)
+                targetResult=TargetResult.accuracyOnly(targetResult.attackRoll,targetResult.defenceRoll,
+                    targetResult.effectiveAccuracyLevel,targetResult.hitChance,maxHitStatusText);
         }
         if(!combatDummy && targetId==16677 && encounterContext.ocellusAirborne && style.combatStyle==CombatStyle.MELEE)
         { targetResult=TargetResult.immune(0,0,0);targetImmune=true; }
@@ -2725,6 +2738,8 @@ public final class LiveCombatSnapshot
             + "Rolls: " + getRollText() + "; attack ticks: " + attackSpeedTicks + "\n"
             + "Special max/chance/average: " + getSpecialMaximumText(true) + "/" + getSpecialHitChanceText() + "/" + getSpecialExpectedDamageText() + "\n"
             + "Local target Defence/Magic/magic defence: " + getTargetDefenceText() + "/" + getTargetMagicText() + "/" + getTargetMagicDefenceText() + "\n"
+            + "Defence floor / remaining reducible: " + (targetEffects.hasTargetStats()
+                ? targetEffects.getDefenceFloor()+" / "+targetEffects.getRemainingDefenceText() : "Unavailable") + "\n"
             + "Availability: max=" + isMaxHitAvailable() + ", accuracy=" + isAccuracyAvailable()
             + ", DPS=" + isDpsAvailable() + "; reasons are shown in the result fields above\n"
             + "Inputs: " + diagnosticInputs + "\n"
@@ -2925,6 +2940,8 @@ public final class LiveCombatSnapshot
 	{
 		return targetEffects.getDefenceText();
 	}
+
+    public String getRemainingDefenceText() { return targetEffects.getRemainingDefenceText(); }
 
 	public boolean hasTrackedTargetMagic()
 	{

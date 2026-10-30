@@ -28,6 +28,13 @@ public final class LiveTargetTracker
 		}
 
 		int targetId = target.getId();
+        // The destroyed Archive statue is a non-attackable transformation of
+        // 16662. Do not retain scenery as a newly confirmed combat target,
+        // including when an owned hitsplat arrives after the transformation.
+        if (targetId == 16663)
+        {
+            return endActiveIfSame(target);
+        }
 		String targetName = target.getName();
 		boolean changed = activeTarget != target
 			|| retainedTargetId != targetId

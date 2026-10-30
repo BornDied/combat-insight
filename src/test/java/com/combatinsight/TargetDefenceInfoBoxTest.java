@@ -10,6 +10,16 @@ import static org.junit.Assert.assertTrue;
 
 public class TargetDefenceInfoBoxTest
 {
+    @Test public void capReadoutExplainsZeroWithoutChangingTheActualLevel()
+    {
+        TargetDefenceInfoBox box=new TargetDefenceInfoBox(new BufferedImage(1,1,BufferedImage.TYPE_INT_ARGB),new CombatInsightPlugin());
+        box.update(new Object(),"Ocellus",129,215,129,true,true,false,false,
+            DEFAULT_TEXT,DEFAULT_FLASH,1000L);
+        assertEquals("0",box.getText());
+        assertTrue(box.getTooltip().contains("Defence: 129 / 215"));
+        assertTrue(box.getTooltip().contains("Defence floor: 129"));
+        assertTrue(box.getTooltip().contains("Remaining to cap: 0 / 86"));
+    }
 	private static final Color DEFAULT_TEXT = new Color(255, 152, 31);
 	private static final Color DEFAULT_FLASH = new Color(100, 235, 130);
 
