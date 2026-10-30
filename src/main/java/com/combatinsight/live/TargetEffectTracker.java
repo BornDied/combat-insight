@@ -52,7 +52,7 @@ final class TargetEffectTracker
 			return false;
 		}
 
-		TargetProfile baseTarget = raidScaling.apply(EncounterResolver.resolve(target.getId(), EncounterContext.from(target, encounterMode)));
+		TargetProfile baseTarget = raidScaling.apply(EncounterResolver.resolveForTracking(target.getId(), EncounterContext.from(target, encounterMode)));
 		if (baseTarget == null || baseTarget.isAmbiguous())
 		{
 			return false;
@@ -84,7 +84,7 @@ final class TargetEffectTracker
 			return TargetEffectSnapshot.empty();
 		}
 
-		TargetProfile baseTarget = raidScaling.apply(EncounterResolver.resolve(target.getId(), EncounterContext.from(target, encounterMode)));
+		TargetProfile baseTarget = raidScaling.apply(EncounterResolver.resolveForTracking(target.getId(), EncounterContext.from(target, encounterMode)));
 		if (baseTarget == null || baseTarget.isAmbiguous())
 		{
 			return TargetEffectSnapshot.empty();

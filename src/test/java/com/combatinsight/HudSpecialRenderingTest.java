@@ -34,6 +34,14 @@ public class HudSpecialRenderingTest
         assertEquals(Color.WHITE, field(line, "leftColor"));
     }
 
+    @Test public void longUnavailableSpecialReasonsRemainAQuestionMark() throws Exception
+    {
+        LineComponent line=renderSpecial(SpecialAttackResult.unavailable(SpecialAttackWeapon.ZARYTE_CROSSBOW,
+            "Guaranteed maximum and enchanted bolt interaction cannot be resolved from the available encounter data"),new CombatInsightConfig() { });
+        assertEquals("?",field(line,"right"));
+        assertEquals(new Color(255,190,80),field(line,"rightColor"));
+    }
+
     private static LineComponent renderSpecial(SpecialAttackResult result, CombatInsightConfig config) throws Exception
     {
         LiveCombatSnapshot snapshot = LiveCombatSnapshot.empty();

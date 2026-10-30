@@ -1,275 +1,69 @@
 # Combat Insight
 
-Version 0.7.0 includes the earlier 0.6 calculation fixes. See the [testing checklist](TESTING-0.7.0.md) and [coverage audit](docs/research/070-coverage.md). Release builds identify themselves as `0.7.0` in copied diagnostics. Availability in RuneLite depends on the Plugin Hub update being reviewed and merged.
+Combat Insight shows your max hit, hit chance and estimated DPS against the NPC you are fighting. It uses your equipped gear, attack style, active prayers and boosted levels, and updates as your setup changes.
 
-Combat Insight is a RuneLite plugin for viewing live combat calculations while playing Old School RuneScape.
+Use it to compare weapons, see the effect of your own defence drains, or check a special attack without opening a separate calculator.
 
 ## Features
 
-- Maximum hit, hit chance, and estimated basic-attack DPS
-- Exact hit splits for supported multi-hit weapons
-- Special maximum, chance, average damage, and on-hit summaries for supported weapons
-- Solo tracking of Defence, Magic, and Magic Defence reductions from supported special attacks
-- Player-Owned House combat-dummy targeting with variant-aware Salve, Slayer, and other modifiers
-- Target-aware calculations using your current gear, combat style, prayers, boosts, and NPC target
-- Compact target name and estimated health in Advanced mode
-- Attack interval, observed average hitsplat, and optional accuracy details
-- Minimal, Standard, and Advanced HUD modes with independent row settings
+- **Max hit**, including separate hits for supported multi-hit weapons.
+- **Hit chance and basic-attack DPS** for your current target.
+- **Special attack previews** with maximum damage, hit chance, average damage and on-hit effects for supported weapons.
+- **Target stat tracking** for Defence, Magic and Magic defence changes caused by your own supported specials. Optional infoboxes keep those stats visible.
+- **Combat details** such as attack speed, known target health, gear bonuses, prayer effects and your average observed hitsplat.
+- **Calculation Inspector** with the inputs and effects behind a result, explanations for unavailable values, and a copyable diagnostic report.
 
-The displayed values update when your equipment, combat style, prayers, boosts, weapon, or target changes.
+Weapon calculations include the twisted bow, Tumeken's shadow, scythe, fang, blowpipe, Obligator, Ascension crossbows and Zorya's tome. The plugin also handles applicable ammunition, set effects, elemental weaknesses, and Salve and Slayer bonuses. POH combat dummies can be selected for comparisons.
 
-## How to use
+## Getting started
 
-1. Install Combat Insight from the RuneLite Plugin Hub.
-2. Enable the plugin in RuneLite's plugin panel.
-3. Open **Configure** and choose a HUD mode.
-4. Equip your gear and select your combat style.
-5. Attack or cast on an NPC to confirm it as your combat target.
-6. View the calculated combat information in the movable overlay.
+1. Install **Combat Insight** from RuneLite's **Plugin Hub** and open its settings.
+2. Choose **Minimal**, **Standard** or **Advanced**. Leave combat type on **Automatic** for normal use.
+3. Equip your gear, select your attack style, then attack or cast on an NPC.
+4. Check the inputs below for your weapon or raid. The HUD updates for the target and retains its information between attacks.
 
-Combat Insight retains your last confirmed combat target between repeated kills. A new Attack or Cast action, or one of your hitsplats on another NPC, updates the target.
+Use RuneLite's overlay controls to move or resize the HUD.
 
-## HUD modes
+## Choose what stays on screen
 
 | Mode | Available information |
 | --- | --- |
-| Minimal | Maximum hit |
-| Standard | Maximum hit, hit chance, DPS, supported special maximum and chance, and optional combat-state rows |
-| Advanced | Standard information plus hit splits, average special damage, special on-hit effects, tracked target stats, target health, attack interval, observed hits, and accuracy details |
+| Minimal | Max hit |
+| Standard | Max hit, hit chance, DPS and special previews, with optional weapon, style, gear and prayer rows |
+| Advanced | Standard information plus hit splits, average special damage, target stats, health, attack speed and accuracy rolls |
 
-The configuration sections match the HUD modes, making it clear which rows are available in Minimal, Standard, and Advanced mode. Separate target-display settings control Defence and Magic-related effects. The Magic infobox and Magic HUD rows appear only while the current combat style is Magic.
+Each mode keeps its own row settings. You can adjust spacing, colours and the background, enable max-hit change flashes, and choose whether special maximums are highlighted. A hold-details key temporarily shows Advanced information without changing your saved mode.
 
-The HUD section also contains three appearance controls:
+The optional Inspector keeps longer explanations away from the combat HUD. Enable it in settings, then **Alt-right-click the HUD → Inspect calculation**. The same menu has **Copy diagnostic snapshot** and **Clear tracked reductions**.
 
-- **Compact HUD** uses narrower default widths and smaller outer padding while
-  preserving row order and right-aligned values. Turn it off for classic spacing.
-- **Quiet HUD colors** makes routine values neutral. Warnings and max-hit change
-  flashes retain their colors; separate Defence/Magic infobox colors are unchanged.
-- **Background style** offers Custom color, Subtle, and Text only. Custom color
-  remains the default and restores your saved background, including its opacity.
+For a longer Archive test, enable **Calculation inspector → Record raid diagnostics** before the encounter. Stop it afterward and use **Copy encounter report** in the Inspector. Recording is off by default, stays in memory and has a size limit shown in the report. Starting another recording or restarting the client clears it. It records observed NPC signals and calculation changes; it does not automatically certify a complete fight or identify every phase.
 
-No row selections are reset. If you manually resized the overlay, that width
-takes precedence over automatic mode widths; use RuneLite's overlay reset option
-to return to automatic sizing. Long unavailable-status messages can wrap, keeping
-the reason visible. The proposed hold-to-show-details shortcut is not included.
+**Count Defence down to cap** shows how much Defence can still be drained. A displayed **0** means the tracked estimate has reached the minimum, which can be above zero. The tooltip and Inspector retain the actual level and floor. Disable the option to display the full Defence level instead. These remain local estimates; Party Hub reductions are not imported.
 
-## Understanding the overlay
+## Inputs to check
 
-### Max hit and Max split
+**Blowpipe:** select the darts loaded inside it. The worn ammo slot does not tell the plugin which darts are loaded. Change this setting when you change darts.
 
-**Max hit** is the highest total damage your complete basic attack can deal. For a supported multi-hit weapon, **Max split** shows how that total is divided across its individual hitsplats.
+**Spells:** select your active spell under **Manual magic spell** when needed. Powered staves use their own attack. A saved spell does not replace a detected melee or ranged attack.
 
-### Hit chance
+**Slayer:** enable **Target is Slayer task** when the current target qualifies for your helmet or mask bonus. Turn it off after the task.
 
-The estimated chance that one accuracy roll will successfully hit the current target.
+**Raids:** open **Raid inputs** and check party size, mode and scaling settings. ToA HP calculations need invocation, starting party size and current path level; Wardens do not use path level. CoX and ToB have observed inputs and manual fallbacks. **Archive starting party size** accepts 1–8; 0 means unknown. Archive HP uses published table entries or matching boss-HUD data, so some targets still have no HP estimate.
 
-### DPS
+**Defence tracking:** reductions come from your own confirmed supported specials. Teammates' drains are not imported. Clear tracked reductions from the HUD menu when an encounter resets or the estimate no longer matches the fight.
 
-Your estimated average basic-attack damage per second, based on accuracy, damage, attack interval, equipment, and target information.
+## Reading the results
 
-### Attack interval
+**`?`** means a required input or calculation is unavailable. Open Inspector for the reason. **Immune** means a recognized rule prevents that attack from damaging the target.
 
-The time between basic attacks, shown in game ticks. With the full Blood Moon set, Dual macuahuitl calculations include the set's accuracy-weighted timing effect.
+DPS assumes continuous basic attacks. Movement, eating, missed attack cycles and encounter downtime affect the damage you actually deal.
 
-### Target
+There are encounter rules for CoX, ToB, ToA, Fractured Archive, DT2 bosses, Nightmare pillars, Zulrah and other targets. Coverage varies by phase. Some temporary buffs and raid phases still have unavailable calculations, including the Trio's imp-enhanced attack, Ezekiel's enrage and Ocellus's final-phase effects. Rondache's charge-based maximum is shown in Inspector; its shield accuracy and DPS are not available.
 
-Advanced mode can show the retained target and its estimated current health in a compact row, such as `Target: Vorkath - 401 / 750`.
+See the [calculation notes and remaining limits](docs/research/2026-10-24-archive-completion.md) and [latest testing notes](docs/research/2026-10-25-preflight.md) for details.
 
-Current health is estimated from RuneLite's NPC health-bar information, so it can differ slightly from the NPC's exact server-side health.
+## Reporting a problem
 
-### Average hitsplat
+[Open a GitHub issue](https://github.com/BornDied/combat-insight/issues) with the boss or form, weapon and ammunition, what you expected, and a copied diagnostic snapshot. Include the HUD mode for a display problem. The report identifies the plugin version, NPC, equipment, style and calculation inputs.
 
-The observed average of your own hitsplats against the current NPC, including zero-damage hits. Each hitsplat from a multi-hit attack is counted separately. The samples reset when you log out or the plugin stops.
-
-## Supported multi-hit basic attacks
-
-Version 0.4.0 includes complete basic-attack calculations for:
-
-- Scythe of vitur, with one, two, or three hits based on target size
-- Dual macuahuitl, including its conditional second accuracy roll
-- Torag's hammers
-- Sulphur blades
-- Dark bow ordinary attacks
-
-The ordinary `Max hit`, `Hit chance`, and `DPS` rows still describe basic attacks. Special attacks use their own rows so the two calculations are not mixed together.
-
-## Supported special attacks
-
-Version 0.5.0 supports:
-
-- Dragon warhammer
-- Elder maul
-- Bandos godsword
-- Burning claws, including their three accuracy rolls and expected burn damage
-- Dragon claws
-- Voidwaker
-- Dragon dagger and its poisoned variants
-- Dark bow, including dragon-arrow and other-arrow special behavior
-- Tonalztics of ralos, including its two hits and the first hit's effect on the second accuracy roll
-- Eye of ayak
-- Accursed sceptre and Accursed sceptre (a)
-- Bone dagger and its poisoned variants
-- Arclight
-- Emberlight
-- Seercull
-- Armadyl godsword
-- Saradomin godsword
-- Zamorak godsword
-- Ancient godsword, including its conditional delayed damage
-- Crimson kisten, including all four independent Crush rolls and its success-count damage ranges
-- Dragon longsword
-- Dragon mace
-- Dragon sword
-- Abyssal dagger, including its shared accuracy roll and two hits
-- Toxic blowpipe and its Blazing ornament variant
-- Webweaver bow, including four independent doubled-accuracy hits
-- Magic shortbow and Magic shortbow (i), including their custom maximum-hit formula
-- Rosewood blowpipe, including its current two-dart special with ordinary accuracy and damage
-- Dragon knives and poisoned variants, including two independent hits
-- Magic longbow and Magic comp bow, including their guaranteed custom-formula hit
-
-Advanced mode can show average special damage and a short on-hit summary. `Spec chance` says `Guaranteed` only when the special cannot miss; non-guaranteed multi-roll chances never round up to `100.0%`.
-
-Webweaver bow average special damage includes its four direct hits but not its
-conditional poison damage; the on-hit row makes that exclusion explicit.
-
-Burning claws average damage includes expected burn damage from that special when the target has room below the five-burn cap. Existing burns can lower the damage that is actually added.
-
-Combat Insight tracks the local player's confirmed reductions to Defence, Magic level, and Magic Defence bonus when those values affect outgoing calculations. Arclight and Emberlight also describe their Attack and Strength effects, but only Defence is stored because that is the affected stat Combat Insight uses for outgoing accuracy. The tracker is solo only and does not read reductions caused by party members. Bone dagger's untouched-target guarantee is based on locally observed hits.
-
-The default Defence display is a skill infobox showing the target's current level. Hold RuneLite's overlay-drag hotkey, normally Alt, to move it. Its static number and reduction-flash colors are configurable, and the box is removed when that NPC dies or despawns.
-
-Tracked Magic level and Magic Defence bonus changes use a separate Magic-skill infobox by default. It appears for supported targets only while Magic is the current combat style, beginning with the target's base Magic Defence bonus before any reduction. Eye of ayak then updates that value, such as Scurrius changing from `10` toward `0`. Seercull and Accursed sceptre instead display the target's current Magic level after they reduce it. The complete Magic defence roll remains internal to hit-chance and DPS calculations. The Magic box has its own static and flash colors and can instead use Advanced HUD rows, both displays, or be hidden.
-
-Natural NPC Defence and Magic recovery is estimated at one level per 100 game ticks. The infobox tooltip and HUD rows mark estimated recovery because the exact server-side recovery timer is not exposed to the client. Eye of ayak's Magic Defence reduction does not use this recovery estimate.
-
-Ancient godsword `Spec max` and `Avg spec dmg` include its delayed 25 damage. Those values assume the target remains within five tiles until the eight-tick timer finishes. The on-hit row identifies the delay and matching 25 Hitpoint heal.
-
-Dizana's quiver ammunition is read from RuneLite's live second-slot item and quantity values. Combat Insight selects ammo compatible with the current weapon, prioritises compatible ammo in the normal slot, and applies the charged or blessed quiver's hidden accuracy and Ranged Strength bonuses only to eligible arrows and bolts.
-
-## NPC combat data
-
-Version 0.5.0 contains 3,976 combat NPC IDs generated from
-the OSRS Wiki's complete `id` lists, rather than keeping only the first ID from
-each monster record. This includes all 11 attackable Phosani's Nightmare IDs
-and all five Nex IDs, plus alternate IDs used for boss phases,
-transformations, quest instances, and duplicate spawns.
-
-An automated major-boss roster covers 226 standard-game IDs across legacy
-bosses, God Wars, Slayer bosses, Wilderness bosses, modern solo encounters,
-and all three released raids. The roster checks that every audited ID remains
-present whenever the generated snapshot is updated.
-
-The audit found 1,140 IDs absent from version 0.4.0. Of those, 1,135 were
-alternate live IDs belonging to an otherwise-present monster record, while 5
-belonged to entirely absent records. Those IDs cover 302 named monsters or
-bosses and 486 distinct stat variants.
-
-Thirty IDs are reused by the game or Wiki data for statistically
-different variants that cannot be distinguished safely by NPC ID alone. They
-remain explicitly marked as ambiguous so Combat Insight shows `Target variant
-needed` instead of silently choosing incorrect stats.
-
-The September 25 raid review refreshes 160 ToB and CoX combat IDs and adds 20
-IDs beyond Wave 2B: nine unique CoX Challenge Mode IDs and eleven ToB phase/add
-IDs. Normal, Entry and Hard Mode ToB records are included. Presence of a record
-does not mean every encounter mechanic is modelled.
-
-### Raid inputs and limitations
-
-Before raiding, expand **Raid inputs** in Combat Insight's configuration. Set
-CoX party size, Challenge Mode, highest party Combat and Hitpoints levels, and
-average Mining level. Set ToB starting party size, including dead players.
-CoX party/mode/highest combat can be observed automatically; HP and Mining stay manual. ToB starting size is manual by default, with an experimental opt-in observed-roster setting. Check the input source in diagnostics.
-
-CoX Defence, Magic and HP are scaled before locally tracked stat reductions.
-ToB scales HP only. Maiden's phase thresholds no longer replace her full HP-bar
-maximum. Changing raid inputs clears tracked reductions so old and new scaling
-cannot be mixed. Reductions caused by teammates remain untracked.
-
-Nylocas colour/style restrictions are enforced for normal, Entry and Hard Mode
-waves and bosses. Damage and DPS are explicitly unavailable for Verzik P1,
-Guardians, Tekton with Magic, Vasa's crystal with Magic, Olm parts with affected
-off-styles, and Ice demon with non-fire attacks. Their special damage transforms
-are not implemented in this update; Demonbane at Ice demon is also conservatively
-withheld. Basic hit chance remains available where the accuracy model applies.
-Invulnerability windows, movement downtime, boss healing, and all other scripted
-phase effects are not a complete fight simulation. Entry Verzik's red Nylocas
-has unknown bundled HP and should not display a fabricated maximum.
-
-## Player-Owned House combat dummies
-
-Clicking **Attack** on a supported POH combat dummy selects it as Combat Insight's target. Dummy targets show `Max hit` and, for supported special attacks, `Spec max`, `Avg spec dmg`, and `On hit`. Normal hit chance, DPS, attack rolls, and target Defence or Magic tracking are hidden because those values would be misleading for a dummy.
-
-Normal dummies do not receive target-specific modifiers. Supported undead, Wilderness, kalphite, kurask, vampyre, and dragon variants apply only the modifiers represented by that form. Attacking a real NPC replaces the dummy target. Leaving the house, logging out, or changing worlds clears it.
-
-## Calculation inputs
-
-Most information is read automatically. Use the **Calculation inputs** section when RuneLite cannot determine a required value, including:
-
-- The dart stored in a toxic blowpipe
-- A manually cast spell (select the spell and force Combat type to Magic if the combat tab still has a melee stance)
-- Slayer-task status
-- Tombs of Amascut invocation level
-- A combat-type override for unusual hybrid weapons
-
-A saved manual spell does not switch a detected melee attack to Magic. For manual spellbook casting with a melee stance selected, explicitly set Combat type to Magic, then return it to Automatic when switching back. Powered staves ignore saved spell elemental bonuses.
-
-## Current limitations
-
-Combat Insight shows a notice when a mechanic cannot yet be calculated reliably. Current examples include:
-
-- Special attacks outside the supported list above, and enchanted-bolt effects
-- Chinchompa multi-target attacks
-- Venator bow bounces
-- Tonalztics of ralos ordinary multi-hit attacks; its special attack is supported
-- Some location, charge, stack, raid, or same-ID NPC-variant effects
-
-## Troubleshooting
-
-If a displayed value seems incorrect:
-
-1. Confirm that your equipment and ammunition are correct.
-2. Check your combat style.
-3. Check your active prayers and boosts.
-4. Confirm that the correct NPC is retained as the target.
-5. Review any calculation notice in Advanced mode.
-6. Reload the plugin if RuneLite has not updated the displayed information.
-
-If the problem continues, include the following in your report:
-
-- Equipment and ammunition
-- Combat style
-- Active prayers and boosts
-- Target NPC
-- The value you expected
-- The value Combat Insight displayed
-- Relevant screenshots or logs
-
-For a special-attack report, also include the special weapon, ammunition, displayed special rows, visible hitsplats, and any tracked Target Def, Target Magic, or Magic def bonus values before and after the hit.
-
-## Support
-
-Report bugs and request features in [Combat Insight GitHub Issues](https://github.com/BornDied/combat-insight/issues).
-
-Local 0.6 candidate: Seeking-arrow damage floors and DPS, plus Necklace of rupture equipment support, are included. See `TESTING-0.6.0.md` and `docs/research/seeking-arrows.md` for scope and checks.
-
-## 0.7 input controls
-
-Target reductions → Defence tracking mode selects **Track my reductions** or **Off (base stats)**. This is independent of the Special attack rows / infobox display settings. Off stops applying locally estimated reductions; it does not import another plugin's tracked values. The HUD menu includes **Clear tracked reductions**. Clearing keeps already observed Tekton special-attempt history so the first-special guarantee cannot reappear. With tracking off and no observed attempt, that conditional guarantee is reported as unknown.
-
-HUD → Show input notice marker is off by default. Enabling it adds an asterisk to the existing Max hit label when notices or unavailable results need attention; it adds no row. Read notices in Advanced mode or copy a diagnostic snapshot for full detail. A missing marker does not certify every mechanic.
-
-ToB observation is experimental and off by default. It keeps the largest locally observed valid roster through room loading, includes dead members, and resets when leaving/logout. It cannot reconstruct players who departed before observation began. Use manual starting size after reconnecting or enabling mid-raid.
-
-## Local equipment-variant candidate
-
-See [TESTING-0.7.1.md](TESTING-0.7.1.md) for ornamented Void/Berserker fixes, cosmetic weapon-category coverage, and Soulreaper basic stack support. Soulreaper special attacks remain unsupported.
-
-## 0.8.0 local test candidate
-
-Optional calculation inspector, compact HUD polish, Zulrah per-hitsplat transforms, Soulreaper special support, and ornament fixes. See [TESTING-0.8.0.md](TESTING-0.8.0.md) for setup, verification and unresolved limitations. This local candidate is not a published release.
-
-## Version 0.8.0
-
-Adds the optional calculation inspector, configurable special-attack highlighting and compact HUD preview, Zulrah per-hitsplat damage transforms, Soulreaper special support, and ornament fixes. Existing mode-specific row settings are preserved. See TESTING-0.8.0.md and AUDIT-080-COMBAT.md for verification and known limits. The latest reported PNM pillar mismatch remains unreproduced; ToA HP-dependent calculations remain unavailable.
+For local development, open this folder as a Gradle project with Java 11 or newer. Run `gradlew test` for the tests and `gradlew run` for the developer client. The [testing checklist](TESTING-0.9.0.md) covers the remaining manual checks.

@@ -380,6 +380,13 @@ public class SpecialAttackCalculatorTest
 		assertEquals("114 (57/57)", result.getMaximumHitText(true));
 	}
 
+    @Test public void ralosSubtractsFlooredQuarterInsteadOfFlooringThreeQuarters()
+    {
+        SpecialAttackResult r=SpecialAttackCalculator.calculate(SpecialAttackWeapon.TONALZTICS_OF_RALOS,
+            41,true,100,109,true,0,false,false,false,true,false,true,100,100,0,-1,false);
+        assertArrayEquals(new int[]{31,31},r.getMaximumHits());
+    }
+
 	@Test
 	public void tonalzticsUsesTwoReducedHitsAndImprovesTheSecondRollAfterSuccess()
 	{

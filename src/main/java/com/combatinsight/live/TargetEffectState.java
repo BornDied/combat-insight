@@ -22,6 +22,11 @@ final class TargetEffectState
 	private boolean estimatedDefenceRecovery;
 	private boolean estimatedMagicRecovery;
 	private boolean tektonDefenceSpecialAttempted;
+    // Current Wiki DPS records verify Attack/Strength1 for these four combat IDs.
+    // NPC BGS chaining follows its def->str->atk->magic model; no generic NPC
+    // Prayer/Attack/Strength values or offensive Magic floor are inferred.
+    private boolean secondaryStatsKnown;
+    private int currentAttack=1,currentStrength=1;
 
 	TargetEffectState(TargetProfile target)
 	{
@@ -35,9 +40,18 @@ final class TargetEffectState
 			return;
 		}
 
+        // Ocellus restores Defence between combat phases, not when moving quadrants.
+        boolean phaseReset=targetId!=target.getId() && isOcellusPhase(targetId) && isOcellusPhase(target.getId());
+        if(phaseReset) {
+            currentDefence=baseDefence;currentMagic=baseMagic;currentMagicDefence=baseMagicDefence;
+            nextRecoveryTick=-1;estimatedDefenceRecovery=false;estimatedMagicRecovery=false;
+        }
 		int previousDefenceDrain = Math.max(0, baseDefence - currentDefence);
 		int previousMagicDrain = Math.max(0, baseMagic - currentMagic);
 		int previousMagicDefenceDrain = Math.max(0, baseMagicDefence - currentMagicDefence);
+		boolean known=target.getId()==16641 || target.getId()==16643 || target.getId()==16645 || target.getId()==16647;
+        if(!secondaryStatsKnown || !known || phaseReset){currentAttack=1;currentStrength=1;}
+        secondaryStatsKnown=known;
 		targetId = target.getId();
 		baseDefence = Math.max(0, target.getDefenceLevel());
 		baseMagic = Math.max(0, target.getMagicLevel());
@@ -50,6 +64,8 @@ final class TargetEffectState
 			? Math.max(0, baseMagicDefence - previousMagicDefenceDrain)
 			: baseMagicDefence;
 	}
+
+    private static boolean isOcellusPhase(int id) { return id==16674 || id==16676 || id==16677; }
 
 	boolean apply(
 		SpecialAttackWeapon weapon,
@@ -76,6 +92,7 @@ final class TargetEffectState
 		int beforeDefence = currentDefence;
 		int beforeMagic = currentMagic;
 		int beforeMagicDefence = currentMagicDefence;
+        int beforeAttack=currentAttack,beforeStrength=currentStrength;
 		boolean tekton = TargetEffectRules.isTekton(targetId, targetName);
 		if (tekton)
 		{
@@ -106,7 +123,16 @@ final class TargetEffectState
 				break;
 			case BANDOS_GODSWORD:
 				int drain = displayedDamage > 0 ? displayedDamage : tekton ? 10 : 0;
+				int overflow=Math.max(0,drain-currentDefence);
 				reduceDefence(drain);
+                if(defenceFloor==0 && currentDefence==0 && secondaryStatsKnown)
+                {
+                    int strengthDrain=Math.min(overflow,currentStrength);
+                    currentStrength-=strengthDrain;overflow-=strengthDrain;
+                    int attackDrain=Math.min(overflow,currentAttack);
+                    currentAttack-=attackDrain;overflow-=attackDrain;
+                    currentMagic=Math.max(0,currentMagic-overflow);
+                }
 				break;
 			case TONALZTICS_OF_RALOS:
 				if (accurate)
@@ -138,12 +164,14 @@ final class TargetEffectState
 			case ARCLIGHT:
 				if (accurate)
 				{
-					reduceDefence(baseDefence * (demon ? 10 : 5) / 100 + (demon ? 2 : 1));
+                    if(secondaryStatsKnown){currentAttack=0;currentStrength=0;}
+					reduceDefence(baseDefence * (demon ? 10 : 5) / 100 + 1);
 				}
 				break;
 			case EMBERLIGHT:
 				if (accurate)
 				{
+                    if(secondaryStatsKnown){currentAttack=0;currentStrength=0;}
 					reduceDefence(baseDefence * (demon ? 15 : 5) / 100 + 1);
 				}
 				break;
@@ -157,7 +185,8 @@ final class TargetEffectState
 				break;
 		}
 
-		boolean recoverableChanged = currentDefence != beforeDefence || currentMagic != beforeMagic;
+		boolean recoverableChanged = currentDefence != beforeDefence || currentMagic != beforeMagic
+            || currentAttack!=beforeAttack || currentStrength!=beforeStrength;
 		boolean changed = recoverableChanged || currentMagicDefence != beforeMagicDefence;
 		if (recoverableChanged && nextRecoveryTick < 0)
 		{
@@ -180,7 +209,8 @@ final class TargetEffectState
 				currentMagic++;
 				estimatedMagicRecovery = true;
 			}
-			if (currentDefence >= baseDefence && currentMagic >= baseMagic)
+            if(secondaryStatsKnown){currentAttack=Math.min(1,currentAttack+1);currentStrength=Math.min(1,currentStrength+1);}
+			if (currentDefence >= baseDefence && currentMagic >= baseMagic && currentAttack>=1 && currentStrength>=1)
 			{
 				nextRecoveryTick = -1;
 			}

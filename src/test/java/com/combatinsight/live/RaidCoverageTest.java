@@ -10,7 +10,7 @@ import static org.junit.Assert.*;
 public class RaidCoverageTest
 {
 	@Test
-	public void everyAuditedRaidCombatIdHasAnUnambiguousProfile() throws Exception
+	public void everyAuditedRaidCombatIdHasAProfileWithExplicitUncertainty() throws Exception
 	{
 		int count = 0;
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -22,7 +22,8 @@ public class RaidCoverageTest
 				if (line.isEmpty() || line.startsWith("#")) continue;
 				int id = Integer.parseInt(line.split("\t")[0]);
 				assertNotNull(line, TargetDatabase.find(id));
-				assertFalse(line, TargetDatabase.find(id).isAmbiguous());
+				boolean disputedVerzikAdd = java.util.Arrays.asList(8381,8382,8383,10841,10842,10843,10858,10859,10860).contains(id);
+				assertEquals(line, disputedVerzikAdd, TargetDatabase.find(id).isAmbiguous());
 				count++;
 			}
 		}

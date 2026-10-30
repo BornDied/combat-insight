@@ -6,6 +6,24 @@ import static org.junit.Assert.*;
 
 public class SpecialInputRegressionTest
 {
+    @Test public void unresolvedRaidPhasesCannotShowAnOrdinaryVoidwakerSpecial() throws Exception
+    {
+        for (int id : new int[]{11753,11754,11755,11756,11757,11758})
+        {
+            SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,id,80);
+            assertFalse("Unresolved phase "+id,result.isMaximumAvailable());
+            assertFalse(result.isAccuracyAvailable());
+        }
+    }
+    @Test public void chargingWardenBlocksEvenGuaranteedAccuracySpecials() throws Exception
+    {
+        for (int id : new int[]{11763,11764})
+        {
+            SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,id,80);
+            assertEquals(0,result.getTotalMaximumHit());
+            assertEquals(0.0,result.getExpectedDamage(),0.0);
+        }
+    }
     @Test public void magicPillarSpecialUsesMeleeDerivedVoidwakerRollThenDoublesIt() throws Exception
     {
         SpecialAttackResult result=calculate("voidwaker",CombatStyle.MELEE,9435,43);
@@ -26,11 +44,11 @@ public class SpecialInputRegressionTest
         assertEquals(104,result.getTotalMaximumHit());
         assertTrue(result.isExpectedDamageAvailable());
     }
-    @Test public void toaRubySpecialWithholdsDamageUntilHpScalingIsKnown() throws Exception
+    @Test public void toaRubySpecialUsesResolvedCurrentHitpoints() throws Exception
     {
         SpecialAttackResult result=calculate("zaryte crossbow",CombatStyle.RANGED,11789,80);
-        assertFalse(result.isMaximumAvailable());
-        assertTrue(result.getMaximumHitText(true).contains("ToA HP scaling unavailable"));
+        assertTrue(result.isMaximumAvailable());
+        assertEquals(44,result.getTotalMaximumHit());
     }
     @Test public void soulreaperCrushUsesSelectedDefence()
     {
@@ -61,11 +79,31 @@ public class SpecialInputRegressionTest
         assertTrue(later.getHitChance()<1.0);
     }
 
+    @Test public void borkMagicSpecialUsesMagicResistanceWithoutPhysicalArmour() throws Exception
+    {
+        TargetProfile base=TargetDatabase.find(16640);
+        TargetProfile known=base.withEncounterStats(300,90,1500,130,false).withFlatArmour(14);
+        SpecialAttackResult s=calculate("accursed sceptre",CombatStyle.MAGIC,16640,40,TargetEffectSnapshot.empty(),known);
+        assertEquals(34,s.getTotalMaximumHit()); // supplied final special max 40, minus 6 magic resistance
+    }
+
+    @Test public void ralosSecondHitPredictionUsesTheOriginalDefenceFloor() throws Exception
+    {
+        TargetProfile known=TargetDatabase.find(16640).withEncounterStats(185,90,1500,130,false).withFlatArmour(14);
+        TargetEffectSnapshot effects=new TargetEffectSnapshot(16640,300,185,90,90,300,300,true,false,false,false);
+        SpecialAttackResult result=calculate("tonalztics of ralos",CombatStyle.RANGED,16640,40,effects,known);
+        double first=10272.0/(2*22117),afterFirst=10272.0/(2*21547);
+        double second=first*afterFirst+(1-first)*first;
+        assertEquals((first+second)*136/31,result.getExpectedDamage(),1e-10);
+    }
+
     private SpecialAttackResult calculate(String weapon,CombatStyle combat,int id,int maximum)throws Exception
     {
         return calculate(weapon,combat,id,maximum,TargetEffectSnapshot.empty());
     }
     private SpecialAttackResult calculate(String weapon,CombatStyle combat,int id,int maximum,TargetEffectSnapshot effects)throws Exception
+    { return calculate(weapon,combat,id,maximum,effects,EncounterResolver.resolve(id,EncounterContext.UNKNOWN)); }
+    private SpecialAttackResult calculate(String weapon,CombatStyle combat,int id,int maximum,TargetEffectSnapshot effects,TargetProfile target)throws Exception
     {
         Object eq=construct("EquipmentState"),pr=construct("PrayerState");set(eq,"weaponNameLower",weapon);
         if(weapon.equals("zaryte crossbow")) set(eq,"ammoNameLower","ruby dragon bolts (e)");
@@ -78,8 +116,8 @@ public class SpecialInputRegressionTest
         Object style=c.newInstance(combat,combat==CombatStyle.MAGIC?AttackType.MAGIC:AttackType.SLASH,"Aggressive",0,3);
         for(Method m:LiveCombatSnapshot.class.getDeclaredMethods())if(m.getName().equals("calculateSpecialAttackResult")) {
             m.setAccessible(true);
-            return (SpecialAttackResult)m.invoke(null,style,eq,pr,id,"Target",EncounterResolver.resolve(id,EncounterContext.UNKNOWN),
-                true,effects,99,99,99,MagicSpell.BLOOD_BLITZ,false,0,maximum,true,-1,false,false,200,false,99);
+            return (SpecialAttackResult)m.invoke(null,style,eq,pr,id,"Target",target,
+                true,effects,99,99,99,MagicSpell.BLOOD_BLITZ,false,0,maximum,true,maximum,false,false,200,false,99);
         }
         throw new AssertionError();
     }

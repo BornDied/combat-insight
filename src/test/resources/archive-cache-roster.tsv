@@ -1,0 +1,52 @@
+# RuneLite cache NPC archive revision 1792425499; parser net.runelite:cache:1.13.4
+# Raw extraction SHA256 585ad6eec3fc930e7f439c726601f21300105042c1f709ff944346492544245e
+# id	name	size	attack_option	cache_base_hp
+16640	Bork	4	1	1500
+16641	The Smorks	3	1	600
+16642	null	1	0	1
+16643	Dagon'hai Elder	2	1	640
+16644	Dagon'hai Elder	2	1	7
+16645	Dagon'hai Monk	2	1	640
+16646	Dagon'hai Monk	2	1	7
+16647	Dagon'hai Monk	2	1	640
+16648	Dagon'hai Monk	2	1	7
+16649	Cauldron	3	0	1000
+16650	Imp	1	1	44
+16651	Demonic rift	1	0	20
+16652	Ezekiel	3	1	3000
+16653	Animated Sword	3	1	80
+16654	null	3	0	1
+16655	null	1	0	1
+16656	Sword	3	0	1
+16657	Inert Guardian	5	0	1
+16658	Archive Guardian	5	0	1
+16659	Archive Guardian	5	1	550
+16660	Archive Guardian	5	1	1100
+16661	Inert Guardian	2	0	1
+16662	Inert Guardian	2	1	180
+16663	Inert Guardian	2	0	1
+16664	Vine	1	0	1
+16665	Dreadnoth the Jellied	5	1	2100
+16666	Jelly	1	1	75
+16667	Moia	3	1	1900
+16668	null	1	0	1
+16669	null	2	0	1
+16670	Undead binder	1	1	95
+16671	null	3	0	1
+16672	Hooded Figure	3	0	1
+16673	Ocellus	3	0	1
+16674	Ocellus	3	1	2500
+16675	null	3	0	5250
+16676	The Blade	3	1	1000
+16677	Ocellus	3	1	5250
+16678	Void Rift	1	1	44
+16679	Void Siphon	1	1	44
+16680	Void Augmenter	1	1	44
+16681	Void Vine	1	1	44
+16682	Ocellus	3	0	1
+16683	The Blade	3	0	1
+16684	Xarth	3	1	2600
+16685	null	2	0	1
+16686	null	2	0	1
+16687	Corpse	1	1	62
+16688	Corpse	1	1	62

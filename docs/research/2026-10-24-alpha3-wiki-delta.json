@@ -1,0 +1,31 @@
+{
+  "source_revision": "98e4fac38b580901cc3f8d485bbaa48bbb3277ed",
+  "comparison": "Previous alpha2 report is retained as history; this is the alpha3 delta.",
+  "wiki_variant_records": 2918,
+  "unique_wiki_ids": 2874,
+  "local_ids": 4001,
+  "unmatched_live_variant_records": 29,
+  "calculator_only_records": 2,
+  "numeric_difference_candidates": 45,
+  "removed_numeric_candidates": [
+    {
+      "id": 16640,
+      "name": "Bork",
+      "version": "",
+      "differences": {
+        "offensive.magic": {
+          "local": 1,
+          "wiki": 0
+        },
+        "defensive.flat_armour": {
+          "local": 10,
+          "wiki": 0
+        },
+        "defensive.crush": {
+          "local": 20,
+          "wiki": 10
+        }
+      }
+    }
+  ]
+}

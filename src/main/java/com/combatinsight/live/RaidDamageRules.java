@@ -8,6 +8,15 @@ final class RaidDamageRules
 {
 	private RaidDamageRules() { }
 
+    /** These distributions are not ordinary accuracy rolls followed by uniform damage. */
+    static String unresolvedEncounter(int id)
+    {
+        if (id == 11755 || id == 11758) return "Attack the exposed Warden core";
+        if (id >= 8381 && id <= 8383 || id >= 10841 && id <= 10843 || id >= 10858 && id <= 10860)
+            return "Verzik add stats pending";
+        return "";
+    }
+
     static boolean bypassesIceDemon(com.combatinsight.calculation.CombatStyle style, String weapon, boolean fire, boolean demonbaneSpell)
     {
         if (style==com.combatinsight.calculation.CombatStyle.MAGIC) return fire || demonbaneSpell;

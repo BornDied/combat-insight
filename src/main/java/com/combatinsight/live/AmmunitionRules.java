@@ -74,6 +74,8 @@ final class AmmunitionRules
 		}
 		if (weapon.contains("crossbow"))
 		{
+			if (weapon.contains("ascension")) return ammo.contains("ascension bolt");
+			if (ammo.contains("ascension bolt")) return false;
 			return isBolt(ammo);
 		}
 		if (weapon.contains("ballista"))

@@ -18,7 +18,7 @@ final class TargetMechanics
 		11730, 11732, 11733,
 		11751, 11750, 11752,
 		11753, 11754, 11756, 11757,
-		11755, 11758,
+		11755, 11758, 11770, 11771,
 		11761, 11763, 11762, 11764);
 
 	private static final Set<Integer> MAGIC_USES_DEFENCE_LEVEL = ids(
@@ -31,7 +31,7 @@ final class TargetMechanics
 	private static final Set<Integer> KEPHRI_OVERLORDS = ids(11724, 11725, 11726);
 
 	private static final Set<Integer> MELEE_IMMUNE = ids(
-		494, 7533, 7706, 7708,
+		494, 7533, 7706, 7708, 16667,
 		12214, 12215, 12219,
 		2042, 2043, 2044);
 
@@ -59,6 +59,17 @@ final class TargetMechanics
 	{
 	}
 
+    static boolean isWardenP2(int id)
+    { return id==11753 || id==11754 || id==11756 || id==11757; }
+
+    static boolean isWardenCore(int id) { return id==11770 || id==11771; }
+
+    static boolean isGuaranteedMaximum(int id, AttackType type)
+    { return isGuaranteedMaxHitTarget(id) || isWardenCore(id) && type.isMelee()
+        || id==16688 && (type.isMelee() || type==AttackType.RANGED_LIGHT)
+        || id==16678 && type.isMelee() || id==16679 && type.isRanged()
+        || id==16680 && type==AttackType.MAGIC; }
+
 	static boolean isInTombsOfAmascut(int npcId)
 	{
 		return TOMBS_OF_AMASCUT.contains(npcId);
@@ -77,11 +88,14 @@ final class TargetMechanics
 	/** Scurrius's summoned rats are always hit and always receive the max damage roll. */
 	static boolean isGuaranteedMaxHitTarget(int npcId)
 	{
-		return npcId == SCURRIUS_SPAWNED_RAT;
+		return npcId == SCURRIUS_SPAWNED_RAT || npcId==16650;
 	}
 
 	static boolean isImmune(int npcId, AttackType attackType)
 	{
+        if(isWardenP2(npcId) && attackType.isMelee()) return true;
+        // RuneLite PHASE3_CHARGING IDs; Wiki variants are explicitly invulnerable.
+		if (npcId == 11763 || npcId == 11764) return true;
 		int nyloStyle = nylocasStyle(npcId);
 		if (nyloStyle != 0)
 		{

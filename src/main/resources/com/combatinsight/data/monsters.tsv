@@ -2758,9 +2758,10 @@
 8373	200	400	3500	80	3	0	100	60	100	70	250	250	250	-	0	0	theatre_of_blood	0
 8374	150	300	3500	80	7	0	70	30	70	100	230	230	230	fire	50	0	theatre_of_blood	0
 8375	150	300	3500	80	7	0	70	30	70	100	230	230	230	fire	50	0	theatre_of_blood	0
-8381	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
-8382	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
-8383	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
+# Verzik add stats conflict with Wiki DPS 98e4fac3; keep research inputs but withhold live output.
+8381	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
+8382	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
+8383	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
 8384	50	50	180	0	3	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
 8385	50	50	200	0	2	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
 8387	200	250	4000	-10	5	0	70	70	70	30	150	150	150	-	0	0	theatre_of_blood	0
@@ -3129,9 +3130,9 @@
 10834	120	180	1600	32	3	0	40	20	40	40	180	180	180	-	0	0	theatre_of_blood	0
 10835	120	180	2400	20	7	0	30	10	30	60	100	100	100	fire	50	0	theatre_of_blood	0
 10836	120	180	2400	20	7	0	30	10	30	60	100	100	100	fire	50	0	theatre_of_blood	0
-10841	1	1	2	505	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
-10842	1	1	2	505	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
-10843	1	1	2	505	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
+10841	1	1	2	505	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
+10842	1	1	2	505	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
+10843	1	1	2	505	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
 10844	40	40	30	0	3	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
 10845	100	100	0	0	2	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
 10847	20	400	2000	80	5	0	20	20	20	20	20	20	20	-	0	0	theatre_of_blood	0
@@ -3141,9 +3142,9 @@
 10851	200	400	3500	80	3	0	100	60	100	70	250	250	250	-	0	0	theatre_of_blood	0
 10852	150	300	3500	80	7	0	70	30	70	100	230	230	230	fire	50	0	theatre_of_blood	0
 10853	150	300	3500	80	7	0	70	30	70	100	230	230	230	fire	50	0	theatre_of_blood	0
-10858	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
-10859	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
-10860	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
+10858	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
+10859	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
+10860	1	1	11	1073	1	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	1
 10861	50	50	180	0	3	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
 10862	100	100	200	0	2	0	0	0	0	0	0	0	0	fire	15	0	theatre_of_blood	0
 10864	150	150	2240	-10	5	0	30	30	30	10	120	120	120	-	0	0	theatre_of_blood	0
@@ -3242,11 +3243,11 @@
 11273	90	90	200	38	1	0	10	10	5	5	20	20	20	-	0	1		0
 11274	15	15	50	0	1	0	10	10	5	5	20	20	20	-	0	1		0
 11275	30	30	80	0	1	0	10	10	5	5	20	20	20	-	0	1		0
-11278	260	230	3400	100	3	0	40	140	60	300	190	190	150	-	0	0		0
-11279	260	230	3400	100	3	0	40	140	60	300	190	190	150	-	0	0		0
-11280	260	230	3400	100	3	0	40	140	60	300	190	190	150	-	0	0		0
-11281	260	230	3400	100	3	0	40	140	60	300	190	190	150	-	0	0		0
-11282	260	230	3400	100	3	0	40	140	60	300	190	190	150	-	0	0		0
+11278	260	230	3400	100	3	0	40	140	35	300	190	190	150	-	0	0		0
+11279	260	230	3400	100	3	0	40	140	35	300	190	190	150	-	0	0		0
+11280	260	230	3400	100	3	0	40	140	35	300	190	190	150	-	0	0		0
+11281	260	230	3400	100	3	0	40	140	35	300	190	190	150	-	0	0		0
+11282	260	230	3400	100	3	0	40	140	35	300	190	190	150	-	0	0		0
 11283	200	200	500	0	1	-2	25	100	100	150	50	50	50	-	0	0		0
 11284	200	200	500	0	1	-2	100	100	100	150	25	25	25	-	0	0		0
 11285	200	200	500	0	1	-2	100	25	100	150	50	50	50	-	0	0		0
@@ -3977,3 +3978,35 @@
 16331	40	0	90	0	1	0	0	0	10	200	200	40	200	fire	50	1		0
 16332	40	0	90	0	1	0	0	0	10	200	200	40	200	fire	50	1		0
 16344	300	100	500	0	1	0	600	600	50	600	50	50	50	earth	5	0		0
+# Fractured Archive launch research 2026-10-22; see docs/FRACTURED_ARCHIVE.md. HP is base only; runtime scaling withheld.
+16640	300	90	1500	0	4	0	140	130	10	300	80	50	5	earth	40	0	fractured_archive	1
+16641	220	185	600	185	3	2	220	170	160	400	80	150	80	earth	85	0	fractured_archive	0
+16643	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16644	100	290	7	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16645	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16646	100	290	7	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16647	100	290	640	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16648	100	290	7	1	2	0	50	50	50	100	80	80	80		0	0	fractured_archive	0
+16652	130	200	3000	250	3	0	150	90	35	200	445	370	320	earth	25	0	fractured_archive	0
+16659	260	250	550	350	5	0	120	110	20	130	75	120	50	fire	80	0	fractured_archive,flying	0
+16660	260	250	1100	350	5	0	120	90	20	130	50	115	50	fire	40	0	fractured_archive	0
+16665	125	220	2100	0	5	0	15	20	5	20	100	80	80	fire	85	0	fractured_archive,demon	0
+16667	195	350	785	300	3	0	20	110	15	30	60	120	140	air	80	0	fractured_archive	0
+16674	215	350	2500	150	3	0	150	95	60	100	50	135	50		0	0	fractured_archive,demon	0
+16676	250	220	1000	0	3	0	150	120	10	100	100	110	80		0	0	fractured_archive	0
+16677	250	300	5250	350	3	0	150	100	30	200	250	250	250		0	0	fractured_archive,demon	0
+16684	170	350	2600	250	3	0	115	105	20	205	125	230	155	water	85	0	fractured_archive,demon	0
+# Archive adds: Wiki DPS 98e4fac3, live IDs RuneLite fc8d1896; see docs/research/2026-10-24-encounter-audit.md.
+# Ocellus add sizes and style guarantees resolved by the cache/strategy audit in 2026-10-24-archive-completion.md.
+16666	100	100	61	0	1	0	4	5	0	15	-45	18	-50	fire	60	0	fractured_archive,demon	0
+16670	225	50	95	0	1	0	12	15	10	-20	0	0	0		0	0	fractured_archive	0
+16678	175	300	44	0	1	0	0	0	0	0	0	0	0	earth	75	0	fractured_archive	0
+16679	175	300	44	0	1	0	50	50	50	0	0	0	0		0	0	fractured_archive	0
+16680	175	300	44	0	1	0	0	0	0	0	0	0	0	earth	75	0	fractured_archive	0
+16681	0	0	44	0	1	0	0	0	0	0	0	0	0		0	0	fractured_archive	0
+16687	100	100	62	0	1	0	100	100	100	0	-20	80	80	water	40	0	fractured_archive,undead	0
+16688	100	100	62	0	1	0	-20	-20	-20	0	-20	80	80	fire	100	0	fractured_archive,undead	0
+# Archive cache audit: geometry/Attack options from NPC archive 1792425499; source notes in docs/research/2026-10-24-archive-completion.md.
+16650	50	125	44	1	1	0	0	0	0	0	0	0	0		0	0	fractured_archive	0
+16653	115	90	0	0	3	0	100	100	100	100	0	0	0	air	100	0	fractured_archive	0
+16662	50	50	0	0	2	0	0	20	-20	-20	0	0	0		0	0	fractured_archive	0

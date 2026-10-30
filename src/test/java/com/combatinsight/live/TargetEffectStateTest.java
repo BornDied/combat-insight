@@ -11,6 +11,20 @@ import static org.junit.Assert.assertTrue;
 
 public class TargetEffectStateTest
 {
+    @Test public void ocellusNewCombatPhaseResetsDefenceButMovementWithinPhaseKeepsIt()
+    {
+        TargetEffectState state=new TargetEffectState(TargetDatabase.find(16674));
+        state.apply(SpecialAttackWeapon.ELDER_MAUL,1,true,"Ocellus",0);
+        assertEquals(140,state.snapshot().getCurrentDefence());
+        state.rebase(TargetDatabase.find(16674));
+        assertEquals(140,state.snapshot().getCurrentDefence());
+        state.rebase(TargetDatabase.find(16676));
+        assertEquals(250,state.snapshot().getCurrentDefence());
+        state.apply(SpecialAttackWeapon.ELDER_MAUL,1,true,"The Blade",1);
+        state.rebase(TargetDatabase.find(16677));
+        assertEquals(250,state.snapshot().getCurrentDefence());
+    }
+
 	@Test
 	public void percentageReductionsUseTheCurrentDefenceLevel()
 	{
@@ -158,11 +172,35 @@ public class TargetEffectStateTest
 
 		TargetEffectState arclight = new TargetEffectState(target(1, 100, 100, 0, true));
 		arclight.apply(SpecialAttackWeapon.ARCLIGHT, 1, "Demon", 0);
-		assertEquals(88, arclight.snapshot().getCurrentDefence());
+		assertEquals(89, arclight.snapshot().getCurrentDefence());
 
 		TargetEffectState emberlight = new TargetEffectState(target(1, 100, 100, 0, true));
 		emberlight.apply(SpecialAttackWeapon.EMBERLIGHT, 1, "Demon", 0);
 		assertEquals(84, emberlight.snapshot().getCurrentDefence());
+	}
+
+	@Test
+	public void arclightDrainsThirteenFromDreadnothBaseDefence()
+	{
+		TargetEffectState state = new TargetEffectState(target(16665, 125, 220, 0, true));
+		state.apply(SpecialAttackWeapon.ARCLIGHT, 1, "Dreadnoth", 0);
+		assertEquals(112, state.snapshot().getCurrentDefence());
+	}
+
+	@Test
+	public void arclightDrainsTwentyTwoFromOcellusPhaseOneBaseDefence()
+	{
+		TargetEffectState state = new TargetEffectState(target(16674, 215, 350, 0, true));
+		state.apply(SpecialAttackWeapon.ARCLIGHT, 1, "Ocellus", 0);
+		assertEquals(193, state.snapshot().getCurrentDefence());
+	}
+
+	@Test
+	public void arclightDrainsEighteenFromXarthBaseDefence()
+	{
+		TargetEffectState state = new TargetEffectState(target(16684, 170, 350, 0, true));
+		state.apply(SpecialAttackWeapon.ARCLIGHT, 1, "Xarth", 0);
+		assertEquals(152, state.snapshot().getCurrentDefence());
 	}
 
 	private static TargetProfile target(int id, int defence)

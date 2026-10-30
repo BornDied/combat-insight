@@ -28,6 +28,26 @@ public class LiveTargetTrackerTest
         assertEquals(8357,tracker.getRetainedTargetId());
     }
 
+    @Test public void destroyedArchiveStatueCannotReplaceCombatIdentity()
+    {
+        java.util.concurrent.atomic.AtomicInteger id=new java.util.concurrent.atomic.AtomicInteger(16662);
+        NPC target=(NPC)Proxy.newProxyInstance(NPC.class.getClassLoader(),new Class<?>[]{NPC.class},(p,m,a)-> {
+            if(m.getName().equals("getId"))return id.get();
+            if(m.getName().equals("getName"))return "Inert Guardian";
+            if(m.getName().equals("isDead"))return false;
+            return null;
+        });
+        LiveTargetTracker tracker=new LiveTargetTracker();tracker.confirmCombatTarget(target);
+        id.set(16663);tracker.refreshActiveIdentity();
+        assertEquals(16662,tracker.getRetainedTargetId());
+        assertTrue(tracker.getActiveTarget()==null);
+        tracker.confirmCombatTarget(target); // A delayed owned hitsplat must not select the dead form.
+        assertEquals(16662,tracker.getRetainedTargetId());
+        assertTrue(tracker.getActiveTarget()==null);
+        tracker.clear();tracker.confirmCombatTarget(target);
+        assertEquals(-1,tracker.getRetainedTargetId());
+    }
+
 	@Test
 	public void retainsConfirmedTargetIdentityAfterCombatEnds()
 	{

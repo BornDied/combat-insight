@@ -9,7 +9,8 @@ public enum MultiHitWeapon
 	DUAL_MACUAHUITL,
 	TORAGS_HAMMERS,
 	SULPHUR_BLADES,
-	DARK_BOW;
+	DARK_BOW,
+    TONALZTICS_OF_RALOS;
 
 	public static MultiHitWeapon forWeapon(String weaponName)
 	{
@@ -19,6 +20,7 @@ public enum MultiHitWeapon
 		}
 
 		String weapon = weaponName.toLowerCase(Locale.ROOT);
+        if(weapon.contains("tonalztics of ralos") && !weapon.contains("uncharged")) return TONALZTICS_OF_RALOS;
 		if (weapon.contains("scythe of vitur"))
 		{
 			return SCYTHE_OF_VITUR;

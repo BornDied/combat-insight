@@ -1,0 +1,451 @@
+[
+  {
+    "id": 16650,
+    "name": "Imp (Dagon'hai Trio)",
+    "version": "",
+    "before": null,
+    "after": {
+      "id": 16650,
+      "name": "Imp (Dagon'hai Trio)",
+      "version": "",
+      "image": "Imp (Dagon'hai Trio).png",
+      "level": 168,
+      "speed": 0,
+      "style": null,
+      "size": 1,
+      "max_hit": 0,
+      "skills": {
+        "atk": 0,
+        "def": 0,
+        "hp": 44,
+        "magic": 0,
+        "ranged": 0,
+        "str": 0
+      },
+      "offensive": {
+        "atk": 0,
+        "magic": 0,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 0,
+        "magic": 0,
+        "heavy": 0,
+        "standard": 0,
+        "light": 0,
+        "slash": 0,
+        "stab": 0
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": null
+    }
+  },
+  {
+    "id": 12353,
+    "name": "Jhallan",
+    "version": "",
+    "before": {
+      "id": 12353,
+      "name": "Jhallan",
+      "version": "",
+      "image": "Jhallan.png",
+      "level": 491,
+      "speed": 4,
+      "style": [
+        "Magic"
+      ],
+      "size": 2,
+      "max_hit": "26",
+      "skills": {
+        "atk": 250,
+        "def": 250,
+        "hp": 1500,
+        "magic": 250,
+        "ranged": 0,
+        "str": 250
+      },
+      "offensive": {
+        "atk": 30,
+        "magic": 30,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 200,
+        "magic": 300,
+        "heavy": 150,
+        "standard": 150,
+        "light": 150,
+        "slash": 200,
+        "stab": 200
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": null
+    },
+    "after": {
+      "id": 12353,
+      "name": "Jhallan",
+      "version": "",
+      "image": "Jhallan.png",
+      "level": 491,
+      "speed": 4,
+      "style": [
+        "Magic"
+      ],
+      "size": 2,
+      "max_hit": "26",
+      "skills": {
+        "atk": 250,
+        "def": 83,
+        "hp": 1,
+        "magic": 83,
+        "ranged": 0,
+        "str": 250
+      },
+      "offensive": {
+        "atk": 30,
+        "magic": 30,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 200,
+        "magic": 300,
+        "heavy": 150,
+        "standard": 150,
+        "light": 150,
+        "slash": 200,
+        "stab": 200
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": null
+    }
+  },
+  {
+    "id": 9435,
+    "name": "Totem (The Nightmare)",
+    "version": "",
+    "before": {
+      "id": 9435,
+      "name": "Totem (Phosani's Nightmare)",
+      "version": "",
+      "image": "Totem (Phosani's Nightmare, uncharged).png",
+      "level": 0,
+      "speed": 0,
+      "style": [
+        "None"
+      ],
+      "size": 3,
+      "max_hit": 0,
+      "skills": {
+        "atk": 1,
+        "def": 0,
+        "hp": 200,
+        "magic": 1,
+        "ranged": 1,
+        "str": 1
+      },
+      "offensive": {
+        "atk": 0,
+        "magic": 0,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 0,
+        "magic": 0,
+        "heavy": 0,
+        "standard": 0,
+        "light": 0,
+        "slash": 0,
+        "stab": 0
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": {
+        "element": "fire",
+        "severity": 70
+      }
+    },
+    "after": {
+      "id": 9435,
+      "name": "Totem (The Nightmare)",
+      "version": "",
+      "image": "Totem (The Nightmare, uncharged).png",
+      "level": 0,
+      "speed": 0,
+      "style": [
+        "None"
+      ],
+      "size": 3,
+      "max_hit": 0,
+      "skills": {
+        "atk": 1,
+        "def": 0,
+        "hp": 300,
+        "magic": 1,
+        "ranged": 1,
+        "str": 1
+      },
+      "offensive": {
+        "atk": 0,
+        "magic": 0,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 0,
+        "magic": 0,
+        "heavy": 0,
+        "standard": 0,
+        "light": 0,
+        "slash": 0,
+        "stab": 0
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": {
+        "element": "fire",
+        "severity": 70
+      }
+    }
+  },
+  {
+    "id": 9436,
+    "name": "Totem (The Nightmare)",
+    "version": "",
+    "before": {
+      "id": 9436,
+      "name": "Totem (Phosani's Nightmare)",
+      "version": "",
+      "image": "Totem (Phosani's Nightmare, charged).png",
+      "level": 0,
+      "speed": 0,
+      "style": [
+        "None"
+      ],
+      "size": 3,
+      "max_hit": 0,
+      "skills": {
+        "atk": 1,
+        "def": 0,
+        "hp": 200,
+        "magic": 1,
+        "ranged": 1,
+        "str": 1
+      },
+      "offensive": {
+        "atk": 0,
+        "magic": 0,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 0,
+        "magic": 0,
+        "heavy": 0,
+        "standard": 0,
+        "light": 0,
+        "slash": 0,
+        "stab": 0
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": null
+    },
+    "after": {
+      "id": 9436,
+      "name": "Totem (The Nightmare)",
+      "version": "",
+      "image": "Totem (The Nightmare, charged).png",
+      "level": 0,
+      "speed": 0,
+      "style": [
+        "None"
+      ],
+      "size": 3,
+      "max_hit": 0,
+      "skills": {
+        "atk": 1,
+        "def": 0,
+        "hp": 300,
+        "magic": 1,
+        "ranged": 1,
+        "str": 1
+      },
+      "offensive": {
+        "atk": 0,
+        "magic": 0,
+        "magic_str": 0,
+        "ranged": 0,
+        "ranged_str": 0,
+        "str": 0
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 0,
+        "magic": 0,
+        "heavy": 0,
+        "standard": 0,
+        "light": 0,
+        "slash": 0,
+        "stab": 0
+      },
+      "attributes": [],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": null
+    }
+  },
+  {
+    "id": 16684,
+    "name": "Xarth",
+    "version": "",
+    "before": {
+      "id": 16684,
+      "name": "Xarth",
+      "version": "",
+      "image": "Xarth.png",
+      "level": 912,
+      "speed": 4,
+      "style": [
+        "Mage",
+        "Ranged",
+        "Melee"
+      ],
+      "size": 3,
+      "max_hit": 0,
+      "skills": {
+        "atk": 250,
+        "def": 170,
+        "hp": 2600,
+        "magic": 350,
+        "ranged": 220,
+        "str": 225
+      },
+      "offensive": {
+        "atk": 150,
+        "magic": 250,
+        "magic_str": 350,
+        "ranged": 250,
+        "ranged_str": 0,
+        "str": 225
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 20,
+        "magic": 205,
+        "heavy": 155,
+        "standard": 230,
+        "light": 125,
+        "slash": 105,
+        "stab": 115
+      },
+      "attributes": [
+        "demon"
+      ],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": {
+        "element": "water",
+        "severity": 85
+      }
+    },
+    "after": {
+      "id": 16684,
+      "name": "Xarth",
+      "version": "",
+      "image": "Xarth.png",
+      "level": 912,
+      "speed": 4,
+      "style": [
+        "Magic",
+        "Ranged",
+        "Melee"
+      ],
+      "size": 3,
+      "max_hit": 0,
+      "skills": {
+        "atk": 250,
+        "def": 170,
+        "hp": 2600,
+        "magic": 350,
+        "ranged": 220,
+        "str": 225
+      },
+      "offensive": {
+        "atk": 150,
+        "magic": 250,
+        "magic_str": 350,
+        "ranged": 250,
+        "ranged_str": 0,
+        "str": 225
+      },
+      "defensive": {
+        "flat_armour": 0,
+        "crush": 20,
+        "magic": 205,
+        "heavy": 155,
+        "standard": 230,
+        "light": 125,
+        "slash": 105,
+        "stab": 115
+      },
+      "attributes": [
+        "demon"
+      ],
+      "immunities": {
+        "burn": null
+      },
+      "is_slayer_monster": false,
+      "weakness": {
+        "element": "water",
+        "severity": 85
+      }
+    }
+  }
+]

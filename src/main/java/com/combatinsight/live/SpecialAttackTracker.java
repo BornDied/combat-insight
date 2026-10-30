@@ -1,165 +1,131 @@
 package com.combatinsight.live;
 
 import com.combatinsight.calculation.SpecialAttackWeapon;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import net.runelite.api.NPC;
 
-/** Detects local special use and binds its next hitsplat to a live target. */
+/** Local special attribution; exact target/tick batches follow RuneLite Special Attack Counter. */
 public final class SpecialAttackTracker
 {
-	private static final int PENDING_TIMEOUT_TICKS = 5;
-
-	private final TargetEffectTracker targetEffects = new TargetEffectTracker();
-	private int previousEnergy = -1;
-    private DefenceTrackingMode trackingMode = DefenceTrackingMode.LOCAL;
+    private final TargetEffectTracker targetEffects=new TargetEffectTracker();
+    private final Map<NPC,Integer> uncertain=new IdentityHashMap<>();
+    private int previousEnergy=-1;
+    private DefenceTrackingMode trackingMode=DefenceTrackingMode.LOCAL;
+    private EncounterMode encounterMode=EncounterMode.AUTO;
+    private RaidScaling raidScaling=RaidScaling.DEFAULT;
+    private PendingSpecial pendingSpecial;
 
     public void setTrackingMode(DefenceTrackingMode next)
     {
-        if (next == null) next = DefenceTrackingMode.LOCAL;
-        if (trackingMode != next)
-        {
-            clearTrackedEffects();
-            trackingMode = next;
-        }
+        if(next==null)next=DefenceTrackingMode.LOCAL;
+        if(trackingMode!=next){clearTrackedEffects();trackingMode=next;}
     }
-
-    /** Reset estimates without losing the current special-energy baseline. */
     public void clearTrackedEffects()
-    {
-        pendingSpecial = null;
-        targetEffects.clearReductions();
-    }
-	private PendingSpecial pendingSpecial;
-	private EncounterMode encounterMode = EncounterMode.AUTO;
-
+    { pendingSpecial=null;uncertain.clear();targetEffects.clearReductions(); }
     public void setEncounterMode(EncounterMode next)
     {
-        if (encounterMode != next)
+        if(encounterMode!=next){pendingSpecial=null;uncertain.clear();encounterMode=next;targetEffects.setEncounterMode(next);}
+    }
+    public void setRaidScaling(RaidScaling next)
+    {
+        if(!raidScaling.equals(next)){pendingSpecial=null;uncertain.clear();raidScaling=next;targetEffects.setRaidScaling(next);}
+    }
+    public void resetEnergy(int energy) { previousEnergy=energy;pendingSpecial=null; }
+
+    public boolean onEnergyChanged(int energy,SpecialAttackWeapon weapon,NPC target,int tick)
+    { return onEnergyChanged(energy,weapon,target,tick,1,null); }
+
+    /** Distance is read from the live actor. Elder Maul uses same-cycle HP-XP evidence. */
+    public boolean onEnergyChanged(int energy,SpecialAttackWeapon weapon,NPC target,int tick,int distance,Boolean elderAccurate)
+    {
+        if(previousEnergy<0 || energy>=previousEnergy){previousEnergy=energy;return false;}
+        previousEnergy=energy;
+        targetEffects.recordSpecialAttempt(weapon,target);
+        if(pendingSpecial!=null)markUncertain(pendingSpecial);
+        pendingSpecial=null;
+        if(trackingMode!=DefenceTrackingMode.LOCAL || weapon==null || !weapon.hasTrackedTargetEffect() || target==null)return false;
+        if(weapon==SpecialAttackWeapon.ELDER_MAUL)
         {
-            pendingSpecial = null;
-            encounterMode = next;
-            targetEffects.setEncounterMode(next);
+            if(elderAccurate==null){uncertain.put(target,target.getId());return false;}
+            targetEffects.record(weapon,target,elderAccurate?1:0,elderAccurate,tick);
+            return true;
         }
+        int delay=SpecialHitTiming.delay(weapon,distance);
+        if(delay<0){uncertain.put(target,target.getId());return false;}
+        pendingSpecial=new PendingSpecial(weapon,target,tick+delay,delay>1);
+        return true;
     }
 
-	private RaidScaling raidScaling = RaidScaling.DEFAULT;
+    public boolean onHitsplat(NPC target,int amount,int tick)
+    { return onHitsplat(target,amount,amount>0,tick); }
+    public boolean onHitsplat(NPC target,int amount,boolean accurate,int tick)
+    {
+        PendingSpecial p=pendingSpecial;
+        if(p==null || target==null || p.target!=target || p.hitTick!=tick)return false;
+        if(target.getId()!=p.targetId){markUncertain(p);pendingSpecial=null;return false;}
+        if(p.hits.size()>=8){uncertain.put(target,target.getId());pendingSpecial=null;return false;}
+        p.hits.add(new Hit(Math.max(0,amount),accurate));
+        return true;
+    }
 
-	public void setRaidScaling(RaidScaling next)
-	{
-		if (!raidScaling.equals(next))
-		{
-			pendingSpecial = null;
-			raidScaling = next;
-			targetEffects.setRaidScaling(next);
-		}
-	}
+    public void onGameTick(int tick)
+    {
+        PendingSpecial p=pendingSpecial;
+        if(p==null || tick<p.hitTick)return;
+        // GameTick runs after this tick's NPC hitsplat updates, as in RuneLite's counter.
+        pendingSpecial=null;
+        if(p.target.getId()!=p.targetId){markUncertain(p);return;}
+        int needed=p.weapon==SpecialAttackWeapon.TONALZTICS_OF_RALOS?2:1;
+        if(p.hits.size()<needed){markUncertain(p);return;}
+        if(needed==2)
+        {
+            apply(p,p.hits.get(0));apply(p,p.hits.get(1));
+        }
+        else apply(p,p.hits.get(p.delayed?0:p.hits.size()-1));
+    }
+    private void apply(PendingSpecial p,Hit hit)
+    { targetEffects.record(p.weapon,p.target,hit.amount,hit.accurate,p.hitTick); }
 
-	public void resetEnergy(int specialEnergy)
-	{
-		previousEnergy = specialEnergy;
-		pendingSpecial = null;
-	}
+    /** Keep identity-bound estimates through loading; never rebind an arbitrary new NPC. */
+    public void onLoading()
+    {
+        if(pendingSpecial!=null)markUncertain(pendingSpecial);
+        pendingSpecial=null;
+    }
+    public TargetEffectSnapshot getTargetEffects(NPC target,int tick)
+    {
+        TargetEffectSnapshot result=targetEffects.snapshot(target,tick);
+        if(trackingMode==DefenceTrackingMode.OFF)
+            return result.withTektonHistory(result.isTektonDefenceSpecialAttempted(),result.isTektonDefenceSpecialAttempted());
+        Integer oldPhase=uncertain.get(target);
+        if(oldPhase!=null && target!=null && result.hasTargetStats() && oldPhase!=target.getId()
+            && ocellusPhase(oldPhase) && ocellusPhase(target.getId()))
+            uncertain.remove(target);
+        return uncertain.containsKey(target)?result.withUncertainReductions():result;
+    }
+    private void markUncertain(PendingSpecial p) { uncertain.put(p.target,p.targetId); }
+    private static boolean ocellusPhase(int id) { return id==16674 || id==16676 || id==16677; }
+    public void remove(NPC target)
+    {
+        if(pendingSpecial!=null && pendingSpecial.target==target)pendingSpecial=null;
+        uncertain.remove(target);targetEffects.remove(target);
+    }
+    public void clear()
+    {previousEnergy=-1;pendingSpecial=null;uncertain.clear();targetEffects.clear();}
 
-	public boolean onEnergyChanged(
-		int specialEnergy,
-		SpecialAttackWeapon weapon,
-		NPC target,
-		int gameTick)
-	{
-		if (previousEnergy < 0 || specialEnergy >= previousEnergy)
-		{
-			previousEnergy = specialEnergy;
-			return false;
-		}
-
-		previousEnergy = specialEnergy;
-        // Attempt history controls conditional spec accuracy, not target reductions.
-        targetEffects.recordSpecialAttempt(weapon, target);
-		pendingSpecial = trackingMode == DefenceTrackingMode.LOCAL && weapon != null && weapon.hasTrackedTargetEffect()
-			? new PendingSpecial(weapon, target, gameTick + PENDING_TIMEOUT_TICKS)
-			: null;
-		return pendingSpecial != null;
-	}
-
-	public boolean onHitsplat(NPC target, int displayedDamage, int gameTick)
-	{
-		return onHitsplat(target, displayedDamage, displayedDamage > 0, gameTick);
-	}
-
-	public boolean onHitsplat(
-		NPC target,
-		int displayedDamage,
-		boolean accurate,
-		int gameTick)
-	{
-		if (pendingSpecial == null || target == null)
-		{
-			return false;
-		}
-		if (gameTick > pendingSpecial.expiresAtTick)
-		{
-			pendingSpecial = null;
-			return false;
-		}
-		if (pendingSpecial.target != null && pendingSpecial.target != target)
-		{
-			return false;
-		}
-
-		SpecialAttackWeapon weapon = pendingSpecial.weapon;
-		targetEffects.record(weapon, target, displayedDamage, accurate, gameTick);
-		pendingSpecial.remainingHits--;
-		if (pendingSpecial.remainingHits <= 0)
-		{
-			pendingSpecial = null;
-		}
-		return true;
-	}
-
-	public void onGameTick(int gameTick)
-	{
-		if (pendingSpecial != null && gameTick > pendingSpecial.expiresAtTick)
-		{
-			pendingSpecial = null;
-		}
-	}
-
-	public TargetEffectSnapshot getTargetEffects(NPC target, int gameTick)
-	{
-        TargetEffectSnapshot result = targetEffects.snapshot(target, gameTick);
-        return trackingMode == DefenceTrackingMode.OFF
-            ? result.withTektonHistory(result.isTektonDefenceSpecialAttempted(), result.isTektonDefenceSpecialAttempted())
-            : result;
-	}
-
-	public void remove(NPC target)
-	{
-		if (pendingSpecial != null && pendingSpecial.target == target)
-		{
-			pendingSpecial = null;
-		}
-		targetEffects.remove(target);
-	}
-
-	public void clear()
-	{
-		previousEnergy = -1;
-		pendingSpecial = null;
-		targetEffects.clear();
-	}
-
-	private static final class PendingSpecial
-	{
-		private final SpecialAttackWeapon weapon;
-		private final NPC target;
-		private final int expiresAtTick;
-		private int remainingHits;
-
-		private PendingSpecial(SpecialAttackWeapon weapon, NPC target, int expiresAtTick)
-		{
-			this.weapon = weapon;
-			this.target = target;
-			this.expiresAtTick = expiresAtTick;
-			this.remainingHits = weapon.getEffectHitCount();
-		}
-	}
+    private static final class Hit
+    {
+        final int amount;final boolean accurate;
+        Hit(int amount,boolean accurate){this.amount=amount;this.accurate=accurate;}
+    }
+    private static final class PendingSpecial
+    {
+        final SpecialAttackWeapon weapon;final NPC target;final int targetId;final int hitTick;final boolean delayed;
+        final List<Hit> hits=new ArrayList<>();
+        PendingSpecial(SpecialAttackWeapon weapon,NPC target,int tick,boolean delayed)
+        {this.weapon=weapon;this.target=target;this.targetId=target.getId();this.hitTick=tick;this.delayed=delayed;}
+    }
 }

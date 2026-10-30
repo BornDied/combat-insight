@@ -24,10 +24,14 @@ final class HudPresentation
             case "DRAGON_DAGGER":
             case "BURNING_CLAWS":
             case "SOULREAPER_AXE":
+            case "ZORYAS_TOME":
                 return accent;
             default: return fallback;
         }
     }
+
+    static String calculation(String text, boolean available)
+    { return "Immune".equals(text) ? text : available ? value(text) : "?"; }
 
     static String value(String text)
     {

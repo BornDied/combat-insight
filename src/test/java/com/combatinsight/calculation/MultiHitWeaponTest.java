@@ -3,6 +3,7 @@ package com.combatinsight.calculation;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import org.junit.Test;
@@ -27,6 +28,16 @@ public class MultiHitWeaponTest
 		assertNull(MultiHitWeapon.forWeapon("Abyssal whip"));
 		assertNull(MultiHitWeapon.forWeapon(null));
 	}
+
+    @Test public void chargedRalosBasicAttacksUseTwoIndependentReducedHits()
+    {
+        MultiHitWeapon weapon=MultiHitWeapon.forWeapon("Tonalztics of Ralos");
+        assertNotNull(weapon);
+        MultiHitResult r=weapon.calculate(0,31,2,.5,3,5,false,false);
+        assertArrayEquals(new int[]{29,29},r.getMaximumHits());
+        assertEquals(13.59375,r.getExpectedDamagePerAttack(),1e-10);
+        assertNull(MultiHitWeapon.forWeapon("Tonalztics of Ralos (uncharged)"));
+    }
 
 	@Test
 	public void scytheUsesTargetSizeAndIndependentFullHalfQuarterRolls()

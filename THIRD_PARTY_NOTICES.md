@@ -1,5 +1,17 @@
 # Third-party notices
 
+The October30 local defence-tracking candidate adapts projectile-delay arithmetic,
+same-tick hitsplat ordering and deferred live-input/HP-XP observations from RuneLite's
+Special Attack Counter (SpecialCounterPlugin.java and SpecialWeapon.java), copyright
+2018 Raqes. Its full BSD2-Clause notice is retained in SpecialHitTiming.java and in
+the bundled resource com/combatinsight/third-party/RuneLite-SpecialCounter-LICENSE.txt.
+Source: https://github.com/runelite/runelite/tree/master/runelite-client/src/main/java/net/runelite/client/plugins/specialcounter
+
+Better Party Defence's current Plugin Hub pin3d5848574bce1c1a8254c1ea887293b4292eb9b9
+was reviewed as a behaviour reference for current-minus-floor display and uncertainty.
+No Better Party Defence or OSParty source implementation is copied into this candidate.
+https://github.com/Falsary/better-party-defence/tree/3d5848574bce1c1a8254c1ea887293b4292eb9b9
+
 Combat Insight source code is distributed under the BSD 2-Clause License; see
 `LICENSE`.
 
@@ -30,5 +42,15 @@ cross-checked against RuneLite's `gameval.NpcID` definitions. The audited roster
 is in `src/test/resources/raid-coverage.tsv`.
 
 Combat Insight is a third-party RuneLite plugin and uses the RuneLite API.
+
+The October 24 alpha2 continuation adds eight curated Fractured Archive records
+from the [Wiki DPS structured monster dataset](https://github.com/weirdgloop/osrs-dps-calc/blob/98e4fac38b580901cc3f8d485bbaa48bbb3277ed/cdn/json/monsters.json),
+cross-checked with RuneLite gameval definitions at
+`fc8d18969e3028af21a78fae38c9ab6c8c7573b1`. The Wiki-derived data retains
+the Wiki's site-content attribution/licensing obligations. The comparison
+report is data derived from those sources, not copied calculator code.
+Source revisions and scope are recorded in
+`docs/research/2026-10-24-encounter-audit.md`. No GearScape implementation was copied.
+
 RuneLite is licensed under the BSD 2-Clause License. RuneLite and Old School
 RuneScape are separate projects; this plugin is not endorsed by Jagex.

@@ -28,10 +28,18 @@ public final class BoltEffect
     public static Result calculate(String ammo, int maximum, int ranged, double accuracy, int currentHp,
         int armour, boolean zaryte, boolean special, boolean diary, boolean undead, boolean dragonOrFiery, HitTransform transform)
     {
+        return calculate(ammo,0,maximum,ranged,accuracy,currentHp,armour,zaryte,special,diary,undead,dragonOrFiery,transform);
+    }
+    /** Some encounter distributions (Warden P2) already have a nonzero minimum. */
+    public static Result calculate(String ammo, int minimum, int maximum, int ranged, double accuracy, int currentHp,
+        int armour, boolean zaryte, boolean special, boolean diary, boolean undead, boolean dragonOrFiery, HitTransform transform)
+    {
         String name=ammo.toLowerCase(Locale.ROOT);
+        boolean ascension = name.contains("ascension");
+        if (ascension && (zaryte || special || !(name.contains("diamond") || name.contains("onyx")))) return null;
         double p=Math.max(0,Math.min(1,accuracy));
         int baseMax=Math.max(0,maximum);
-        double baseMean=baseMax<=0 ? 0 : transform.average(0,baseMax,armour);
+        double baseMean=baseMax<=0 ? 0 : transform.average(minimum,baseMax,armour);
         int normalMaximum=baseMax<=0 ? 0 : transform.maximum(baseMax,armour);
         double rate, effectMean; int effectMaximum; boolean ignoresAccuracy;
         if (name.contains("ruby") && enchanted(name))
@@ -43,14 +51,14 @@ public final class BoltEffect
         }
         else if(name.contains("diamond") && enchanted(name))
         {
-            rate=.10; ignoresAccuracy=true;
+            rate=ascension ? .05 : .10; ignoresAccuracy=true;
             int effectMax=baseMax*(zaryte ? 126 : 115)/100;
             effectMaximum=transform.maximum(effectMax,armour);
             effectMean=transform.average(0,effectMax,armour);
         }
         else if(name.contains("onyx") && enchanted(name))
         {
-            rate=undead ? 0 : .11; ignoresAccuracy=false;
+            rate=undead ? 0 : ascension ? .055 : .11; ignoresAccuracy=false;
             int effectMax=baseMax*(zaryte ? 132 : 120)/100;
             effectMaximum=transform.maximum(effectMax,armour);
             effectMean=transform.average(0,effectMax,armour);
@@ -60,7 +68,7 @@ public final class BoltEffect
             rate=dragonOrFiery ? 0 : .06; ignoresAccuracy=false;
             int bonus=ranged*2/(zaryte ? 9 : 10);
             effectMaximum=transform.maximum(baseMax+bonus,armour);
-            effectMean=transform.average(bonus,baseMax+bonus,armour);
+            effectMean=transform.average(Math.max(0,Math.min(minimum,baseMax))+bonus,baseMax+bonus,armour);
         }
         else return null;
         if (diary) rate*=1.1;

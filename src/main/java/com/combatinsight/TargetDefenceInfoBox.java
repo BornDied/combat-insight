@@ -15,6 +15,8 @@ final class TargetDefenceInfoBox extends InfoBox
 	private Object targetKey;
 	private int currentDefence;
 	private int baseDefence;
+    private int defenceFloor;
+    private boolean showRemaining;
 	private long reductionChangedAt;
 	private boolean animateChanges;
 	private Color textColor = DEFAULT_TEXT_COLOR;
@@ -37,6 +39,14 @@ final class TargetDefenceInfoBox extends InfoBox
 		Color newFlashColor,
 		long now)
 	{
+        update(newTargetKey,targetName,newCurrentDefence,newBaseDefence,0,false,tracked,
+            estimatedRecovery,animate,newTextColor,newFlashColor,now);
+    }
+
+    void update(Object newTargetKey,String targetName,int newCurrentDefence,int newBaseDefence,
+        int floor,boolean remaining,boolean tracked,boolean estimatedRecovery,boolean animate,
+        Color newTextColor,Color newFlashColor,long now)
+    {
 		boolean sameTarget = targetKey == newTargetKey;
 		if (sameTarget && newCurrentDefence < currentDefence)
 		{
@@ -50,6 +60,8 @@ final class TargetDefenceInfoBox extends InfoBox
 		targetKey = newTargetKey;
 		currentDefence = Math.max(0, newCurrentDefence);
 		baseDefence = Math.max(0, newBaseDefence);
+        defenceFloor=Math.min(baseDefence,Math.max(0,floor));
+        showRemaining=remaining;
 		animateChanges = animate;
 		textColor = newTextColor == null ? DEFAULT_TEXT_COLOR : newTextColor;
 		flashColor = newFlashColor == null ? DEFAULT_FLASH_COLOR : newFlashColor;
@@ -66,7 +78,9 @@ final class TargetDefenceInfoBox extends InfoBox
 			safeName,
 			currentDefence,
 			baseDefence,
-			status));
+			status)+String.format(Locale.ROOT,
+            "</br>Defence floor: %,d</br>Remaining to cap: %,d / %,d</br>Local estimate; teammate reductions are not imported.",
+            defenceFloor,Math.max(0,currentDefence-defenceFloor),Math.max(0,baseDefence-defenceFloor)));
 	}
 
 	boolean appliesTo(Object target)
@@ -77,7 +91,7 @@ final class TargetDefenceInfoBox extends InfoBox
 	@Override
 	public String getText()
 	{
-		return Integer.toString(currentDefence);
+		return Integer.toString(showRemaining?Math.max(0,currentDefence-defenceFloor):currentDefence);
 	}
 
 	@Override

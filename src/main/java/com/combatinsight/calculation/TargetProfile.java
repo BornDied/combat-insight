@@ -69,6 +69,32 @@ public final class TargetProfile
 		this.ambiguous = ambiguous;
 	}
 
+    /** Footprint evidence alone cannot resolve unrelated combat-stat ambiguity. */
+    public TargetProfile withSize(int liveSize)
+    {
+        return new TargetProfile(id,defenceLevel,magicLevel,hitpoints,offensiveMagic,Math.max(1,liveSize),
+            flatArmour,stabDefence,slashDefence,crushDefence,magicDefence,
+            lightRangedDefence,standardRangedDefence,heavyRangedDefence,weaknessElement,
+            weaknessSeverity,slayerMonster,attributes,ambiguous);
+    }
+
+    public TargetProfile withFlatArmour(int armour)
+    {
+        return new TargetProfile(id,defenceLevel,magicLevel,hitpoints,offensiveMagic,size,
+            Math.max(0,armour),stabDefence,slashDefence,crushDefence,magicDefence,
+            lightRangedDefence,standardRangedDefence,heavyRangedDefence,weaknessElement,
+            weaknessSeverity,slayerMonster,attributes,ambiguous);
+    }
+
+    /** A calculator variant can describe a separate live hitbox; size comes from the cache. */
+    public TargetProfile withEncounterIdentity(int liveId, int liveSize)
+    {
+        return new TargetProfile(liveId, defenceLevel, magicLevel, hitpoints, offensiveMagic,
+            Math.max(0, liveSize), flatArmour, stabDefence, slashDefence, crushDefence,
+            magicDefence, lightRangedDefence, standardRangedDefence, heavyRangedDefence,
+            weaknessElement, weaknessSeverity, slayerMonster, attributes, liveSize < 1);
+    }
+
 	public int getId()
 	{
 		return id;

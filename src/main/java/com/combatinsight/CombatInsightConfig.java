@@ -30,6 +30,11 @@ public interface CombatInsightConfig extends Config
         position = 0, section = trackingSection)
     default DefenceTrackingMode defenceTrackingMode() { return DefenceTrackingMode.LOCAL; }
 
+    @ConfigItem(keyName="showRemainingDefence",name="Count Defence down to cap",
+        description="Show remaining reducible Defence: 0 means the minimum has been reached, not an actual Defence level of 0. Tooltip and Inspector retain actual levels. Local estimates only.",
+        position=1,section=trackingSection)
+    default boolean showRemainingDefence() { return true; }
+
     @ConfigItem(keyName = "dt2EncounterMode", name = "DT2 encounter mode",
         description = "Auto detects normal or Awakened from the active boss combat level. Quest NPCs remain separate. Vardorvis requires visible health.",
         position = 30, section = calculationSection)
@@ -143,6 +148,12 @@ public interface CombatInsightConfig extends Config
 	@Range(min = 1, max = 5)
 	@ConfigItem(keyName = "tobPartySize", name = "ToB starting party size", description = "Party size at raid start, including players who later die. Normal/Hard solos and duos use trio health scaling.", position = 5, section = raidSection)
 	default int tobPartySize() { return 5; }
+
+    @Range(min = 0, max = 8)
+    @ConfigItem(keyName = "archivePartySize", name = "Archive starting party size",
+        description = "Include players who later die or leave. 0 means unknown. Uses published HP table cells only; a matching boss HUD takes priority. Observed roster is diagnostic because joining mid-raid can miss departed members.",
+        position = 10, section = raidSection)
+    default int archivePartySize() { return 0; }
 
 	@ConfigItem(
 		keyName = "showHud",
@@ -540,7 +551,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "toaInvocationLevel",
 		name = "ToA invocation",
-		description = "Tombs of Amascut raid invocation used for target defence scaling; leave at 0 outside ToA",
+		description = "Tombs of Amascut raid invocation used for defence rolls and HP scaling; verify against your raid",
 		position = 8,
 		section = raidSection
 	)
@@ -548,6 +559,16 @@ public interface CombatInsightConfig extends Config
 	{
 		return 0;
 	}
+
+    @Range(min=0,max=8)
+    @ConfigItem(keyName="toaPartySize", name="ToA party size", position=9, section=raidSection,
+        description="Starting party size, 1-8. Zero means unknown and withholds ToA HP and ruby damage.")
+    default int toaPartySize() { return 0; }
+
+    @Range(min=-1,max=6)
+    @ConfigItem(keyName="toaPathLevel", name="ToA current path level", position=10, section=raidSection,
+        description="Level of the path you are currently fighting, 0-6. -1 means unknown. Wardens do not use this input.")
+    default int toaPathLevel() { return -1; }
 
 	@ConfigItem(
 		keyName = "showAttackSpeed",
@@ -564,7 +585,7 @@ public interface CombatInsightConfig extends Config
 	@ConfigItem(
 		keyName = "showWarnings",
 		name = "Show calculation notices",
-		description = "Explain missing inputs and mechanics that are not safe to calculate yet",
+		description = "Show a compact ? notice. Read full explanations in Inspector or copied diagnostics.",
 		position = 6,
 		section = advancedRowsSection
 	)
@@ -601,6 +622,11 @@ public interface CombatInsightConfig extends Config
     @ConfigItem(keyName = "enableInspector", name = "Enable calculation inspector",
         description = "Show the Inspect calculation action in the HUD menu", position = 0, section = inspectorSection)
     default boolean enableInspector() { return true; }
+
+    @ConfigItem(keyName = "recordOcellusEncounter", name = "Record raid diagnostics",
+        description = "Temporary local Archive test recorder, including Bork, Smorks and Ocellus. Enable before pull; stop after fight. Starting again clears the previous recording.", position = 1, section = inspectorSection)
+    default boolean recordOcellusEncounter() { return false; }
+
 
     @ConfigItem(keyName = "showManualIndicator", name = "Show manual input indicator",
         description = "Show Manual only when a manual override is active in the current calculation", position = 8, section = effectsSection)

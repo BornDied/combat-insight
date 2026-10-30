@@ -13,6 +13,7 @@ public final class RaidScaling
 	private final int highestHitpoints;
 	private final int averageMining;
 	private final int tobSize;
+    private final int toaSize, toaPath;
     private final String provenance;
     private final String theatreProvenance;
 
@@ -25,6 +26,15 @@ public final class RaidScaling
     private RaidScaling(int coxSize, boolean challengeMode, int highestCombat,
         int highestHitpoints, int averageMining, int tobSize, String provenance, String theatreProvenance)
     {
+        this(coxSize,challengeMode,highestCombat,highestHitpoints,averageMining,tobSize,provenance,theatreProvenance,0,-1);
+    }
+
+    private RaidScaling(int coxSize, boolean challengeMode, int highestCombat,
+        int highestHitpoints, int averageMining, int tobSize, String provenance, String theatreProvenance,
+        int toaSize, int toaPath)
+    {
+        this.toaSize=toaSize>=1 && toaSize<=8 ? toaSize : 0;
+        this.toaPath=toaPath>=0 && toaPath<=6 ? toaPath : -1;
         this.provenance=provenance;
         this.theatreProvenance=theatreProvenance;
 		this.coxSize = clamp(coxSize, 1, 100);
@@ -36,21 +46,59 @@ public final class RaidScaling
 	}
 
     RaidScaling withObservedChambers(int size, boolean cm, int combat)
-    { return new RaidScaling(size,cm,combat>=60 && combat<=126 ? combat : highestCombat,highestHitpoints,averageMining,tobSize, "observed party/mode; highest CB " + (combat>=60 && combat<=126 ? "observed" : "manual fallback"), theatreProvenance); }
+    { return new RaidScaling(size,cm,combat>=60 && combat<=126 ? combat : highestCombat,highestHitpoints,averageMining,tobSize, "observed party/mode; highest CB " + (combat>=60 && combat<=126 ? "observed" : "manual fallback"), theatreProvenance,toaSize,toaPath); }
 
     public RaidScaling withObservedTheatre(int size)
     {
         if (size < 1 || size > 5) return this;
         return new RaidScaling(coxSize, challengeMode, highestCombat, highestHitpoints,
-            averageMining, size, provenance, "observed roster (verify starting size)");
+            averageMining, size, provenance, "observed roster (verify starting size)",toaSize,toaPath);
     }
+
+    public RaidScaling withTombsInputs(int partySize, int pathLevel)
+    {
+        return new RaidScaling(coxSize,challengeMode,highestCombat,highestHitpoints,averageMining,tobSize,
+            provenance,theatreProvenance,partySize,pathLevel);
+    }
+
+    /** Wiki ordering: invocation, path, party, then HP rounding. Unknown inputs retain no HP. */
+    public TargetProfile applyTombs(TargetProfile base, int invocation)
+    {
+        if(base==null || base.isAmbiguous() || !TargetMechanics.isInTombsOfAmascut(base.getId())) return base;
+        int id=base.getId();
+        boolean core=TargetMechanics.isWardenCore(id) || id==11755 || id==11758;
+        boolean path=!(id>=11750 && id<=11771);
+        int hp=0;
+        if(toaSize>0 && (!path || toaPath>=0))
+        {
+            long scaled=core ? 4500 : base.getHitpoints();
+            long invocationPercent=(core?1L:4L)*Math.max(0,invocation)/10;
+            scaled+=scaled*invocationPercent/100;
+            if(path && toaPath>0) scaled=scaled*(103+5*toaPath)/100;
+            if(toaSize>=2)
+            {
+                int partyFactor=9*(toaSize>=3?2:1)+(toaSize>=4?6*(toaSize-3):0);
+                scaled=scaled*(10+partyFactor)/10;
+            }
+            if(scaled>100)
+            {
+                int round=scaled>300?10:5;
+                scaled=(scaled+round/2)/round*round;
+            }
+            hp=(int)Math.min(Integer.MAX_VALUE,scaled);
+        }
+        return base.withRaidStats(base.getDefenceLevel(),base.getMagicLevel(),hp);
+    }
+
+    public String tombsInputs()
+    { return "manual party="+(toaSize==0?"unknown":toaSize)+", current path="+(toaPath<0?"unknown":toaPath); }
 
     boolean hasManualTheatreSize() { return "manual".equals(theatreProvenance); }
 
     public String inputSummary()
     {
         return "CoX " + provenance + ": size="+coxSize+", CM="+challengeMode+", CB="+highestCombat
-            +"; manual team HP="+highestHitpoints+", Mining="+averageMining+"; ToB " + theatreProvenance + " size="+tobSize;
+            +"; manual team HP="+highestHitpoints+", Mining="+averageMining+"; ToB " + theatreProvenance + " size="+tobSize+"; ToA "+tombsInputs();
     }
 
 	public TargetProfile apply(TargetProfile base)
@@ -154,12 +202,13 @@ public final class RaidScaling
 		RaidScaling that = (RaidScaling) other;
 		return coxSize == that.coxSize && challengeMode == that.challengeMode
 			&& highestCombat == that.highestCombat && highestHitpoints == that.highestHitpoints
-			&& averageMining == that.averageMining && tobSize == that.tobSize;
+			&& averageMining == that.averageMining && tobSize == that.tobSize
+            && toaSize==that.toaSize && toaPath==that.toaPath;
 	}
 
 	@Override public int hashCode()
 	{
-		return Objects.hash(coxSize, challengeMode, highestCombat, highestHitpoints, averageMining, tobSize);
+		return Objects.hash(coxSize, challengeMode, highestCombat, highestHitpoints, averageMining, tobSize,toaSize,toaPath);
 	}
 
 	private static int clamp(int value, int min, int max) { return Math.max(min, Math.min(max, value)); }
