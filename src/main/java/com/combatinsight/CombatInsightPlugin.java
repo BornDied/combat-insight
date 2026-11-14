@@ -127,7 +127,8 @@ public class CombatInsightPlugin extends Plugin
                 return;
             }
             if (inspector != null) return;
-            inspector=new CalculationInspectorPanel(this::copyDiagnostic, encounterRecorder::report);
+            inspector=new CalculationInspectorPanel(this::copyDiagnostic, () -> encounterRecorder.setEnabled(true),
+                () -> encounterRecorder.setEnabled(false), this::exportEncounter);
             BufferedImage icon=new BufferedImage(16,16,BufferedImage.TYPE_INT_ARGB);
             java.awt.Graphics2D g=icon.createGraphics();
             g.setColor(new Color(66,217,255)); g.drawOval(1,1,9,9); g.drawLine(10,10,15,15); g.dispose();
@@ -188,6 +189,22 @@ public class CombatInsightPlugin extends Plugin
         copyDiagnostic(snapshot.diagnosticReport());
     }
 
+    private void exportEncounter()
+    {
+        javax.swing.JFileChooser chooser=new javax.swing.JFileChooser();
+        chooser.setSelectedFile(new java.io.File("combat-insight-raid-recording.txt"));
+        if(chooser.showSaveDialog(inspector)!=javax.swing.JFileChooser.APPROVE_OPTION)return;
+        if(chooser.getSelectedFile().exists() && javax.swing.JOptionPane.showConfirmDialog(inspector,
+            "Replace the existing file?", "Export recording", javax.swing.JOptionPane.YES_NO_OPTION)
+            !=javax.swing.JOptionPane.YES_OPTION)return;
+        try {
+            java.nio.file.Files.write(chooser.getSelectedFile().toPath(),
+                encounterRecorder.report().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch(java.io.IOException ex) {
+            javax.swing.JOptionPane.showMessageDialog(inspector,"Could not export recording: "+ex.getMessage(),
+                "Export failed",javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
     private void copyDiagnostic(String report)
     {
         SwingUtilities.invokeLater(() -> {
@@ -264,8 +281,7 @@ public class CombatInsightPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-        encounterRecorder.setEnabled(config.recordOcellusEncounter());
-        archiveStateTracker.observeRoom(client);
+archiveStateTracker.observeRoom(client);
 		specialAttackTracker.onGameTick(client.getTickCount());
 		LiveCombatSnapshot previous = snapshot;
 		NPC activeTarget = targetTracker.getActiveTarget();
@@ -304,6 +320,7 @@ public class CombatInsightPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
+        encounterRecorder.marker(client==null ? -1 : client.getTickCount(), "Game state="+event.getGameState()+"; recording continuity may have a gap");
 		if (event.getGameState() != GameState.LOGGED_IN)
 		{
             heldDetails.clear();
@@ -419,16 +436,24 @@ public class CombatInsightPlugin extends Plugin
 			}
 		}
 	}
+    @Subscribe
+    public void onAnimationChanged(net.runelite.api.events.AnimationChanged event)
+    {
+        if(event.getActor()!=client.getLocalPlayer())return;
+        NPC target=targetTracker.getActiveTarget();
+        if(target!=null)encounterRecorder.event(client.getTickCount(),target.getId(),
+            "local player animation="+event.getActor().getAnimation()+" (attack timing unconfirmed); target index="+target.getIndex());
+    }
 
-	@Subscribe
-	public void onHitsplatApplied(HitsplatApplied event)
+    @Subscribe
+    public void onHitsplatApplied(HitsplatApplied event)
 	{
 		if (event.getActor() instanceof NPC
 			&& event.getHitsplat() != null
 			&& event.getHitsplat().isMine())
 		{
 			NPC combatTarget = (NPC) event.getActor();
-            encounterRecorder.event(client.getTickCount(),combatTarget.getId(),"owned hitsplat amount="
+            encounterRecorder.event(client.getTickCount(),combatTarget.getId(),"target index="+combatTarget.getIndex()+"; owned hitsplat amount="
                 +event.getHitsplat().getAmount()+"; type="+event.getHitsplat().getHitsplatType());
 			CombatDummy combatDummy = CombatDummy.forNpcId(combatTarget.getId());
 			if (combatDummy != null)

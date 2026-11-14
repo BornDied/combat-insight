@@ -623,12 +623,7 @@ public interface CombatInsightConfig extends Config
         description = "Show the Inspect calculation action in the HUD menu", position = 0, section = inspectorSection)
     default boolean enableInspector() { return true; }
 
-    @ConfigItem(keyName = "recordOcellusEncounter", name = "Record raid diagnostics",
-        description = "Temporary local Archive test recorder, including Bork, Smorks and Ocellus. Enable before pull; stop after fight. Starting again clears the previous recording.", position = 1, section = inspectorSection)
-    default boolean recordOcellusEncounter() { return false; }
-
-
-    @ConfigItem(keyName = "showManualIndicator", name = "Show manual input indicator",
+@ConfigItem(keyName = "showManualIndicator", name = "Show manual input indicator",
         description = "Show Manual only when a manual override is active in the current calculation", position = 8, section = effectsSection)
     default boolean showManualIndicator() { return false; }
 

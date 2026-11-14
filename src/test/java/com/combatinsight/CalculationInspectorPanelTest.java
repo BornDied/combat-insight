@@ -31,6 +31,19 @@ public class CalculationInspectorPanelTest
         });
     }
 
+    @Test public void raidControlsStartStopAndExport() throws Exception
+    {
+        SwingUtilities.invokeAndWait(() -> {
+            java.util.concurrent.atomic.AtomicInteger starts=new java.util.concurrent.atomic.AtomicInteger();
+            java.util.concurrent.atomic.AtomicInteger stops=new java.util.concurrent.atomic.AtomicInteger();
+            java.util.concurrent.atomic.AtomicInteger exports=new java.util.concurrent.atomic.AtomicInteger();
+            CalculationInspectorPanel panel=new CalculationInspectorPanel(x -> {}, starts::incrementAndGet, stops::incrementAndGet, exports::incrementAndGet);
+            button(panel,"Start Raid Recording").doClick();
+            button(panel,"Stop Recording").doClick();
+            button(panel,"Export Recording").doClick();
+            assertEquals(1,starts.get());assertEquals(1,stops.get());assertEquals(1,exports.get());
+        });
+    }
     @Test public void sidebarRendersAtRuneLiteWidthWithoutHorizontalOverflow() throws Exception
     {
         SwingUtilities.invokeAndWait(() -> {
