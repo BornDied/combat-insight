@@ -191,19 +191,25 @@ public class CombatInsightPlugin extends Plugin
 
     private void exportEncounter()
     {
-        javax.swing.JFileChooser chooser=new javax.swing.JFileChooser();
-        chooser.setSelectedFile(new java.io.File("combat-insight-raid-recording.txt"));
-        if(chooser.showSaveDialog(inspector)!=javax.swing.JFileChooser.APPROVE_OPTION)return;
-        if(chooser.getSelectedFile().exists() && javax.swing.JOptionPane.showConfirmDialog(inspector,
+        net.runelite.client.util.Filepath.Chooser chooser=new net.runelite.client.util.Filepath.Chooser()
+            .setIsSave().setAcceptsFiles().setFileName("combat-insight-raid-recording.txt")
+            .setDefaultExtension("txt");
+        java.util.List<net.runelite.client.util.Filepath> selected=chooser.showDialog(inspector);
+        if(selected==null || selected.isEmpty())return;
+        net.runelite.client.util.Filepath file=selected.get(0);
+        if(file.exists() && javax.swing.JOptionPane.showConfirmDialog(inspector,
             "Replace the existing file?", "Export recording", javax.swing.JOptionPane.YES_NO_OPTION)
             !=javax.swing.JOptionPane.YES_OPTION)return;
         try {
-            java.nio.file.Files.write(chooser.getSelectedFile().toPath(),
-                encounterRecorder.report().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            writeRecording(file, encounterRecorder.report());
         } catch(java.io.IOException ex) {
             javax.swing.JOptionPane.showMessageDialog(inspector,"Could not export recording: "+ex.getMessage(),
                 "Export failed",javax.swing.JOptionPane.ERROR_MESSAGE);
         }
+    }
+    static void writeRecording(net.runelite.client.util.Filepath file, String report) throws java.io.IOException
+    {
+        file.write(report);
     }
     private void copyDiagnostic(String report)
     {
