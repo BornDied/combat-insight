@@ -17,6 +17,23 @@ public class ArchiveMagicTest
                 assertEquals(i==j ? 26 : 24, capture(spells[j],16434+i,CombatStyleOverride.MAGIC).getMagicBaseMaxHit());
         }
     }
+    @Test public void archiveElementalCasesProduceSupportedSnapshots()
+    {
+        int[] targets={16653,16652,16660,16687,16643,16645,16647};
+        MagicSpell[] spells={MagicSpell.WIND_SURGE,MagicSpell.EARTH_SURGE,MagicSpell.FIRE_SURGE,MagicSpell.WATER_SURGE};
+        for(int id:targets) for(MagicSpell spell:spells) {
+            LiveCombatSnapshot result=capture(spell,0,CombatStyleOverride.MAGIC,id);
+            assertTrue("max hit unavailable for "+id+" "+spell,result.isMaxHitAvailable());
+        }
+        assertTrue(capture(MagicSpell.WIND_SURGE,0,CombatStyleOverride.MAGIC,16653).getMaxHit()
+            > capture(MagicSpell.WATER_SURGE,0,CombatStyleOverride.MAGIC,16653).getMaxHit());
+        assertTrue(capture(MagicSpell.EARTH_SURGE,0,CombatStyleOverride.MAGIC,16652).getMaxHit()
+            > capture(MagicSpell.WATER_SURGE,0,CombatStyleOverride.MAGIC,16652).getMaxHit());
+        assertTrue(capture(MagicSpell.FIRE_SURGE,0,CombatStyleOverride.MAGIC,16660).getMaxHit()
+            > capture(MagicSpell.WATER_SURGE,0,CombatStyleOverride.MAGIC,16660).getMaxHit());
+        assertTrue(capture(MagicSpell.WATER_SURGE,0,CombatStyleOverride.MAGIC,16687).getMaxHit()
+            > capture(MagicSpell.FIRE_SURGE,0,CombatStyleOverride.MAGIC,16687).getMaxHit());
+    }
     @Test public void upgradeDoesNotAffectAncientsOrSavedSpellDuringMelee()
     {
         assertEquals(30,capture(MagicSpell.ICE_BARRAGE,16436,CombatStyleOverride.MAGIC).getMagicBaseMaxHit());

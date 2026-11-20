@@ -21,9 +21,9 @@ final class CalculationInspectorPanel extends PluginPanel
     private final JButton copy=new JButton("Copy diagnostic");
     private boolean active;
 
-    CalculationInspectorPanel(Consumer<String> copier) { this(copier, () -> "Recording unavailable."); }
+    CalculationInspectorPanel(Consumer<String> copier) { this(copier, () -> {}, () -> {}, () -> {}); }
 
-    CalculationInspectorPanel(Consumer<String> copier, java.util.function.Supplier<String> encounterReport)
+    CalculationInspectorPanel(Consumer<String> copier, Runnable start, Runnable stop, Runnable export)
     {
         super();
         setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
@@ -74,10 +74,17 @@ final class CalculationInspectorPanel extends PluginPanel
             if(doc!=null) copier.accept(doc.report);
         });
         buttons.add(freeze); buttons.add(Box.createVerticalStrut(4)); buttons.add(copy); add(buttons);
-        JButton copyEncounter=new JButton("Copy encounter report");
-        copyEncounter.setAlignmentX(LEFT_ALIGNMENT);
-        copyEncounter.addActionListener(e -> copier.accept(encounterReport.get()));
-        buttons.add(Box.createVerticalStrut(4));buttons.add(copyEncounter);
+        JButton startRecording=new JButton("Start Raid Recording");
+        JButton stopRecording=new JButton("Stop Recording");
+        JButton exportRecording=new JButton("Export Recording");
+        for(JButton button:new JButton[]{startRecording,stopRecording,exportRecording}) {
+            button.setAlignmentX(LEFT_ALIGNMENT);buttons.add(Box.createVerticalStrut(4));buttons.add(button);
+        }
+        JLabel recordingState=new JLabel("Raid recording: stopped");
+        recordingState.setAlignmentX(LEFT_ALIGNMENT);buttons.add(recordingState);
+        startRecording.addActionListener(e -> {start.run();recordingState.setText("Raid recording: active");});
+        stopRecording.addActionListener(e -> {stop.run();recordingState.setText("Raid recording: stopped");});
+        exportRecording.addActionListener(e -> export.run());
         renderDocument();
     }
 

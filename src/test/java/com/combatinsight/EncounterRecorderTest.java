@@ -33,6 +33,19 @@ public class EncounterRecorderTest
   for(int i=0;i<12100;i++)r.event(i,16677,"hit "+i);
   assertTrue(r.report().contains("Dropped entries: 101"));assertTrue(r.report().contains("hit 12099"));
  }
+ @Test public void fullRaidRetainsRoomSummariesAfterTimelineOverflow(){
+  EncounterRecorder r=new EncounterRecorder();r.setEnabled(true);
+  r.snapshot(1,16660,"Guardian first room","grounded");
+  r.snapshot(2,16640,"Bork second room","standing");
+  r.snapshot(3,16665,"Moia third room","active");
+  r.snapshot(4,16684,"Xarth fourth room","active");
+  for(int i=0;i<12100;i++)r.event(10+i,16677,"hit "+i);
+  r.snapshot(13000,16677,"Ocellus final room","final");r.setEnabled(false);
+  String report=r.report();
+  assertTrue(report.contains("Guardian first room"));assertTrue(report.contains("Bork second room"));
+  assertTrue(report.contains("Moia third room"));assertTrue(report.contains("Xarth fourth room"));
+  assertTrue(report.contains("Ocellus final room"));assertTrue(report.contains("Dropped entries:"));
+ }
  @Test public void roomSignalsAreRecordedWithoutASelectedTargetAndOnlyWhenChanged(){
   AtomicInteger animation=new AtomicInteger(14538),health=new AtomicInteger(-1);
   NPC bork=npc(16640,animation,new AtomicInteger(-1));
@@ -48,6 +61,32 @@ public class EncounterRecorderTest
   assertTrue(report.contains("NPC 16640"));assertTrue(report.contains("animation=14538"));
   assertTrue(report.contains("animation=14546"));assertTrue(report.contains("health ratio/scale=71/101"));
   assertFalse(report.contains("Tick 1 "));assertFalse(report.contains("Tick 3 "));assertFalse(report.contains("Tick 5 "));
+ }
+ @Test public void roomWithoutSelectedTargetSurvivesOverflowAndMarksTickGaps(){
+  EncounterRecorder r=new EncounterRecorder();r.setEnabled(true);
+  r.observeRoom(1,Arrays.asList(npc(16660,new AtomicInteger(42),new AtomicInteger(-1))));
+  for(int i=0;i<12100;i++)r.event(2+i,16677,"hit "+i);
+  r.observeRoom(12102,Arrays.asList());
+  String report=r.report();
+  assertTrue(report.contains("1 Guardian\nFirst: Tick 1 NPC 16660"));
+  assertTrue(report.contains("Room observation gap after tick 1"));
+ }
+ @Test public void returningToGuardianRetainsSeparateRoomSummaries(){
+  EncounterRecorder r=new EncounterRecorder();r.setEnabled(true);
+  NPC guardian=npc(16660,new AtomicInteger(-1),new AtomicInteger(-1));
+  NPC bork=npc(16640,new AtomicInteger(-1),new AtomicInteger(-1));
+  // Replay the supplied recording's partial first raid, then Guardian on raid two.
+  r.observeRoom(15359,Arrays.asList(bork));r.snapshot(15360,16640,"first raid Bork","standing");
+  r.observeRoom(15988,Arrays.asList(npc(16674,new AtomicInteger(-1),new AtomicInteger(-1))));
+  r.observeRoom(17238,Arrays.asList(guardian));
+  r.observeRoom(17239,Arrays.asList(guardian));
+  r.observeRoom(17424,Arrays.asList(bork));r.snapshot(17425,16640,"second raid Bork","standing");
+  for(int i=0;i<12100;i++)r.event(18000+i,16677,"hit "+i);
+  String report=r.report();
+  assertTrue(report.contains("Observed sequence 1 / 2 Bork or Ezekiel"));
+  assertTrue(report.contains("Observed sequence 2 / 2 Bork or Ezekiel"));
+  assertFalse(report.contains("Observed sequence 3"));
+  assertTrue(report.contains("first raid Bork"));assertTrue(report.contains("second raid Bork"));
  }
  private static NPC npc(int id,AtomicInteger animation,AtomicInteger health){
   return (NPC)Proxy.newProxyInstance(NPC.class.getClassLoader(),new Class<?>[]{NPC.class},(p,m,a)->{

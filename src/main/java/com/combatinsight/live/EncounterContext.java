@@ -12,6 +12,7 @@ public final class EncounterContext
     final ArchiveEncounterState archive;
     final int combatLevel,healthRatio,healthScale,nightmarePillarHp,npcSize,protectionMask;
     final boolean borkStunned,ocellusAirborne,ocellusFinalPhase;
+    final boolean borkSlamDamageUncertain;
     final int borkQuartile,observedCurrentHp,observedMaximumHp;
 
     public EncounterContext(EncounterMode mode,int combatLevel,int ratio,int scale)
@@ -29,6 +30,14 @@ public final class EncounterContext
         int size,int protection,boolean stunned,int quartile,int currentHp,int maximumHp,boolean airborne,boolean finalPhase,
         ArchiveEncounterState archive)
     {
+        this(mode,combatLevel,ratio,scale,pillarHp,size,protection,stunned,quartile,
+            currentHp,maximumHp,airborne,finalPhase,archive,false);
+    }
+    private EncounterContext(EncounterMode mode,int combatLevel,int ratio,int scale,int pillarHp,
+        int size,int protection,boolean stunned,int quartile,int currentHp,int maximumHp,boolean airborne,boolean finalPhase,
+        ArchiveEncounterState archive,boolean borkSlamDamageUncertain)
+    {
+        this.borkSlamDamageUncertain=borkSlamDamageUncertain;
         this.archive=archive;
         this.mode=mode==null?EncounterMode.AUTO:mode;
         this.combatLevel=combatLevel;this.healthRatio=ratio;this.healthScale=scale;
@@ -55,20 +64,26 @@ public final class EncounterContext
             // destruction in P3 (confirmed by the October30 live recording).
             // Only the deflect family or a visible curse establishes P4 here.
             npc.getId()==16677 && (hasCurse(npc) || animation>=14863 && animation<=14868))
-            .withArchiveState(ArchiveEncounterState.observe(null,npc));
+            .withArchiveState(ArchiveEncounterState.observe(null,npc))
+            .withBorkSlamDamageUncertain(bork && (animation==14549 || animation==14550));
     }
+
+    private EncounterContext withBorkSlamDamageUncertain(boolean uncertain)
+    { return new EncounterContext(mode,combatLevel,healthRatio,healthScale,nightmarePillarHp,npcSize,
+        protectionMask,borkStunned,borkQuartile,observedCurrentHp,observedMaximumHp,
+        ocellusAirborne,ocellusFinalPhase,archive,uncertain); }
 
     EncounterContext withBorkQuartile(int quartile)
     { return new EncounterContext(mode,combatLevel,healthRatio,healthScale,nightmarePillarHp,npcSize,
-        protectionMask,borkStunned,quartile,observedCurrentHp,observedMaximumHp,ocellusAirborne,ocellusFinalPhase,archive); }
+        protectionMask,borkStunned,quartile,observedCurrentHp,observedMaximumHp,ocellusAirborne,ocellusFinalPhase,archive,borkSlamDamageUncertain); }
 
     EncounterContext withOcellusFinalPhase()
     { return new EncounterContext(mode,combatLevel,healthRatio,healthScale,nightmarePillarHp,npcSize,
-        protectionMask,borkStunned,borkQuartile,observedCurrentHp,observedMaximumHp,ocellusAirborne,true,archive); }
+        protectionMask,borkStunned,borkQuartile,observedCurrentHp,observedMaximumHp,ocellusAirborne,true,archive,borkSlamDamageUncertain); }
 
     EncounterContext withArchiveState(ArchiveEncounterState state)
     { return new EncounterContext(mode,combatLevel,healthRatio,healthScale,nightmarePillarHp,npcSize,
-        protectionMask,borkStunned,borkQuartile,observedCurrentHp,observedMaximumHp,ocellusAirborne,ocellusFinalPhase,state); }
+        protectionMask,borkStunned,borkQuartile,observedCurrentHp,observedMaximumHp,ocellusAirborne,ocellusFinalPhase,state,borkSlamDamageUncertain); }
 
     /** Explicit starting roster; zero leaves HP unknown unless observed from the boss HUD. */
     public EncounterContext withArchivePartySize(int size)
@@ -158,6 +173,7 @@ public final class EncounterContext
             if(base>0 && hp>=0 && hp<=base){current=hp;maximum=base;}
         }
         return new EncounterContext(c.mode,c.combatLevel,c.healthRatio,c.healthScale,pillar,c.npcSize,
-            c.protectionMask,c.borkStunned,quartile,current,maximum,c.ocellusAirborne,c.ocellusFinalPhase,ArchiveEncounterState.observe(client,npc));
+            c.protectionMask,c.borkStunned,quartile,current,maximum,c.ocellusAirborne,c.ocellusFinalPhase,
+            ArchiveEncounterState.observe(client,npc),c.borkSlamDamageUncertain);
     }
 }

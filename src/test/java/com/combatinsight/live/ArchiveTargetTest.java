@@ -63,6 +63,13 @@ public class ArchiveTargetTest
         assertNotNull(air); assertNotNull(ground);
         assertTrue(air.hasAttribute("flying"));assertFalse(ground.hasAttribute("flying"));
         assertEquals(110,air.defenceBonus(AttackType.SLASH));assertEquals(90,ground.defenceBonus(AttackType.SLASH));
-        assertEquals(80,air.getWeaknessSeverity());assertEquals(40,ground.getWeaknessSeverity());
+        assertEquals(80,air.getWeaknessSeverity());assertEquals(80,ground.getWeaknessSeverity());
+        assertEquals(55,air.defenceBonus(AttackType.RANGED_LIGHT));
+        assertEquals(50,ground.defenceBonus(AttackType.MAGIC));
+        assertEquals(60,TargetDatabase.find(16684).defenceBonus(AttackType.STAB));
+        assertEquals(1650,TargetDatabase.find(16640).getHitpoints());
+        assertEquals(650,TargetDatabase.find(16641).getHitpoints());
+        assertEquals(2450,TargetDatabase.find(16684).getHitpoints());
+        assertEquals(125,TargetDatabase.find(16653).getWeaknessSeverity());
     }
 }

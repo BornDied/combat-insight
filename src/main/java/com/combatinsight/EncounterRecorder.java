@@ -5,22 +5,34 @@ import java.util.Deque;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import net.runelite.api.NPC;
 import net.runelite.api.NPCComposition;
+import net.runelite.api.Client;
+import net.runelite.api.Player;
+import net.runelite.api.Item;
+import net.runelite.api.ItemContainer;
+import net.runelite.api.InventoryID;
 
 /** Bounded local testing timeline. No external I/O or gameplay actions. */
 final class EncounterRecorder
 {
     private final Deque<String> entries=new ArrayDeque<>();
     private final Map<NPC,String> previousActors=new IdentityHashMap<>();
-    private int characters, dropped;
+    private final Map<String,String> roomFirst=new LinkedHashMap<>(), roomLast=new LinkedHashMap<>();
+    private int characters, dropped, lastRoomTick = -1;
     private boolean enabled;
     private String previous="";
+    private int sequence=1, droppedSummaries;
+    private boolean guardianWasPresent, observedLaterRoom;
     synchronized void setEnabled(boolean next)
     {
-        if(next && !enabled) { entries.clear();characters=0;dropped=0;previous=""; }
+        if(next && !enabled) {
+            entries.clear();roomFirst.clear();roomLast.clear();characters=0;dropped=0;lastRoomTick=-1;previous="";
+            sequence=1;droppedSummaries=0;guardianWasPresent=false;observedLaterRoom=false;
+        }
         if(next!=enabled)previousActors.clear();
         enabled=next;
     }
@@ -28,6 +40,20 @@ final class EncounterRecorder
     synchronized void observeRoom(int tick,Iterable<NPC> actors)
     {
         if(!enabled || actors==null)return;
+        if(lastRoomTick>=0 && (tick>lastRoomTick+1 || tick<lastRoomTick))
+            marker(tick,"Room observation gap after tick "+lastRoomTick);
+        lastRoomTick=tick;
+        boolean guardianPresent=false;
+        for(NPC actor:actors)
+            if(actor!=null && (actor.getId()==16659 || actor.getId()==16660))guardianPresent=true;
+        if(guardianPresent && !guardianWasPresent && observedLaterRoom)
+        {
+            sequence++;
+            observedLaterRoom=false;
+            previous="";
+            marker(tick,"Observed sequence "+sequence+": Guardian loaded after a later room; new raid or return, unconfirmed");
+        }
+        guardianWasPresent=guardianPresent;
         Set<NPC> present=Collections.newSetFromMap(new IdentityHashMap<>());
         for(NPC actor:actors)
         {
@@ -43,7 +69,10 @@ final class EncounterRecorder
                 +"; overhead archives="+Arrays.toString(actor.getOverheadArchiveIds())
                 +"; overhead sprites="+Arrays.toString(actor.getOverheadSpriteIds());
             if(!cues.equals(previousActors.put(actor,cues)))
+            {
+                remember(room(actor.getId()),"Tick "+tick+" "+cues);
                 append("Tick "+tick+" room observation\n"+cues);
+            }
         }
         previousActors.keySet().retainAll(present);
     }
@@ -52,12 +81,64 @@ final class EncounterRecorder
         if(!enabled || !isArchive(targetId))return;
         String body="NPC "+targetId+"\n"+report+"\nObserved cues: "+cues;
         if(body.equals(previous))return;
+        remember(room(targetId),"Tick "+tick+" "+body);
         previous=body; append("Tick "+tick+" snapshot\n"+body);
     }
     synchronized void event(int tick,int targetId,String event)
     {
         if(enabled && isArchive(targetId))
             append("Tick "+tick+" NPC "+targetId+": "+event);
+    }
+    synchronized void marker(int tick,String event) { if(enabled) append("Tick "+tick+" marker: "+event); }
+    /** Interaction is observed at animation time; a retained Inspector target is only context. */
+    synchronized void observePlayerAnimation(Client client,NPC retainedTarget)
+    {
+        if(!enabled)return;
+        Player player=client.getLocalPlayer();
+        if(player==null)return;
+        NPC interacting=player.getInteracting() instanceof NPC ? (NPC)player.getInteracting() : null;
+        NPC scope=interacting!=null ? interacting : retainedTarget;
+        if(scope==null || !isArchive(scope.getId()))return;
+        ItemContainer equipment=client.getItemContainer(InventoryID.EQUIPMENT);
+        Item[] items=equipment==null ? null : equipment.getItems();
+        int weapon=items!=null && items.length>3 && items[3]!=null ? items[3].getId() : -1;
+        event(client.getTickCount(),scope.getId(),"local player animation="+player.getAnimation()
+            +" (attack timing unconfirmed); game cycle="+client.getGameCycle()+"; equipped weapon="+weapon
+            +"; interacting="+actorIdentity(interacting)+"; retained Inspector target="+actorIdentity(retainedTarget));
+    }
+    private static String actorIdentity(NPC npc)
+    {
+        return npc==null ? "none" : "NPC "+npc.getId()+" index="+npc.getIndex();
+    }
+    private static String room(int id)
+    {
+        if(id==16659 || id==16660 || id==16662) return "1 Guardian";
+        if(id==16640 || id==16641 || id==16652 || id==16653) return "2 Bork or Ezekiel";
+        if(id==16665 || id==16666 || id==16667 || id==16670) return "3 Moia or Dreadnoth";
+        if(id>=16643 && id<=16650 || id==16684 || id==16687 || id==16688) return "4 Dagon'hai or Xarth";
+        if(id>=16674 && id<=16681) return "5 Ocellus";
+        return null;
+    }
+    private void remember(String room,String observation)
+    {
+        if(room==null)return;
+        if(!room.startsWith("1 "))observedLaterRoom=true;
+        String key="Observed sequence "+sequence+" / "+room;
+        roomFirst.putIfAbsent(key,observation);
+        roomLast.put(key,observation);
+        // Keep up to sixteen complete five-room summary sets as well as the bounded timeline.
+        while(roomFirst.size()>80)
+        {
+            String oldest=roomFirst.keySet().iterator().next();
+            roomFirst.remove(oldest);roomLast.remove(oldest);droppedSummaries++;
+        }
+    }
+    private String summaries()
+    {
+        StringBuilder out=new StringBuilder("Room summaries (first and latest actor observations or selected-target snapshots; not proof of completion):\n");
+        for(String room:roomFirst.keySet()) out.append("\n").append(room).append("\nFirst: ").append(roomFirst.get(room))
+            .append("\nLatest: ").append(roomLast.get(room)).append("\n");
+        return out.toString();
     }
     private static boolean isArchive(int id) { return id>=16640 && id<=16688; }
     private void append(String text)
@@ -72,8 +153,11 @@ final class EncounterRecorder
         return "Combat Insight "+BuildInfo.VERSION+" Archive encounter recording\nRecording: "+enabled
             +"\nCompleteness: unverified; captures only observed events while enabled. Enable before pulling; stop after kill/wipe. Actor changes do not end recording."
             +"\nDropped entries: "+dropped+"\nNo automatic fight/phase boundary certification; multiple attempts may be present.\n\n"
+            +"Observed sequences: "+sequence+"; dropped room summaries: "+droppedSummaries
+            +"\nSequence boundaries mark Guardian re-entry after a later room; completion and retries require review.\n\n"
             +"Scope: observed Archive actors, including Bork and Smorks, even without a selected target."
             +"\nLimits: 12,000 entries / 8,000,000 characters; oldest entries are removed at the limit.\n\n"
+            +summaries()+"\nTimeline:\n"
             +(entries.isEmpty()?"No Archive events captured. Recording must be enabled while Archive NPCs are loaded.":String.join("\n\n",entries));
     }
 }
