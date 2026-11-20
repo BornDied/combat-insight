@@ -446,9 +446,7 @@ archiveStateTracker.observeRoom(client);
     public void onAnimationChanged(net.runelite.api.events.AnimationChanged event)
     {
         if(event.getActor()!=client.getLocalPlayer())return;
-        NPC target=targetTracker.getActiveTarget();
-        if(target!=null)encounterRecorder.event(client.getTickCount(),target.getId(),
-            "local player animation="+event.getActor().getAnimation()+" (attack timing unconfirmed); target index="+target.getIndex());
+        encounterRecorder.observePlayerAnimation(client,targetTracker.getActiveTarget());
     }
 
     @Subscribe
@@ -460,7 +458,10 @@ archiveStateTracker.observeRoom(client);
 		{
 			NPC combatTarget = (NPC) event.getActor();
             encounterRecorder.event(client.getTickCount(),combatTarget.getId(),"target index="+combatTarget.getIndex()+"; owned hitsplat amount="
-                +event.getHitsplat().getAmount()+"; type="+event.getHitsplat().getHitsplatType());
+                +event.getHitsplat().getAmount()+"; type="+event.getHitsplat().getHitsplatType()
+                +"; game cycle="+client.getGameCycle()+"; target animation="+combatTarget.getAnimation()
+                +"; target pose="+combatTarget.getPoseAnimation()
+                +"; target health ratio/scale="+combatTarget.getHealthRatio()+"/"+combatTarget.getHealthScale());
 			CombatDummy combatDummy = CombatDummy.forNpcId(combatTarget.getId());
 			if (combatDummy != null)
 			{
