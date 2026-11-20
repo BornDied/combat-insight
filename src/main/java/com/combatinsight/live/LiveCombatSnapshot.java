@@ -771,6 +771,8 @@ public final class LiveCombatSnapshot
                 : "Bork: Smorks HP quartile "+encounterContext.borkQuartile+"; armour "+target.getFlatArmour());
         }
         if(targetDataAvailable && (targetId==16676 || targetId>=16678 && targetId<=16681)) archiveStatus="";
+        if(!combatDummy && targetId==16640 && encounterContext.borkSlamDamageUncertain)
+            archiveStatus="Bork slam damage unverified";
         if (archiveStatus.isEmpty() && !combatDummy)
             archiveStatus = RaidDamageRules.unresolvedEncounter(targetId);
         if(!combatDummy && targetId==16652 && encounterContext.archive.ezekielEnraged)
@@ -821,6 +823,13 @@ public final class LiveCombatSnapshot
 
         if(!combatDummy && targetId==16640 && style.attackType==AttackType.MAGIC && targetDataAvailable)
             encounterDamage=HitTransform.flatReduction(Math.max(0,target.getFlatArmour()-8));
+        if (style.combatStyle == CombatStyle.MELEE && equipment.weaponNameLower.equals("sunspear")
+            && targetDataAvailable && isVampyre(target))
+        {
+            // Vampyrebane scales each rolled hit, preserving integer rounding in DPS.
+            encounterDamage = HitTransform.multiplier(3, 2);
+            appliedEffects.add("Sunspear: vampyre damage x1.5 per hit; accuracy x1.25");
+        }
         if (!combatDummy && targetDataAvailable && !isTargetImmune(targetId,style,equipment,target))
         {
             if (TargetMechanics.isZulrah(targetId)) appliedEffects.add("Zulrah: each hitsplat above 50 rerolls 45–50");
@@ -931,6 +940,8 @@ public final class LiveCombatSnapshot
             specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Moia shadow shield damage unverified");
         if(impBuffUnknown && specialAttackResult.getWeapon()!=null)
             specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Imp next-attack buff unverified");
+        if(!combatDummy && targetId==16640 && encounterContext.borkSlamDamageUncertain && specialAttackResult.getWeapon()!=null)
+            specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Bork slam damage unverified");
         if(!combatDummy && targetId==16652 && encounterContext.archive.ezekielEnraged && specialAttackResult.getWeapon()!=null)
             specialAttackResult=SpecialAttackResult.unavailable(specialAttackResult.getWeapon(),"Ezekiel enrage damage curve unverified");
         if(!combatDummy && targetId==16677 && specialAttackResult.getWeapon()!=null)
@@ -991,6 +1002,7 @@ public final class LiveCombatSnapshot
                 + "; DT2 mode=" + encounterContext.mode + "; observed target combat=" + encounterContext.combatLevel
                 + "; NPC size="+encounterContext.npcSize+"; protection="+encounterContext.protectionMask
                 + "; Bork stunned="+encounterContext.borkStunned+"; Smorks quartile="+encounterContext.borkQuartile
+                + "; Bork slam damage unresolved="+encounterContext.borkSlamDamageUncertain
                 + "; Ocellus airborne="+encounterContext.ocellusAirborne+"; final phase="+encounterContext.ocellusFinalPhase
                 + "; Archive observed roster="+encounterContext.archive.partySize+"; manual starting party="+encounterContext.archive.manualPartySize+"; Ezekiel enrage="+encounterContext.archive.ezekielEnraged
                 + "; Imp buff unresolved="+encounterContext.archive.impBuffUncertain
@@ -1572,6 +1584,10 @@ public final class LiveCombatSnapshot
 				{
 					attackRoll = scale(attackRoll, 7, 6);
 				}
+				if (weapon.equals("sunspear") && isVampyre(target))
+				{
+					attackRoll = scale(attackRoll, 5, 4);
+				}
 				if (equipment.isObsidianWeapon() && equipment.hasFullObsidian())
 				{
 					attackRoll += baseAttackRoll / 10;
@@ -1744,6 +1760,12 @@ public final class LiveCombatSnapshot
 			maxHit += 10;
 		}
 		return maxHit;
+	}
+
+	private static boolean isVampyre(TargetProfile target)
+	{
+		return target.hasAttribute("vampyre1") || target.hasAttribute("vampyre2")
+			|| target.hasAttribute("vampyre3");
 	}
 
 	private static int applyRangedTargetDamage(
